@@ -12,7 +12,8 @@ function [P, ix] = build_model(par, st, sc, ev, opt)
 %     'none'    ignored
 %   opt: milp, nonant, fix_y (Hx3), terminal, Eref_end, Sref_end, no_late, visible (Kx1 logical),
 %        active (KxS logical, event happens in scenario s; default = visible), Cmax (for 'commit'),
-%        w_max (weight of 'max')
+%        w_max (weight of 'max'), risk (risk measure of the scenario costs instead of their
+%        expectation, see ADD_RISK: struct with type 'dro' (delta) or 'cvar' (beta, w); [] = expectation)
 %   Optional par fields used: par.dr.c_pre (pre-event load-up assessment), par.it.ramp_max (limit on
 %   deferrable IT power swings), terminal backlog value d.c_B_end when the horizon reaches par.Tsim.
 %
@@ -212,7 +213,7 @@ for k = 1:numel(ev)
                 end
                 ix.ev(k).R = R; ix.ev(k).Z = Z; ix.ev(k).SF = SF; ix.ev(k).MX = MX;
             case 'commit'
-                [m, Cv] = addb(m, 1, 1, 0, opt.Cmax, -par.dr.eps_commit);
+                [m, Cv] = addb(m, 1, 1, 0, opt.Cmax, -par.dr.eps_commit); m.scen(Cv) = 0;   % first stage
                 [m, R]  = addb(m, 1, S, 0, Inf, -e.price * Dh * pr);
                 [m, Z]  = addb(m, 1, S, 0, 1, 0); m.isint(Z) = opt.milp;
                 [m, Wv] = addb(m, 1, S, 0, opt.Cmax, 0);
@@ -237,7 +238,7 @@ for k = 1:numel(ev)
                     m.ub(PG(hk, s)) = min(m.ub(PG(hk, s)), max(sc.Pb(hk) - e.C, 0));
                 end
             case 'max'
-                [m, Cv] = addb(m, 1, 1, 0, Inf, -opt.w_max);
+                [m, Cv] = addb(m, 1, 1, 0, Inf, -opt.w_max); m.scen(Cv) = 0;
                 for s = find(act(k, :))
                     m = lpb_addle(m, [(1:nh)'; (1:nh)'], [PG(hk, s); repmat(Cv, nh, 1)], ones(2*nh,1), sc.Pb(hk));
                 end
@@ -286,11 +287,18 @@ if opt.terminal
     end
 end
 
+%% risk measure of the scenario costs (day-ahead commitment, Proposition 3)
+ix.G = []; ix.risk = [];
+if ~isempty(opt.risk) && S > 1
+    [m, ix.G, ix.risk] = add_risk(m, pr, opt.risk);
+end
+
 P = lpb_finalize(m);
 ix.Y = Y; ix.Zc = []; if capon, ix.Zc = ZC; end
 ix.B = B; ix.V = V; ix.PG = PG; ix.POV = POV; ix.PCH = PCH; ix.PDS = PDS; ix.E = E;
 ix.PGT = PGT; ix.HAC = HAC; ix.QEC = QEC; ix.QTC = QTC; ix.QTD = QTD; ix.SS = SS; ix.PPV = PPV;
 ix.H = H; ix.S = S; ix.t0 = t0;
+ix.scen = zeros(m.n, 1); ix.scen(1:numel(m.scen)) = m.scen(:);
 end
 
 %% ----------------------------------------------------------------------
@@ -298,6 +306,51 @@ function [m, X] = addb(m, H, S, lb, ub, f)
 if numel(f) == 1, f = f * ones(H*S, 1); end
 [m, id] = lpb_addvar(m, H*S, lb, ub, f(:));
 X = reshape(id, H, S);
+if ~isfield(m, 'scen'), m.scen = zeros(0, 1); end
+m.scen(id, 1) = kron((1:S)', ones(H, 1));        % scenario of each variable (0 = first stage)
+end
+
+function [m, G, rv] = add_risk(m, pr, rk)
+%ADD_RISK  Replace the expected scenario cost sum_s pr_s f_s(x) by a risk measure (exact LP reformulation).
+%   Every cost coefficient of a scenario variable was built as pr_s * c_j, so f_s(x) = sum_{j in s} c_j x_j.
+%   rk.type = 'dro' : worst-case expectation over the l1 ball {p in simplex: ||p - pr||_1 <= rk.delta}
+%                     = min eta + sum_s pr_s lam_s + delta*nu  s.t.  f_s <= eta + lam_s, |lam_s| <= nu
+%                     (LP duality; delta = 0 -> expectation, delta >= 2(1 - min pr) -> worst scenario)
+%           'cvar': (1 - w) E[f] + w CVaR_beta[f],  CVaR = min eta + 1/(1-beta) sum_s pr_s (f_s - eta)^+
+S = numel(pr); n0 = m.n;
+sc = zeros(n0, 1); sc(1:numel(m.scen)) = m.scen(:);
+f = m.f;
+big = 1e9;
+[m, G] = lpb_addvar(m, S, -big, big, 0);                 % scenario costs f_s(x)
+for s = 1:S
+    js = find(sc == s & f ~= 0);
+    m = lpb_addeq(m, [1; ones(numel(js), 1)], [G(s); js], [-1; f(js) / pr(s)], 0);
+end
+m.f(sc > 0) = 0;                                         % remove the expectation
+rv = struct('type', rk.type);
+switch rk.type
+    case 'dro'
+        [m, eta] = lpb_addvar(m, 1, -big, big, 1);
+        [m, lam] = lpb_addvar(m, S, -big, big, pr(:));
+        [m, nu]  = lpb_addvar(m, 1, 0, big, rk.delta);
+        for s = 1:S
+            m = lpb_addle(m, [1; 1; 1], [G(s); eta; lam(s)], [1; -1; -1], 0);
+            m = lpb_addle(m, [1; 1], [lam(s); nu], [1; -1], 0);
+            m = lpb_addle(m, [1; 1], [lam(s); nu], [-1; -1], 0);
+        end
+        rv.eta = eta; rv.lam = lam; rv.nu = nu;
+    case 'cvar'
+        w = rk.w; b = rk.beta;
+        m.f(G) = (1 - w) * pr(:);
+        [m, eta] = lpb_addvar(m, 1, -big, big, w);
+        [m, piv] = lpb_addvar(m, S, 0, big, w / (1 - b) * pr(:));
+        for s = 1:S
+            m = lpb_addle(m, [1; 1; 1], [G(s); eta; piv(s)], [1; -1; -1], 0);
+        end
+        rv.eta = eta; rv.pi = piv;
+    otherwise
+        error('build_model:risk', 'unknown risk type %s', rk.type);
+end
 end
 
 function [m, rows] = add_store(m, X, PC, PD, eta_c, inv_eta_d, keep, X0, dt, H, S)
@@ -312,7 +365,7 @@ end
 
 function opt = defaults(opt, K)
 f = {'milp', true; 'nonant', true; 'fix_y', []; 'terminal', false; 'Eref_end', 0; 'Sref_end', 0; ...
-     'no_late', false; 'fix_z', []; 'visible', true(K,1); 'Cmax', 15; 'w_max', 1e7; 'active', []};
+     'no_late', false; 'fix_z', []; 'visible', true(K,1); 'Cmax', 15; 'w_max', 1e7; 'active', []; 'risk', []};
 for i = 1:size(f,1)
     if ~isfield(opt, f{i,1}), opt.(f{i,1}) = f{i,2}; end
 end

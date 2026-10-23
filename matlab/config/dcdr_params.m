@@ -108,6 +108,8 @@ par.co2.ef_gas   = 56.1 * 3.6 / 1000;  % [S] tCO2/MWh_fuel, IPCC 2006 default fo
 
 %% ---------------- benchmarks ----------------
 par.bench.alpha_grid = 0.2:0.1:1.0;   % static compute share searched day-ahead for IR-O* (1.0 = IT side alone)
+par.bench.it_gas = 'available';     % IT power budget of the independent benchmarks counts the gas engine's
+                                     % ramp-feasible output ('nominal' = its no-DR schedule, earlier weaker variant)
 
 %% ---------------- case selection ----------------
 par.case.weather_date = '2024-08-05';          % hot weekday (Tmax 38.3 C, Suzhou-Wujiang)

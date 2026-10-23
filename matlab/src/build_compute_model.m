@@ -36,11 +36,15 @@ if capon
 end
 capfree = par.it.u_max * par.it.Ngpu - sc.inf(:,1) - sc.fix(:,1);
 m = lpb_addle(m, [r; r; r], [Y{1}; Y{2}; Y{3}], [one; one; one], capfree);
-% IT power budget (compute has priority on the connection headroom)
+% IT power budget: connection limit plus the on-site generation the facility EMS can dispatch (gas
+% engine up to its ramp-feasible maximum), storage idle; compute has priority on this headroom.
+% par.bench.it_gas = 'nominal' reproduces the earlier, weaker benchmark (gas engine at its no-DR schedule).
+pgt_b = min(par.gt.Pmax, st.pgt_prev + par.gt.ramp * (1:H)');
+if isfield(par, 'bench') && isfield(par.bench, 'it_gas') && strcmp(par.bench.it_gas, 'nominal'), pgt_b = opt.pgt_nom(:); end
 base_it = d.Pfix + d.pdyn * (par.it.k_inf * sc.inf(:,1) + sc.fix(:,1));
-qac = min(par.ac.cop * d.kh * opt.pgt_nom(:), par.ac.Qmax);
+qac = min(par.ac.cop * d.kh * pgt_b, par.ac.Qmax);
 fac_other = (1 + a) * base_it + par.fac.P_aux0 + (th * base_it + par.fac.Q0 - qac) ./ sc.cop(:,1) ...
-            - opt.pgt_nom(:) - sc.pv(:,1);
+            - pgt_b - sc.pv(:,1);
 budget = d.Pcap - fac_other;
 if capon
     m = lpb_addle(m, repmat(r, 6, 1), [Y{1}; Y{2}; Y{3}; Z{1}; Z{2}; Z{3}], [repmat(phi * d.pdyn, 3, 1); -repmat(phi * d.pdyn * rho, 3, 1)], max(budget, 0));

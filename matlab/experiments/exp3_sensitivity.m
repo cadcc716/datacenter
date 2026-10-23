@@ -52,8 +52,9 @@ end
 function [rows, hdr] = run_set(c, strat, x, nm)
 [r, hdr] = run_list_quiet(c, strat);
 rows = [repmat(x, size(r, 1), 1), (1:size(r, 1))', r];
+jn = find(strcmp(hdr, 'net_cost_adj')); jr = find(strcmp(hdr, 'max_rebound_MW'));
 fprintf('  exp3 %s=%-5g fulfil %s = %s  maxRb %s  net_adj(k) %s\n', nm, x, strjoin(strat(:, 3)', '/'), ...
-    sprintf('%5.1f ', r(:, 1)), sprintf('%4.2f ', r(:, 9)), sprintf('%5.0f ', r(:, end-3) / 1000));
+    sprintf('%5.1f ', r(:, 1)), sprintf('%4.2f ', r(:, jr)), sprintf('%5.0f ', r(:, jn) / 1000));
 end
 
 function [rows, hdr] = run_list_quiet(c, S)
