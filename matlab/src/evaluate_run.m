@@ -90,6 +90,7 @@ M.net_cost = M.cost_op + M.cost_delay - M.dr_pay + M.pen_dev + M.pen_rb + M.pen_
 M.preload_mean = mean_or_nan(L.pg(pre) - base(pre));
 M.preload_max = max_or_nan(L.pg(pre) - base(pre));
 M.ramp_up_max = max([diff(L.pg); 0]);
+M.ramp_dn_max = max([-diff(L.pg); 0]);
 hh = (0:T-1)' * dt;
 M.peak_evening = max(L.pg(hh >= 14 & hh < 24));
 M.peak_grid = max(L.pg);

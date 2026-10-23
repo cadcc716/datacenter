@@ -95,6 +95,7 @@ if th_on, st.TH = (1 - par.th.loss * dt) * st.TH + qth * dt; end
 if ~isfield(st, 'acc'), st.acc = zeros(1, 4); end
 st.acc = st.acc + dt * [(1 + fac.a_aux) * pit + fac.P_aux0 + qec / data.cop, pit, ppv, pg + ppv + pgt];
 st.pgt_prev = pgt;
+st.pg_prev = pg;
 st.y_prev = sum(y);
 overdue = sum(sum(st.rem(1:t, :)));
 st.late = st.late + overdue * dt;

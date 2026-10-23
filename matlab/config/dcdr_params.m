@@ -76,6 +76,8 @@ par.price.nonfloat = 250;        % [A] T&D + losses + funds (not floated)
 par.cap.gamma     = 1.10;        % [A] connection limit / typical-day peak import (flexible interconnection)
 par.cap.Pcap_abs  = [];          % set by setup_case from the baseline peak (MW)
 par.cap.Pmin      = 1.5;         % [A] minimum grid import kept for anti-reverse-power protection / supply security (MW)
+par.cap.ramp_max  = Inf;         % [A] optional tie-line ramp limit on grid import (MW per 15 min); Inf = off
+par.cap.c_ramp    = 5e4;         % [A] CNY per MW and step above the tie-line ramp limit (soft)
 
 %% ---------------- demand response (Jiangsu rules 2024) ----------------
 par.dr.price_da   = 3000;        % [S] day-ahead peak-shaving cap 3 CNY/kWh (speed coefficient 1.0)

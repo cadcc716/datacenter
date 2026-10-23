@@ -4,9 +4,11 @@ function out = exp17_policy(ctx, root, opts)
 %   sweep 2  green-electricity share target g (purchased green power at par.pol.c_green), C = 6 MW;
 %   sweep 3  electric PUE cap, C = 6 MW;
 %   sweep 4  closed loop with thermal inertia on: IR-O*, IR-P, JR-D on the first N Monte-Carlo days (C = 6 MW)
-%            (the same days without inertia are in exp4_certain).
+%            (the same days without inertia are in exp4_certain);
+%   sweep 5  tie-line ramp limit on grid import (MW per 15 min), C = 6 MW.
 if nargin < 3, opts = struct(); end
 Cs = getf(opts, 'Cs', [6 7 8 9]); gs = getf(opts, 'greens', [0 0.6 0.8 0.9]); pues = getf(opts, 'pues', [Inf 1.3 1.25 1.2]);
+ramps = getf(opts, 'ramps', [Inf 4 2 1]);
 N = min(getf(opts, 'N', 26), ctx.inp.mc.N);
 S = {'IR-O*', 'IR-P', 'JR'};
 rows = []; hdr = {}; t0 = tic;
@@ -26,6 +28,11 @@ for u = pues
     par = ctx.par; par.pol.pue_max = u;
     [rows, hdr] = run3(rows, ctx, par, 6, S, [3, u, 6]);
     report(rows, hdr, 3, u, t0);
+end
+for rg = ramps
+    par = ctx.par; par.cap.ramp_max = rg;
+    [rows, hdr] = run3(rows, ctx, par, 6, S, [5, rg, 6]);
+    report(rows, hdr, 5, rg, t0);
 end
 if N > 0
     par = ctx.par; par.th.on = true; c0 = ctx; c0.par = par;

@@ -161,6 +161,8 @@ ZH2EN = {
     "无热惯性": "no thermal inertia", "计热惯性": "with thermal inertia", "(a) 机房热惯性作为第三类恢复状态": "(a) Thermal inertia as a third recovery state",
     "绿电占比目标 g": "Green-electricity share target g", "(b) 绿电占比约束（6 MW）": "(b) Green-share constraint (6 MW)",
     "PUE 上限": "PUE cap", "(c) PUE 上限（6 MW）": "(c) PUE cap (6 MW)", "（点旁为实际 PUE）": " (labels: achieved PUE)", "无": "none",
+    "联络线爬坡上限 / (MW/15 min)": "Tie-line ramp limit / (MW per 15 min)", "(d) 联络线爬坡约束（6 MW）": "(d) Tie-line ramp limit (6 MW)",
+    "（点旁为兑现率）": " (labels: fulfilment)",
     "可靠容量处": "at reliable capacity", "独立恢复": "Independent recovery", "联合恢复": "Joint recovery",
     # generic fragments
     "万元": "10⁴ CNY", "元/MWh": "CNY/MWh", "元/(GPU·h)": "CNY/(GPU·h)", "元/kWh": "CNY/kWh", "元/kW": "CNY/kW", "本文": "proposed",
@@ -806,7 +808,7 @@ def fig_policy():
     d = rd("exp17_policy.csv")
     if d is None: return
     nm = {1: "IR-O*", 2: "IR-P", 3: "JR"}
-    fig, ax = plt.subplots(1, 3, figsize=(14, 3.9)); fig.subplots_adjust(wspace=0.3)
+    fig, ax = plt.subplots(1, 4, figsize=(18, 3.9)); fig.subplots_adjust(wspace=0.32)
     a = ax[0]; q = d[d.sweep == 1]
     for i, ls in [(3, "-"), (1, "-")]:
         for th, lab in [(0, "无热惯性"), (1, "计热惯性")]:
@@ -814,18 +816,20 @@ def fig_policy():
             a.plot(r.C, r.net_cost_adj / 1e4, color=C[nm[i]], lw=2, ls="-" if th else ":", marker=MK[nm[i]], ms=6, mec="#fcfcfb", mew=0.8,
                    label=f"{NAME['IR-O*(hindsight)' if i == 1 else 'JR']}，{lab}")
     a.set_xlabel("每次事件的统一承诺 C / MW"); a.set_ylabel("综合成本 / 万元"); a.set_title("(a) 机房热惯性作为第三类恢复状态"); a.legend(fontsize=6.5)
-    for a, sw, xl, tt in [(ax[1], 2, "绿电占比目标 g", "(b) 绿电占比约束（6 MW）"), (ax[2], 3, "PUE 上限", "(c) PUE 上限（6 MW）")]:
+    for a, sw, xl, tt in [(ax[1], 2, "绿电占比目标 g", "(b) 绿电占比约束（6 MW）"), (ax[2], 3, "PUE 上限", "(c) PUE 上限（6 MW）"),
+                          (ax[3], 5, "联络线爬坡上限 / (MW/15 min)", "(d) 联络线爬坡约束（6 MW）")]:
         q = d[d.sweep == sw]; vals = sorted(q.value.unique(), key=lambda v: (np.isinf(v), v))
         xs = np.arange(len(vals))
         for i in [1, 2, 3]:
             r = q[q.strategy == i].set_index("value").reindex(vals)
             a.plot(xs, r.net_cost_adj / 1e4, color=C[nm[i]], lw=2, marker=MK[nm[i]], ms=6, mec="#fcfcfb", mew=0.8,
                    label=NAME["IR-O*(hindsight)" if i == 1 else nm[i]])
-            if sw == 3:
+            if sw in (3, 5):
                 for x_, (_, rr) in zip(xs, r.iterrows()):
-                    a.annotate(f"{rr.pue:.3f}", (x_, rr.net_cost_adj / 1e4), xytext=(0, 6 if i == 3 else -11), textcoords="offset points", ha="center", fontsize=6.3, color=INK2)
+                    t_ = f"{rr.pue:.3f}" if sw == 3 else f"{rr.fulfil_rate_pct:.0f}%"
+                    a.annotate(t_, (x_, rr.net_cost_adj / 1e4), xytext=(0, 6 if i == 3 else -11), textcoords="offset points", ha="center", fontsize=6.3, color=INK2)
         a.set_xticks(xs); a.set_xticklabels(["无" if np.isinf(v) else f"{v:g}" for v in vals])
-        a.set_xlabel(xl); a.set_ylabel("综合成本 / 万元"); a.set_title(tt + ("（点旁为实际 PUE）" if sw == 3 else "")); a.legend(fontsize=6.5)
+        a.set_xlabel(xl); a.set_ylabel("综合成本 / 万元"); a.set_title(tt + {3: "（点旁为实际 PUE）", 5: "（点旁为兑现率）"}.get(sw, "")); a.legend(fontsize=6.5)
     save(fig, "fig21_policy.png")
 
 

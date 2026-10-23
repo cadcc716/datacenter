@@ -5,6 +5,7 @@ st.t = 1;
 st.E = par.bess.E0;
 st.S = par.tes.S0;
 st.pgt_prev = 0;
+st.pg_prev = NaN;           % grid import of the previous step (tie-line ramp option)
 st.rem = zeros(par.Tsim + d.nlagmax + 2, 3);   % remaining GPU-h by deadline step
 st.ev_r  = zeros(nev, 1);   % sum of realised reductions (MW*steps)
 st.ev_n  = zeros(nev, 1);   % elapsed event steps

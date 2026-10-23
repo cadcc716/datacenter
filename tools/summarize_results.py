@@ -300,11 +300,12 @@ header("Exp17  thermal inertia, green-electricity share, PUE cap")
 d = rd("exp17_policy.csv")
 if d is not None:
     d["name"] = d.strategy.map(NM3)
-    for sw, lab in [(1, "thermal inertia off/on x C"), (2, "green share g"), (3, "PUE cap")]:
+    for sw, lab in [(1, "thermal inertia off/on x C"), (2, "green share g"), (3, "PUE cap"), (5, "tie-line ramp limit (MW/15 min)")]:
         q = d[d.sweep == sw]
         idx = ["value", "C"] if sw == 1 else ["value"]
         print(f"--- {lab}")
-        print(q.pivot_table(index=idx, columns="name", values=["fulfil_rate_pct", "net_cost_adj", "pue", "th_max_K", "cost_green"]).round(3).to_string())
+        vals = ["fulfil_rate_pct", "net_cost_adj", "pue", "th_max_K", "cost_green"] + (["ramp_up_max_MW", "ramp_dn_max_MW"] if sw == 5 else [])
+        if len(q): print(q.pivot_table(index=idx, columns="name", values=[v for v in vals if v in q.columns]).round(3).to_string())
     q = d[d.sweep == 4]
     if len(q):
         J = q[q.strategy == 3].set_index("value")

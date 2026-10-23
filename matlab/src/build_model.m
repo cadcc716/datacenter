@@ -168,6 +168,24 @@ end
 %% grid connection limit
 [m, ix.row_cap] = lpb_addle(m, [r; r], [PG(:); POV(:)], [one; -one], d.Pcap * one);
 
+%% optional tie-line ramp limit (soft): |PG_t - PG_{t-1}| <= par.cap.ramp_max (MW per step), excess priced
+if isfield(par.cap, 'ramp_max') && isfinite(par.cap.ramp_max)
+    Rg = par.cap.ramp_max;
+    [m, GU] = addb(m, H, S, 0, Inf, W(par.cap.c_ramp));
+    [m, GD] = addb(m, H, S, 0, Inf, W(par.cap.c_ramp));
+    if isfield(st, 'pg_prev') && ~isnan(st.pg_prev)
+        for s = 1:S
+            m = lpb_addle(m, [1; 1], [PG(1, s); GU(1, s)], [1; -1], Rg + st.pg_prev);
+            m = lpb_addle(m, [1; 1], [PG(1, s); GD(1, s)], [-1; -1], Rg - st.pg_prev);
+        end
+    end
+    cur = (2:H)' + (0:S-1) * H; cur = cur(:); nr = numel(cur); rr = (1:nr)';
+    if nr > 0
+        m = lpb_addle(m, [rr; rr; rr], [PG(cur); PG(cur - 1); GU(cur)], [ones(nr, 1); -ones(nr, 1); -ones(nr, 1)], Rg * ones(nr, 1));
+        m = lpb_addle(m, [rr; rr; rr], [PG(cur); PG(cur - 1); GD(cur)], [-ones(nr, 1); ones(nr, 1); -ones(nr, 1)], Rg * ones(nr, 1));
+    end
+end
+
 %% storage dynamics
 [m, ix.row_E] = add_store(m, E,  PCH, PDS, par.bess.eta_c, 1 / par.bess.eta_d, 1, st.E, dt, H, S);
 [m, ix.row_S] = add_store(m, SS, QTC, QTD, par.tes.eta_c,  1 / par.tes.eta_d, 1 - par.tes.loss * dt, st.S, dt, H, S);
