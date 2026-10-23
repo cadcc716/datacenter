@@ -57,7 +57,19 @@ M.cost_energy = sum(inp.price(1:T) .* L.pg) * dt;
 M.gas_MWh = sum(L.pgt) * dt;
 M.cost_gas = M.gas_MWh * par.price.gas / par.gt.eta_e;
 M.cost_deg = sum(L.pch + L.pdis) * dt * par.bess.c_deg;
-M.cost_op = M.cost_energy + M.cost_gas + M.cost_deg;
+% policy indicators: electric PUE, PV share, green electricity bought to reach the target share
+fac = (1 + par.fac.a_aux) * L.pit + par.fac.P_aux0 + L.qec ./ L.cop;
+M.pue = sum(fac) / sum(L.pit);
+consE = sum(L.pg + L.ppv + L.pgt) * dt; pvE = sum(L.ppv) * dt;
+M.green_share_pv = pvE / consE;
+gmin = 0; if isfield(par, 'pol'), gmin = par.pol.green_min; end
+M.green_buy = min(max(gmin * consE - pvE, 0), sum(L.pg) * dt);       % MWh of green electricity purchased
+M.cost_green = 0; if gmin > 0, M.cost_green = par.pol.c_green * M.green_buy; end
+M.pue_excess = 0;                                                       % facility MWh above the PUE cap
+if isfield(par, 'pol') && par.pol.pue_max < Inf, M.pue_excess = max(sum(fac) - par.pol.pue_max * sum(L.pit), 0) * dt; end
+M.th_max_K = 0; M.th_end = 0;
+if isfield(L, 'TH') && isfield(par, 'th') && par.th.on, M.th_max_K = max(L.TH) / par.th.C; M.th_end = L.TH(end); end
+M.cost_op = M.cost_energy + M.cost_gas + M.cost_deg + M.cost_green;
 % service cost of deferred work (the same delay price c_jct that every optimiser has in its objective)
 M.cost_delay = par.qos.c_jct * dt * sum(L.backlog(:)) + par.qos.c_late * dt * sum(L.overdue);
 M.dr_pay = sum(M.pay);
@@ -97,6 +109,7 @@ if ~isempty(refL)
     dB = M.term_backlog - sum(refL.backlog(T, :));
     dE = refL.E(T) - L.E(T); dS = refL.S(T) - L.S(T);
     M.term_adj = d.c_B_end * dB + (pval + par.bess.c_deg) * dE / par.bess.eta_c + pval * dS / (par.tes.eta_c * L.cop(T));
+    if isfield(L, 'TH') && isfield(refL, 'TH'), M.term_adj = M.term_adj + pval * (L.TH(T) - refL.TH(T)) / L.cop(T); end
 else
     M.term_adj = d.c_B_end * M.term_backlog;
 end

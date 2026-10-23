@@ -51,7 +51,9 @@ if isempty(jN), jN = jD; end
 azpool = setdiff(azwk, jD);
 
 %% --- weather -> PV and chiller COP ---
-[wt, Tamb, ghi] = read_weather(fullfile(datadir, 'weather_suzhou_2024summer.csv'));
+wfile = 'weather_suzhou_2024summer.csv';
+if isfield(par.case, 'weather_file') && ~isempty(par.case.weather_file), wfile = par.case.weather_file; end
+[wt, Tamb, ghi] = read_weather(fullfile(datadir, wfile));
 wD = weather_day(wt, Tamb, ghi, par.case.weather_date);
 wN = weather_day(wt, Tamb, ghi, next_date(par.case.weather_date));
 wB = cell(1, numel(par.case.base_dates));
@@ -197,12 +199,33 @@ Tq = w.T;
 end
 
 function p = tou_price(par)
+% Jiangsu 2025 summer TOU on the purchase price; par.price.shape selects alternative shapes with the
+% same daily mean (tariff-shape sensitivity, Exp16)
 h = ((0:par.Tsim-1)' * par.dt);
 hd = mod(h, 24);
+f = jiangsu(hd);
+shape = 'jiangsu'; if isfield(par.price, 'shape') && ~isempty(par.price.shape), shape = par.price.shape; end
+switch shape
+    case 'jiangsu'
+    case 'flat'                    % no time-of-use signal
+        f = ones(size(hd)) * mean(jiangsu((0:95)' / 4));
+    case 'two_tier'                % peak 8-22 h / valley otherwise, peak-valley ratio 3
+        f = 0.5 * ones(size(hd)); f(hd >= 8 & hd < 22) = 1.5;
+    case 'critical'                % Jiangsu shape plus a critical peak 19-21 h (peak x 1.2)
+        f(hd >= 19 & hd < 21) = 1.8 * 1.2;
+    case 'duck'                    % solar-rich system: midday valley 10-15 h, evening peak 17-23 h
+        f = ones(size(hd)); f(hd >= 10 & hd < 15) = 0.35; f(hd >= 17 & hd < 23) = 1.8; f(hd < 6) = 0.6;
+    otherwise
+        error('load_inputs:shape', 'unknown tariff shape %s', shape);
+end
+f = f * mean(jiangsu((0:95)' / 4)) / mean(f(1:96));   % same daily mean as the base tariff
+p = par.price.nonfloat + par.price.purchase * f;
+end
+
+function f = jiangsu(hd)
 f = ones(size(hd));
 f(hd < 6 | (hd >= 11 & hd < 13)) = 0.35;
 f(hd >= 14 & hd < 22) = 1.8;
-p = par.price.nonfloat + par.price.purchase * f;
 end
 
 function v = mean_nan2(a, b)

@@ -49,6 +49,15 @@ end
 [m, SS]  = addb(m, H, S, par.tes.Smin, par.tes.Smax, 0);
 [m, PPV] = addb(m, H, S, 0, Inf, 0);
 m.ub(PPV(:)) = max(sc.pv(:), 0);
+% optional thermal inertia of the data hall: stored heat TH above the set-point (third recovery state)
+th_on = isfield(par, 'th') && par.th.on;
+if th_on
+    [m, TH]  = addb(m, H, S, -par.th.C * par.th.dT_dn, par.th.C * par.th.dT_up, 0);
+    [m, QHC] = addb(m, H, S, 0, Inf, 0);          % heat accumulating in the hall (cooling below the load)
+    [m, QHD] = addb(m, H, S, 0, Inf, 0);          % stored heat removed / pre-cooling (cooling above the load)
+else
+    TH = []; QHC = []; QHD = [];
+end
 if ~isempty(opt.fix_y)
     for c = 1:3
         v = repmat(opt.fix_y(:, c), 1, S);
@@ -113,6 +122,7 @@ th = par.fac.theta; a = par.fac.a_aux;
 base_it = d.Pfix + d.pdyn * (par.it.k_inf * sc.inf + sc.fix);
 I = [r; r; r; r; r; r; r]; J = [QEC(:); HAC(:); QTD(:); QTC(:); Y{1}(:); Y{2}(:); Y{3}(:)];
 Vv = [one; par.ac.cop * one; one; -one; -th * d.pdyn * [one; one; one]];
+if th_on, I = [I; r; r]; J = [J; QHC(:); QHD(:)]; Vv = [Vv; one; -one]; end   % supply + accumulation = load
 if capon
     I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; th * d.pdyn * par.it.cap_rho * [one; one; one]];
 end
@@ -161,6 +171,10 @@ end
 %% storage dynamics
 [m, ix.row_E] = add_store(m, E,  PCH, PDS, par.bess.eta_c, 1 / par.bess.eta_d, 1, st.E, dt, H, S);
 [m, ix.row_S] = add_store(m, SS, QTC, QTD, par.tes.eta_c,  1 / par.tes.eta_d, 1 - par.tes.loss * dt, st.S, dt, H, S);
+if th_on
+    th0 = 0; if isfield(st, 'TH'), th0 = st.TH; end
+    [m, ix.row_TH] = add_store(m, TH, QHC, QHD, 1, 1, 1 - par.th.loss * dt, th0, dt, H, S);
+end
 
 %% gas engine heat recovery and ramping
 m = lpb_addle(m, [r; r], [HAC(:); PGT(:)], [one; -d.kh * one], zeros(n, 1));
@@ -176,6 +190,7 @@ m.lb(PGT(1, :)) = max(0, st.pgt_prev - par.gt.ramp);
 if S > 1 && opt.nonant
     X = {Y{1}, Y{2}, Y{3}, PCH, PDS, PGT, HAC, QEC, QTC, QTD, PPV};
     if capon, X = [X, {ZC{1}, ZC{2}, ZC{3}}]; end
+    if th_on, X = [X, {QHC, QHD}]; end
     for q = 1:numel(X)
         xx = X{q}; ns = S - 1; rr = (1:ns)';
         m = lpb_addeq(m, [rr; rr], [xx(1, 2:S)'; repmat(xx(1, 1), ns, 1)], [ones(ns,1); -ones(ns,1)], zeros(ns,1));
@@ -285,6 +300,41 @@ if opt.terminal
         m = lpb_addle(m, [1;1], [E(H, s); eE(s)], [-1; -1], -opt.Eref_end);
         m = lpb_addle(m, [1;1], [SS(H, s); eS(s)], [-1; -1], -opt.Sref_end);
     end
+    if th_on                                   % heat still stored at the end must be removed later
+        [m, eT] = addb(m, 1, S, 0, Inf, par.term.c_S * pr);
+        for s = 1:S, m = lpb_addle(m, [1;1], [TH(H, s); eT(s)], [1; -1], 0); end
+    end
+end
+
+%% optional cumulative policy constraints over the window 1..t0+H-1 (accrued values in st.acc), soft
+%  acc = [facility MWh, IT MWh, PV MWh used, consumption MWh (grid + PV + gas engine)]
+acc = zeros(1, 4); if isfield(st, 'acc'), acc = st.acc(1:4); end
+pol = struct('pue_max', Inf, 'green_min', 0);
+if isfield(par, 'pol'), pol = par.pol; end
+if pol.pue_max < Inf                          % electric PUE: sum facility <= PUE_max * sum IT
+    U = pol.pue_max; kk = (1 + a - U) * d.pdyn;
+    [m, SLP] = addb(m, 1, S, 0, Inf, pol.c_pue * pr);
+    for s = 1:S
+        cols = [Y{1}(:, s); Y{2}(:, s); Y{3}(:, s); QEC(:, s); SLP(s)];
+        vals = [repmat(dt * kk, 3 * H, 1); dt ./ sc.cop(:, s); -1];
+        if capon
+            cols = [cols; ZC{1}(:, s); ZC{2}(:, s); ZC{3}(:, s)]; vals = [vals; repmat(-dt * kk * par.it.cap_rho, 3 * H, 1)];
+        end
+        rhs = -acc(1) + U * acc(2) - sum(dt * ((1 + a - U) * base_it(:, s) + par.fac.P_aux0));
+        m = lpb_addle(m, ones(numel(cols), 1), cols, vals, rhs);
+    end
+end
+GG = [];
+if pol.green_min > 0                          % green share: PV + purchased green power >= g * consumption
+    g = pol.green_min;
+    [m, GG] = addb(m, H, S, 0, Inf, W(pol.c_green));
+    m = lpb_addle(m, [r; r], [GG(:); PG(:)], [one; -one], zeros(n, 1));
+    [m, SLG] = addb(m, 1, S, 0, Inf, pol.c_green_short * pr);
+    for s = 1:S
+        cols = [PPV(:, s); GG(:, s); PG(:, s); PGT(:, s); SLG(s)];
+        vals = [repmat(-dt * (1 - g), H, 1); repmat(-dt, H, 1); repmat(g * dt, H, 1); repmat(g * dt, H, 1); -1];
+        m = lpb_addle(m, ones(numel(cols), 1), cols, vals, acc(3) - g * acc(4));
+    end
 end
 
 %% risk measure of the scenario costs (day-ahead commitment, Proposition 3)
@@ -297,6 +347,7 @@ P = lpb_finalize(m);
 ix.Y = Y; ix.Zc = []; if capon, ix.Zc = ZC; end
 ix.B = B; ix.V = V; ix.PG = PG; ix.POV = POV; ix.PCH = PCH; ix.PDS = PDS; ix.E = E;
 ix.PGT = PGT; ix.HAC = HAC; ix.QEC = QEC; ix.QTC = QTC; ix.QTD = QTD; ix.SS = SS; ix.PPV = PPV;
+ix.TH = TH; ix.QHC = QHC; ix.QHD = QHD; ix.GG = GG;
 ix.H = H; ix.S = S; ix.t0 = t0;
 ix.scen = zeros(m.n, 1); ix.scen(1:numel(m.scen)) = m.scen(:);
 end

@@ -102,6 +102,25 @@ par.term.c_S     = 100;          % [A] CNY/MWh_th value of terminal TES shortfal
 % leftover backlog at the end of the evaluation window is valued at its energy cost at the flat price
 % (set in sys_derived as d.c_B_end, CNY per GPU-h)
 
+%% ---------------- server-room thermal inertia (optional third recovery state; off in the base case) ----------------
+% Stored heat TH (MWh_th) of the data hall + chilled-water loop above the supply set-point: cooling may run
+% below the heat load during an event (the hall warms up within the allowed band) and must remove that heat
+% afterwards, competing for the same recovery channel as catch-up computing and storage recharge.
+par.th.on     = false;           % [A] enable the thermal-inertia state
+par.th.C      = 2.0;             % [A] effective thermal capacitance, MWh_th per K (chilled-water loop ~1.2 + air/IT/structure)
+par.th.dT_up  = 3;               % [A] allowed rise above the set-point, K (e.g. 22 -> 25 C supply, ASHRAE A1 recommended 18-27 C)
+par.th.dT_dn  = 2;               % [A] allowed pre-cooling below the set-point, K
+par.th.loss   = 0;               % [A] per-hour relaxation of the stored heat (envelope exchange; negligible for a data hall)
+
+%% ---------------- policy constraints (optional; off in the base case) ----------------
+% cumulative over the simulated window; the MPC enforces them on accrued + planned quantities (soft)
+par.pol.pue_max   = Inf;         % [S] electric PUE cap: new large DCs <= 1.25, national hub nodes <= 1.2 (NDRC et al.,
+                                 %     data-centre green and low-carbon action plan, 2024); Inf = off
+par.pol.c_pue     = 2000;        % [A] CNY per MWh of facility electricity above the PUE cap (soft)
+par.pol.green_min = 0;           % [S] minimum green-electricity share (action plan: > 80 % for new hub-node DCs); 0 = off
+par.pol.c_green   = 30;          % [A] environmental premium of purchased green electricity (CNY/MWh)
+par.pol.c_green_short = 1000;    % [A] CNY/MWh short of the green-share target (soft)
+
 %% ---------------- carbon accounting ----------------
 par.co2.ef_grid  = 0.5617;       % [S] tCO2/MWh, East China grid 2022 average (MEE & NBS notice, 2024-12-20)
 par.co2.ef_gas   = 56.1 * 3.6 / 1000;  % [S] tCO2/MWh_fuel, IPCC 2006 default for natural gas (56.1 t/TJ)

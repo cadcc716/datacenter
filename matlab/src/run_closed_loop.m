@@ -5,7 +5,7 @@ T = par.Tsim;
 st = state_init(par, numel(ev));
 if isfield(ctx, 'st0') && ~isempty(ctx.st0), st = state_fit_events(ctx.st0, numel(ev)); end
 t1 = st.t; t2 = T; if isfield(ctx, 't_stop') && ~isempty(ctx.t_stop), t2 = ctx.t_stop; end
-f = {'pg','pit','pch','pdis','E','S','pgt','qac','qec','qtc','qtd','ppv','pv','cop','overdue','over','inf'};
+f = {'pg','pit','pch','pdis','E','S','pgt','qac','qec','qtc','qtd','ppv','pv','cop','overdue','over','inf','TH','qth'};
 for i = 1:numel(f), L.(f{i}) = zeros(T, 1); end
 L.y = zeros(T, 3); L.z = zeros(T, 3); L.backlog = zeros(T, 3); L.solve_time = zeros(T,1); L.fallback = false(T,1);
 for t = t1:t2

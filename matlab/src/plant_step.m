@@ -47,9 +47,17 @@ pgt = min(max(pgt, st.pgt_prev - par.gt.ramp), st.pgt_prev + par.gt.ramp);
 qac = min([par.ac.cop * max(u.hac, 0), par.ac.cop * d.kh * pgt, par.ac.Qmax]);
 qtd = min([max(u.qtd, 0), par.tes.Qmax, max(st.S - par.tes.Smin, 0) * par.tes.eta_d / dt]);
 qtc = min([max(u.qtc, 0), par.tes.Qmax, max(par.tes.Smax - st.S, 0) / (par.tes.eta_c * dt)]);
-qec = qload - qac - qtd + qtc;
-if qec < 0          % too much cold supplied: reduce TES discharge, then AC output
+% optional thermal inertia: qth = heat accumulating in the hall (cooling below the load), within the band
+qth = 0; th_on = isfield(par, 'th') && par.th.on;
+if th_on
+    if isfield(u, 'qth'), qth = u.qth; end
+    keep = 1 - par.th.loss * dt;
+    qth = min(max(qth, (-par.th.C * par.th.dT_dn - keep * st.TH) / dt), (par.th.C * par.th.dT_up - keep * st.TH) / dt);
+end
+qec = qload - qac - qtd + qtc - qth;
+if qec < 0          % too much cold supplied: reduce TES discharge, then heat accumulation, then AC output
     r1 = min(qtd, -qec); qtd = qtd - r1; qec = qec + r1;
+    if qec < 0 && qth > 0, r1 = min(qth, -qec); qth = qth - r1; qec = qec + r1; end
     if qec < 0, qac = qac + qec; qec = 0; end
 end
 %% battery
@@ -83,6 +91,9 @@ end
 %% state update
 st.E = st.E + (par.bess.eta_c * pch - pdis / par.bess.eta_d) * dt;
 st.S = (1 - par.tes.loss * dt) * st.S + (par.tes.eta_c * qtc - qtd / par.tes.eta_d) * dt;
+if th_on, st.TH = (1 - par.th.loss * dt) * st.TH + qth * dt; end
+if ~isfield(st, 'acc'), st.acc = zeros(1, 4); end
+st.acc = st.acc + dt * [(1 + fac.a_aux) * pit + fac.P_aux0 + qec / data.cop, pit, ppv, pg + ppv + pgt];
 st.pgt_prev = pgt;
 st.y_prev = sum(y);
 overdue = sum(sum(st.rem(1:t, :)));
@@ -100,6 +111,6 @@ end
 rec = struct('pg', pg, 'pit', pit, 'y', y, 'z', z, 'pch', pch, 'pdis', pdis, 'E', st.E, 'S', st.S, ...
     'pgt', pgt, 'qac', qac, 'qec', qec, 'qtc', qtc, 'qtd', qtd, 'ppv', ppv, 'pv', data.pv, ...
     'cop', data.cop, 'overdue', overdue, 'backlog', sum(st.rem, 1), 'over', max(pg - d.Pcap, 0), ...
-    'inf', data.inf);
+    'inf', data.inf, 'TH', st.TH, 'qth', qth);
 st.t = t + 1;
 end

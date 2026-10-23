@@ -5,7 +5,7 @@
 %   Runs in MATLAB (Optimization Toolbox, or Gurobi if on the path) or GNU Octave (glpk).
 %   Results are written to matlab/results/*.csv, figures by tools/plot_results.py.
 %   Options (set before calling):  QUICK = true  -> smoke run (tiny samples / grids)
-%                                  RUN = [...]   -> subset of experiments (default 1:15; Exp14 timing runs last)
+%                                  RUN = [...]   -> subset of experiments (default 1:18; Exp14 timing runs last)
 %                                  NMC = n       -> Monte-Carlo realisations (default: all, 52)
 %                                  MC_PART = 'certain' | 'uncertain' | 'all' (parts of Exp4; default 'all')
 %   Base case: Jiangsu settlement rules + gap-rebound assessment c_rb = 3 CNY/kW per event (a policy
@@ -15,7 +15,7 @@ root = fileparts(mfilename('fullpath'));
 addpath(fullfile(root, 'src')); addpath(fullfile(root, 'config')); addpath(fullfile(root, 'experiments'));
 dcdr_setup_paths();
 if ~exist('QUICK', 'var'), QUICK = false; end
-if ~exist('RUN', 'var'), RUN = 1:15; end
+if ~exist('RUN', 'var'), RUN = 1:18; end
 if ~exist('NMC', 'var'), NMC = []; end
 if ~exist('MC_PART', 'var'), MC_PART = 'all'; end
 if ~exist('LOGTAG', 'var'), LOGTAG = ''; end
@@ -108,6 +108,21 @@ if any(RUN == 15)
     fprintf('== Exp15: risk-averse day-ahead commitment (SP / DRO / RO / CVaR), out of sample with JR-D\n');
     if QUICK, E15 = exp15_risk(ctx, root, struct('Sda', 5, 'N', 2, 'deltas', [0.4 2], 'cvars', [0.8 1.0]));
     else, E15 = exp15_risk(ctx, root); end
+end
+if any(RUN == 16)
+    fprintf('== Exp16: time-of-use tariff shape (same daily mean)\n');
+    if QUICK, E16 = exp16_tariff(ctx, root, struct('shapes', {{'jiangsu', 'duck'}}, 'Cs', 6, 'N', 1));
+    else, E16 = exp16_tariff(ctx, root); end
+end
+if any(RUN == 17)
+    fprintf('== Exp17: thermal inertia (third recovery state), green-electricity share, PUE cap\n');
+    if QUICK, E17 = exp17_policy(ctx, root, struct('Cs', 6, 'greens', [0 0.8], 'pues', [Inf 1.25], 'N', 1));
+    else, E17 = exp17_policy(ctx, root); end
+end
+if any(RUN == 18)
+    fprintf('== Exp18: season and climate generalisation (Suzhou summer / winter, Gui''an summer)\n');
+    if QUICK, E18 = exp18_climate(ctx, root, struct('Cs', [6 8], 'N', 1));
+    else, E18 = exp18_climate(ctx, root); end
 end
 if any(RUN == 14)
     fprintf('== Exp14: computational performance (run on an idle machine)\n');

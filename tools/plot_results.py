@@ -125,7 +125,7 @@ ZH2EN = {
     "电储能能量容量 E / MWh": "Battery energy capacity E / MWh", "MWh（下方为虚拟储能）": "MWh (below zero: virtual storage)",
     "(c) 物理—虚拟储能镜像（JR，可靠容量处）": "(c) Physical vs virtual storage (JR at its reliable capacity)",
     "帕累托前沿（JR-D 运行）": "Pareto front (operated by JR-D)", "膝点：": "Knee: ", "样本外平均综合成本 / 万元": "Out-of-sample mean total cost / 10⁴ CNY",
-    "样本外最差 10% 日平均成本（CVaR$_{0.9}$）/ 万元": "Out-of-sample mean of worst 10% days (CVaR$_{0.9}$) / 10⁴ CNY",
+    "样本外最差 10% 日平均成本（CVaR(0.9)）/ 万元": "Out-of-sample mean of worst 10% days (CVaR(0.9)) / 10⁴ CNY",
     "(a) 风险—期望权衡（52 个运行日）": "(a) Risk–expectation trade-off (52 operating days)",
     "模糊集半径 δ（0 = 随机规划，2 = 场景鲁棒）": "Ambiguity radius δ (0 = SP, 2 = scenario-robust)", "日前承诺 / MW": "Day-ahead commitment / MW",
     "(b) 承诺随保守度的变化": "(b) Commitments vs conservativeness", "能量（购电+燃气+退化）": "Energy (grid + gas + degradation)",
@@ -143,6 +143,24 @@ ZH2EN = {
     "+联合分配\n通道 (JR-M)": "+ joint\nallocation\n(JR-M)", "+跨事件远见\n(JR-D)": "+ cross-event\nforesight\n(JR-D)",
     "+场景对冲\n(JR-S，E3 不确定)": "+ scenario\nhedging\n(JR-S)", "合计": "Total",
     "相对 IR-R 的日均成本变化 / 万元": "Change of daily mean cost vs IR-R / 10⁴ CNY",
+    "DR 日 15 min 驱动因素的同期相关系数（00:00–24:00）": "Coincidence of the DR-day drivers (15-min Pearson correlation, 00:00-24:00)",
+    "Pearson 相关系数": "Pearson correlation", "DR 基线": "DR baseline", "不响应购电": "Grid import without DR", "光伏出力": "PV output",
+    "气温": "Temperature", "冷机 COP": "Chiller COP", "推理 GPU": "Inference GPUs", "可延迟作业 GPU": "Deferrable-job GPUs",
+    "购电": "Grid import", "并网上限": "Connection limit", "光伏": "PV", "燃气内燃机": "Gas engine", "电储能放电": "BESS discharge", "电储能充电（负）": "BESS charge (negative)",
+    "电功率 / MW": "Electric power / MW", "(a) 电平衡（JR-D）": "(a) Electric balance (JR-D)", "电制冷": "Electric chiller",
+    "吸收式制冷": "Absorption chiller", "蓄冷放冷": "TES discharge", "蓄冷（负）": "TES charge (negative)", "冷功率 / MW(th)": "Cooling / MW(th)",
+    "(b) 冷平衡（JR-D）": "(b) Cooling balance (JR-D)", "电储能电量 E / MWh": "Battery energy E / MWh", "蓄冷量 S / MWh(th)": "TES energy S / MWh(th)",
+    "算力积压的电量当量 εΣB / MWh": "Backlog energy equivalent εΣB / MWh", "三类恢复状态": "Recovery states",
+    "时刻 / h（24 以后为次日）": "Time / h (after 24: next day)", "名义负荷": "Nominal load", "补算": "Catch-up computing",
+    "电储能回充": "BESS recharge", "蓄冷回充": "TES recharge", "间隔 E1→E2": "Gap E1→E2", "间隔 E2→E3": "Gap E2→E3", "E3 后 2 h": "2 h after E3",
+    "恢复通道的去向：各间隔用于补算与回充的电量 / MWh（设施电量当量）": "Where the recovery channel goes: energy for catch-up and recharge per gap / MWh (facility equivalent)",
+    "江苏分时（基准）": "Jiangsu TOU (base)", "平电价": "Flat", "两段峰谷": "Two-tier", "含尖峰": "Critical peak", "鸭子曲线": "Duck curve",
+    "苏州夏季（基准）": "Suzhou summer (base)", "苏州冬季": "Suzhou winter", "贵安夏季": "Gui'an summer",
+    "(a) 分时电价形态（日均电价相同）": "(a) Tariff shape (same daily mean)", "(b) 可靠可交付容量（完美信息）": "(b) Reliably deliverable capacity (perfect information)",
+    "(c) 季节与气候（统一 6 MW，闭环）": "(c) Season and climate (uniform 6 MW, closed loop)",
+    "无热惯性": "no thermal inertia", "计热惯性": "with thermal inertia", "(a) 机房热惯性作为第三类恢复状态": "(a) Thermal inertia as a third recovery state",
+    "绿电占比目标 g": "Green-electricity share target g", "(b) 绿电占比约束（6 MW）": "(b) Green-share constraint (6 MW)",
+    "PUE 上限": "PUE cap", "(c) PUE 上限（6 MW）": "(c) PUE cap (6 MW)", "（点旁为实际 PUE）": " (labels: achieved PUE)", "无": "none",
     "可靠容量处": "at reliable capacity", "独立恢复": "Independent recovery", "联合恢复": "Joint recovery",
     # generic fragments
     "万元": "10⁴ CNY", "元/MWh": "CNY/MWh", "元/(GPU·h)": "CNY/(GPU·h)", "元/kWh": "CNY/kWh", "元/kW": "CNY/kW", "本文": "proposed",
@@ -552,7 +570,7 @@ def fig_risk():
         a.annotate(f"膝点：{r.label}", (r["mean"], r["cvar"]), xytext=(10, 10), textcoords="offset points", fontsize=7.5, color=INK)
     for _, r in pts.iterrows():
         a.annotate(r.label, (r["mean"], r["cvar"]), xytext=(4, -10), textcoords="offset points", fontsize=6.5, color=INK2)
-    a.set_xlabel("样本外平均综合成本 / 万元"); a.set_ylabel("样本外最差 10% 日平均成本（CVaR$_{0.9}$）/ 万元")
+    a.set_xlabel("样本外平均综合成本 / 万元"); a.set_ylabel("样本外最差 10% 日平均成本（CVaR(0.9)）/ 万元")
     a.set_title("(a) 风险—期望权衡（52 个运行日）"); a.legend(fontsize=7, loc="upper right")
     b = ax[1]
     dro = c[c.kind.isin([0, 1])].copy(); dro["delta"] = np.where(dro.kind == 0, 0.0, dro.p1); dro = dro.sort_values("delta")
@@ -621,6 +639,196 @@ def fig_decomposition():
     save(fig, "fig16_decomposition.png")
 
 
+# ---------------------------------------------------------------- fig17 coincidence of the DR drivers
+def fig_drivers():
+    d = rd("case_profiles.csv")
+    if d is None: return
+    q = d[d.hour < 24].copy(); q["flex"] = q.gpu_c1 + q.gpu_c2 + q.gpu_c3
+    cols = [("baseline", "DR 基线"), ("pg_noDR", "不响应购电"), ("price", "分时电价"), ("pv", "光伏出力"), ("temp", "气温"),
+            ("cop", "冷机 COP"), ("gpu_inf", "推理 GPU"), ("flex", "可延迟作业 GPU")]
+    Rm = q[[c for c, _ in cols]].corr().values
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list("div", ["#2a78d6", "#f0efec", "#e34948"])
+    fig, ax = plt.subplots(figsize=(6.4, 5.2))
+    n = len(cols); M = np.where(np.tril(np.ones((n, n)), -1) > 0, Rm, np.nan)
+    im = ax.imshow(M, cmap=cmap, vmin=-1, vmax=1)
+    for i in range(n):
+        for j in range(i):
+            ax.text(j, i, f"{Rm[i, j]:.2f}", ha="center", va="center", fontsize=7.5, color=INK)
+    ax.set_xticks(range(n)); ax.set_xticklabels([l for _, l in cols], rotation=45, ha="right", fontsize=7.5)
+    ax.set_yticks(range(n)); ax.set_yticklabels([l for _, l in cols], fontsize=7.5); ax.grid(False)
+    ax.set_title("DR 日 15 min 驱动因素的同期相关系数（00:00–24:00）")
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Pearson 相关系数")
+    save(fig, "fig17_drivers_correlation.png")
+
+
+# ---------------------------------------------------------------- fig18 typical day, four aligned panels
+SRC = {"grid": "#2a78d6", "pv": "#eda100", "gas": "#eb6834", "bess": "#6250d6", "ec": "#2a78d6", "ac": "#eb6834", "tes": "#1baf7a"}
+
+
+def fig_typical_day(case="DAcommit"):
+    j = rd(f"ts_{case}_JRD.csv"); o = rd(f"ts_{case}_IROs.csv"); cp = rd("case_profiles.csv")
+    if j is None or o is None or cp is None: return
+    cop = np.concatenate([cp.cop.values, cp.cop.values])[:len(j)]
+    epsr = 0.7875e-3 * (1 + 0.05 + 1.0 / cop)            # facility MWh per GPU-h (eps_t)
+    fig, ax = plt.subplots(4, 1, figsize=(9, 9.6), sharex=True); fig.subplots_adjust(hspace=0.32)
+    h = j.hour.values
+    a = ax[0]
+    pos = [("grid", j.pg, "购电"), ("pv", j.ppv, "光伏"), ("gas", j.pgt, "燃气内燃机"), ("bess", j.pdis, "电储能放电")]
+    a.stackplot(h, *[v for _, v, _ in pos], colors=[SRC[k] for k, _, _ in pos], labels=[l for _, _, l in pos], alpha=0.85, edgecolor="#fcfcfb", linewidth=0.5)
+    a.fill_between(h, 0, -j.pch, color=SRC["bess"], alpha=0.35, lw=0, label="电储能充电（负）")
+    a.plot(h, j.base, color=INK2, lw=1, ls="--", label="DR 基线"); a.axhline(j.Pcap.iloc[0], color=C["cap"], lw=1, ls=":", label="并网上限")
+    a.set_ylabel("电功率 / MW"); a.set_title("(a) 电平衡（JR-D）"); a.legend(fontsize=6.5, ncol=7, loc="upper left")
+    a.set_ylim(min(-1, -float(j.pch.max()) * 1.2), float((j.pg + j.ppv + j.pgt + j.pdis).max()) * 1.32)
+    a = ax[1]
+    posc = [("ec", j.qec, "电制冷"), ("ac", j.qac, "吸收式制冷"), ("tes", j.qtd, "蓄冷放冷")]
+    a.stackplot(h, *[v for _, v, _ in posc], colors=[SRC[k] for k, _, _ in posc], labels=[l for _, _, l in posc], alpha=0.85, edgecolor="#fcfcfb", linewidth=0.5)
+    a.fill_between(h, 0, -j.qtc, color=SRC["tes"], alpha=0.35, lw=0, label="蓄冷（负）")
+    a.set_ylabel("冷功率 / MW(th)"); a.set_title("(b) 冷平衡（JR-D）"); a.legend(fontsize=6.5, ncol=4, loc="upper left")
+    a.set_ylim(min(-1, -float(j.qtc.max()) * 1.2), float((j.qec + j.qac + j.qtd).max()) * 1.32)
+    lim = 0
+    for a, d, nm in [(ax[2], j, "JR-D"), (ax[3], o, "IR-O*")]:
+        X = epsr * (d.B1 + d.B2 + d.B3)
+        a.plot(h, d.E, color=SRC["bess"], lw=2, label="电储能电量 E / MWh")
+        a.plot(h, d.S, color=SRC["tes"], lw=2, label="蓄冷量 S / MWh(th)")
+        a.plot(h, X, color=C["JR-M"], lw=2, label="算力积压的电量当量 εΣB / MWh")
+        a.set_ylabel("MWh"); a.set_title(f"({'cd'[0 if nm == 'JR-D' else 1]}) 三类恢复状态（{NAME[nm]}）")
+        a.legend(fontsize=6.5, ncol=3, loc="upper left"); lim = max(lim, float(np.nanmax([d.E.max(), d.S.max(), X.max()])))
+    for a in ax:
+        shade(a); a.set_xlim(12, 30); a.set_xticks(range(12, 31, 2))
+    ax[2].set_ylim(0, lim * 1.25); ax[3].set_ylim(0, lim * 1.25)
+    ax[3].set_xlabel("时刻 / h（24 以后为次日）")
+    save(fig, "fig18_typical_day.png")
+
+
+# ---------------------------------------------------------------- fig19 where the recovery channel goes (alluvial)
+def _alluvial(a, flows, lorder, rorder, lcol, rcol, lab, title):
+    """two-column alluvial with explicit flows (left, right, value): no proportional allocation"""
+    lv = {l: sum(v for x, _, v in flows if x == l) for l in lorder}; rv = {r: sum(v for _, x, v in flows if x == r) for r in rorder}
+    tot = sum(lv.values()); gap = 0.04 * tot
+    def stack(order, val):
+        y, out = 0.0, {}
+        for k in order:
+            if val[k] > 1e-9: out[k] = [y, y + val[k]]; y += val[k] + gap
+        return out
+    yl, yr = stack(lorder, lv), stack(rorder, rv)
+    cl = {k: v[0] for k, v in yl.items()}; cr = {k: v[0] for k, v in yr.items()}
+    xs = np.linspace(0, 1, 60); sig = 3 * xs ** 2 - 2 * xs ** 3
+    for l in lorder:
+        for r in rorder:
+            f = sum(v for x, y_, v in flows if x == l and y_ == r)
+            if f <= 1e-9 or l not in yl or r not in yr: continue
+            lo = cl[l] + (cr[r] - cl[l]) * sig; hi = lo + f
+            a.fill_between(0.14 + 0.72 * xs, lo, hi, color=rcol[r], alpha=0.35, lw=0)
+            cl[l] += f; cr[r] += f
+    for k, (y0, y1) in yl.items():
+        a.add_patch(plt.Rectangle((0.10, y0), 0.04, y1 - y0, color=lcol[k]))
+        a.text(0.09, (y0 + y1) / 2, f"{lab[k]}\n{y1 - y0:.1f}", ha="right", va="center", fontsize=7, color=INK2)
+    for k, (y0, y1) in yr.items():
+        a.add_patch(plt.Rectangle((0.86, y0), 0.04, y1 - y0, color=rcol[k]))
+        a.text(0.91, (y0 + y1) / 2, f"{lab[k]} {y1 - y0:.1f}", ha="left", va="center", fontsize=7, color=INK2)
+    a.set_xlim(-0.22, 1.32); a.set_ylim(-gap, max([v[1] for v in yl.values()] + [v[1] for v in yr.values()]) + gap)
+    a.invert_yaxis(); a.axis("off"); a.set_title(title)
+
+
+CH_LAB = {"g1": "间隔 E1→E2", "g2": "间隔 E2→E3", "g3": "E3 后 2 h", "catch": "补算", "rech": "电储能回充", "tesr": "蓄冷回充"}
+
+
+def fig_channel(case="DAcommit"):
+    cp = rd("case_profiles.csv"); runs = [(rd(f"ts_{case}_JRD.csv"), "JR-D"), (rd(f"ts_{case}_IROs.csv"), "IR-O*")]
+    if cp is None or any(r is None for r, _ in runs): return
+    gaps = [("g1", 18, 19), ("g2", 20, 21), ("g3", 22, 24)]
+    pitn = np.concatenate([cp.pit_noDR.values, cp.pit_noDR.values]); cop = np.concatenate([cp.cop.values, cp.cop.values])
+    fig, ax = plt.subplots(1, 2, figsize=(11, 4.2)); fig.subplots_adjust(wspace=0.12)
+    lcol = {"g1": "#86b6ef", "g2": "#3987e5", "g3": "#1c5cab"}; rcol = {"catch": C["JR-M"], "rech": "#6250d6", "tesr": "#1baf7a"}
+    for ia, (a, (d, nm)) in enumerate(zip(ax, runs)):
+        flows = []; h = d.hour.values; n = len(d)
+        for g, h0, h1 in gaps:
+            m = (h >= h0) & (h < h1); cp_ = cop[:n][m]
+            flows += [(g, "catch", float((np.maximum(d.pit.values[m] - pitn[:n][m], 0) * (1 + 0.05 + 1.0 / cp_)).sum() * 0.25)),
+                      (g, "rech", float(d.pch.values[m].sum() * 0.25)), (g, "tesr", float((d.qtc.values[m] / cp_).sum() * 0.25))]
+        _alluvial(a, flows, ["g1", "g2", "g3"], ["catch", "rech", "tesr"], lcol, rcol, CH_LAB, f"({'ab'[ia]}) {nm}")
+    fig.suptitle("恢复通道的去向：各间隔用于补算与回充的电量 / MWh（设施电量当量）", fontsize=10)
+    save(fig, "fig19_channel_flows.png")
+
+
+# ---------------------------------------------------------------- fig20 generalisation: tariff shape and climate
+SHAPE_LAB = {"jiangsu": "江苏分时（基准）", "flat": "平电价", "two_tier": "两段峰谷", "critical": "含尖峰", "duck": "鸭子曲线"}
+CASE_LAB = {"suzhou_summer": "苏州夏季（基准）", "suzhou_winter": "苏州冬季", "guian_summer": "贵安夏季"}
+
+
+def _grouped(a, groups, series, vals, ylab, title, pct_vs=None):
+    x = np.arange(len(groups)); w = 0.26
+    for i, nm in enumerate(series):
+        v = [vals[g][i] for g in range(len(groups))]
+        a.bar(x + (i - 1) * (w + 0.02), v, w, color=C[nm], label=NAME[nm], edgecolor="#fcfcfb", linewidth=2)
+    if pct_vs is not None:
+        for g in range(len(groups)):
+            best = min(vals[g][k] for k in pct_vs); jr = vals[g][series.index("JR-D")]
+            if np.isfinite(best) and best != 0:
+                a.text(x[g] + (w + 0.02), jr, f"{100 * (jr - best) / abs(best):+.1f}%", ha="center", va="bottom", fontsize=7, color=INK2)
+    a.set_xticks(x); a.set_xticklabels(groups, fontsize=7.5); a.set_ylabel(ylab); a.set_title(title)
+
+
+def fig_generalization():
+    t = rd("exp16_tariff_mc.csv"); ts = rd("exp16_shapes.csv"); c = rd("exp18_climate.csv"); cm = rd("exp18_climate_mc.csv"); cs = rd("exp18_cases.csv")
+    if t is None and c is None: return
+    fig, ax = plt.subplots(1, 3, figsize=(14, 3.9)); fig.subplots_adjust(wspace=0.3)
+    ser = ["IR-O*", "IR-P", "JR-D"]
+    if t is not None and ts is not None:
+        sh = list(ts["label"]); vals = []
+        for j in range(len(sh)):
+            q = t[t["shape"] == j + 1]; vals.append([q[q.strategy == i + 1].net_cost_adj.mean() / 1e4 for i in range(3)])
+        _grouped(ax[0], [SHAPE_LAB.get(s, s) for s in sh], ser, vals, "蒙特卡洛平均综合成本 / 万元", "(a) 分时电价形态（日均电价相同）", pct_vs=[0, 1])
+        ax[0].set_ylim(0, max(max(v) for v in vals) * 1.15); ax[0].legend(fontsize=7, loc="lower right")
+    if c is not None and cs is not None:
+        names = list(cs["label"]); groups = [CASE_LAB.get(n, n) for n in names]
+        caps = []
+        for j in range(len(names)):
+            row = []
+            for i in range(3):
+                q = c[(c["case"] == j + 1) & (c.strategy == i + 1) & (c.fulfil_rate_pct >= 99 - 1e-6) & (c.n_valid == 3)]
+                row.append(float(q.C.max()) if len(q) else 0.0)
+            caps.append(row)
+        _grouped(ax[1], groups, ser, caps, "≥99% 兑现且三次全有效的最大承诺 / MW", "(b) 可靠可交付容量（完美信息）")
+        ax[1].legend(fontsize=7, loc="lower right")
+        if cm is not None:
+            vals = []
+            for j in range(len(names)):
+                q = cm[cm["case"] == j + 1]; vals.append([q[q.strategy == i + 1].net_cost_adj.mean() / 1e4 for i in range(3)])
+            _grouped(ax[2], groups, ser, vals, "蒙特卡洛平均综合成本 / 万元", "(c) 季节与气候（统一 6 MW，闭环）", pct_vs=[0, 1])
+            ax[2].set_ylim(0, max(max(v) for v in vals) * 1.15); ax[2].legend(fontsize=7, loc="lower right")
+    save(fig, "fig20_generalization.png")
+
+
+# ---------------------------------------------------------------- fig21 multi-energy coupling and policy constraints
+def fig_policy():
+    d = rd("exp17_policy.csv")
+    if d is None: return
+    nm = {1: "IR-O*", 2: "IR-P", 3: "JR"}
+    fig, ax = plt.subplots(1, 3, figsize=(14, 3.9)); fig.subplots_adjust(wspace=0.3)
+    a = ax[0]; q = d[d.sweep == 1]
+    for i, ls in [(3, "-"), (1, "-")]:
+        for th, lab in [(0, "无热惯性"), (1, "计热惯性")]:
+            r = q[(q.strategy == i) & (q.value == th)].sort_values("C")
+            a.plot(r.C, r.net_cost_adj / 1e4, color=C[nm[i]], lw=2, ls="-" if th else ":", marker=MK[nm[i]], ms=6, mec="#fcfcfb", mew=0.8,
+                   label=f"{NAME['IR-O*(hindsight)' if i == 1 else 'JR']}，{lab}")
+    a.set_xlabel("每次事件的统一承诺 C / MW"); a.set_ylabel("综合成本 / 万元"); a.set_title("(a) 机房热惯性作为第三类恢复状态"); a.legend(fontsize=6.5)
+    for a, sw, xl, tt in [(ax[1], 2, "绿电占比目标 g", "(b) 绿电占比约束（6 MW）"), (ax[2], 3, "PUE 上限", "(c) PUE 上限（6 MW）")]:
+        q = d[d.sweep == sw]; vals = sorted(q.value.unique(), key=lambda v: (np.isinf(v), v))
+        xs = np.arange(len(vals))
+        for i in [1, 2, 3]:
+            r = q[q.strategy == i].set_index("value").reindex(vals)
+            a.plot(xs, r.net_cost_adj / 1e4, color=C[nm[i]], lw=2, marker=MK[nm[i]], ms=6, mec="#fcfcfb", mew=0.8,
+                   label=NAME["IR-O*(hindsight)" if i == 1 else nm[i]])
+            if sw == 3:
+                for x_, (_, rr) in zip(xs, r.iterrows()):
+                    a.annotate(f"{rr.pue:.3f}", (x_, rr.net_cost_adj / 1e4), xytext=(0, 6 if i == 3 else -11), textcoords="offset points", ha="center", fontsize=6.3, color=INK2)
+        a.set_xticks(xs); a.set_xticklabels(["无" if np.isinf(v) else f"{v:g}" for v in vals])
+        a.set_xlabel(xl); a.set_ylabel("综合成本 / 万元"); a.set_title(tt + ("（点旁为实际 PUE）" if sw == 3 else "")); a.legend(fontsize=6.5)
+    save(fig, "fig21_policy.png")
+
+
 if __name__ == "__main__":
     fig_case(); fig_mechanism()
     for case in ["DAcommit", "uniform6"]:
@@ -628,3 +836,4 @@ if __name__ == "__main__":
     fig_sensitivity(); fig_sensitivity("_crb0"); fig_map(); fig_mc(); fig_shadow(); fig_commit()
     fig_pareto(); fig_capacity(); fig_stylized(); fig_robust()
     fig_substitution(); fig_risk(); fig_decomposition()
+    fig_drivers(); fig_typical_day(); fig_channel(); fig_generalization(); fig_policy()
