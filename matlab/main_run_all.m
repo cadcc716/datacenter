@@ -5,7 +5,7 @@
 %   Runs in MATLAB (Optimization Toolbox, or Gurobi if on the path) or GNU Octave (glpk).
 %   Results are written to matlab/results/*.csv, figures by tools/plot_results.py.
 %   Options (set before calling):  QUICK = true  -> smoke run (tiny samples / grids)
-%                                  RUN = [...]   -> subset of experiments (default 1:12)
+%                                  RUN = [...]   -> subset of experiments (default 1:14)
 %                                  NMC = n       -> Monte-Carlo realisations (default: all, 52)
 %                                  MC_PART = 'certain' | 'uncertain' | 'all' (parts of Exp4; default 'all')
 %   Base case: Jiangsu settlement rules + gap-rebound assessment c_rb = 3 CNY/kW per event (a policy
@@ -15,7 +15,7 @@ root = fileparts(mfilename('fullpath'));
 addpath(fullfile(root, 'src')); addpath(fullfile(root, 'config')); addpath(fullfile(root, 'experiments'));
 dcdr_setup_paths();
 if ~exist('QUICK', 'var'), QUICK = false; end
-if ~exist('RUN', 'var'), RUN = 1:12; end
+if ~exist('RUN', 'var'), RUN = 1:14; end
 if ~exist('NMC', 'var'), NMC = []; end
 if ~exist('MC_PART', 'var'), MC_PART = 'all'; end
 if ~exist('LOGTAG', 'var'), LOGTAG = ''; end
@@ -99,6 +99,14 @@ if any(RUN == 11), fprintf('== Exp11: stylised theorem check\n'); E11 = exp11_st
 if any(RUN == 12)
     fprintf('== Exp12: reliably deliverable capacity (c_rb = 0, Monte-Carlo commitment sweep)\n');
     if QUICK, E12 = exp12_capacity(ctx0, root, [6 8], 2, '_crb0'); else, E12 = exp12_capacity(ctx0, root, [4 5 6 7 8 9], 20, '_crb0'); end
+end
+if any(RUN == 13)
+    fprintf('== Exp13: virtual-physical substitution (battery energy, connection margin; c_rb = 0)\n');
+    if QUICK, E13 = exp13_substitution(ctx0, root, struct('Es', [6 12], 'gammas', 1.1, 'Cs', [7 8])); else, E13 = exp13_substitution(ctx0, root); end
+end
+if any(RUN == 14)
+    fprintf('== Exp14: computational performance (run on an idle machine)\n');
+    if QUICK, E14 = exp14_timing(ctx, root, struct('Hs', 24, 'Ss', 1, 'reps', 1)); else, E14 = exp14_timing(ctx, root); end
 end
 fprintf('== all done in %.1f min\n', toc(t_all) / 60);
 diary off;
