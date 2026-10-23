@@ -668,8 +668,8 @@ def fig_drivers():
 SRC = {"grid": "#2a78d6", "pv": "#eda100", "gas": "#eb6834", "bess": "#6250d6", "ec": "#2a78d6", "ac": "#eb6834", "tes": "#1baf7a"}
 
 
-def fig_typical_day(case="DAcommit"):
-    j = rd(f"ts_{case}_JRD.csv"); o = rd(f"ts_{case}_IROs.csv"); cp = rd("case_profiles.csv")
+def fig_typical_day(case="DAcommit", tag="_crb0"):
+    j = rd(f"ts_{case}_JRD{tag}.csv"); o = rd(f"ts_{case}_IROs{tag}.csv"); cp = rd("case_profiles.csv")
     if j is None or o is None or cp is None: return
     cop = np.concatenate([cp.cop.values, cp.cop.values])[:len(j)]
     epsr = 0.7875e-3 * (1 + 0.05 + 1.0 / cop)            # facility MWh per GPU-h (eps_t)
@@ -736,8 +736,8 @@ def _alluvial(a, flows, lorder, rorder, lcol, rcol, lab, title):
 CH_LAB = {"g1": "间隔 E1→E2", "g2": "间隔 E2→E3", "g3": "E3 后 2 h", "catch": "补算", "rech": "电储能回充", "tesr": "蓄冷回充"}
 
 
-def fig_channel(case="DAcommit"):
-    cp = rd("case_profiles.csv"); runs = [(rd(f"ts_{case}_JRD.csv"), "JR-D"), (rd(f"ts_{case}_IROs.csv"), "IR-O*")]
+def fig_channel(case="DAcommit", tag="_crb0"):
+    cp = rd("case_profiles.csv"); runs = [(rd(f"ts_{case}_JRD{tag}.csv"), "JR-D"), (rd(f"ts_{case}_IROs{tag}.csv"), "IR-O*")]
     if cp is None or any(r is None for r, _ in runs): return
     gaps = [("g1", 18, 19), ("g2", 20, 21), ("g3", 22, 24)]
     pitn = np.concatenate([cp.pit_noDR.values, cp.pit_noDR.values]); cop = np.concatenate([cp.cop.values, cp.cop.values])
