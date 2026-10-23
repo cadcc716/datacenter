@@ -1,0 +1,63 @@
+== case: Pcap = 16.03 MW (gamma 1.10 x typical peak 14.57 MW), static split alpha = 0.41, MC realisations = 52
+== Exp17: thermal inertia (third recovery state), green-electricity share, PUE cap
+  exp17 sweep 1 value 0     IR-O*  fulfil  82.7%  net_adj(k)  260.3  PUE 1.264
+  exp17 sweep 1 value 0     IR-P   fulfil  88.1%  net_adj(k)  244.7  PUE 1.263
+  exp17 sweep 1 value 0     JR     fulfil  97.1%  net_adj(k)  232.1  PUE 1.262
+  (0 min)
+  exp17 sweep 1 value 1     IR-O*  fulfil  87.0%  net_adj(k)  247.3  PUE 1.263
+  exp17 sweep 1 value 1     IR-P   fulfil  96.9%  net_adj(k)  229.0  PUE 1.261
+  exp17 sweep 1 value 1     JR     fulfil  97.1%  net_adj(k)  223.3  PUE 1.261
+  (0 min)
+  exp17 sweep 2 value 0     IR-O*  fulfil 100.0%  net_adj(k)  244.9  PUE 1.264
+  exp17 sweep 2 value 0     IR-P   fulfil 100.0%  net_adj(k)  233.6  PUE 1.263
+  exp17 sweep 2 value 0     JR     fulfil 100.0%  net_adj(k)  228.0  PUE 1.262
+  (0 min)
+  exp17 sweep 2 value 0.6   IR-O*  fulfil 100.0%  net_adj(k)  251.7  PUE 1.264
+  exp17 sweep 2 value 0.6   IR-P   fulfil 100.0%  net_adj(k)  240.4  PUE 1.263
+  exp17 sweep 2 value 0.6   JR     fulfil 100.0%  net_adj(k)  234.9  PUE 1.262
+  (0 min)
+  exp17 sweep 2 value 0.8   IR-O*  fulfil 100.0%  net_adj(k)  254.4  PUE 1.264
+  exp17 sweep 2 value 0.8   IR-P   fulfil 100.0%  net_adj(k)  243.1  PUE 1.263
+  exp17 sweep 2 value 0.8   JR     fulfil 100.0%  net_adj(k)  237.5  PUE 1.262
+  (0 min)
+  exp17 sweep 2 value 0.9   IR-O*  fulfil 100.0%  net_adj(k)  255.7  PUE 1.264
+  exp17 sweep 2 value 0.9   IR-P   fulfil 100.0%  net_adj(k)  244.4  PUE 1.263
+  exp17 sweep 2 value 0.9   JR     fulfil 100.0%  net_adj(k)  238.9  PUE 1.262
+  (1 min)
+  exp17 sweep 3 value Inf   IR-O*  fulfil 100.0%  net_adj(k)  244.9  PUE 1.264
+  exp17 sweep 3 value Inf   IR-P   fulfil 100.0%  net_adj(k)  233.6  PUE 1.263
+  exp17 sweep 3 value Inf   JR     fulfil 100.0%  net_adj(k)  228.0  PUE 1.262
+  (1 min)
+  exp17 sweep 3 value 1.3   IR-O*  fulfil 100.0%  net_adj(k)  244.9  PUE 1.264
+  exp17 sweep 3 value 1.3   IR-P   fulfil 100.0%  net_adj(k)  233.6  PUE 1.263
+  exp17 sweep 3 value 1.3   JR     fulfil 100.0%  net_adj(k)  228.0  PUE 1.262
+  (1 min)
+  exp17 sweep 3 value 1.25  IR-O*  fulfil 100.0%  net_adj(k)  248.0  PUE 1.250
+  exp17 sweep 3 value 1.25  IR-P   fulfil 100.0%  net_adj(k)  236.5  PUE 1.250
+  exp17 sweep 3 value 1.25  JR     fulfil 100.0%  net_adj(k)  230.4  PUE 1.250
+  (1 min)
+  exp17 sweep 3 value 1.2   IR-O*  fulfil 100.0%  net_adj(k)  250.4  PUE 1.246
+  exp17 sweep 3 value 1.2   IR-P   fulfil 100.0%  net_adj(k)  238.6  PUE 1.246
+  exp17 sweep 3 value 1.2   JR     fulfil 100.0%  net_adj(k)  232.8  PUE 1.246
+  (1 min)
+  exp17 sweep 5 value Inf   IR-O*  fulfil 100.0%  net_adj(k)  244.9  PUE 1.264
+  exp17 sweep 5 value Inf   IR-P   fulfil 100.0%  net_adj(k)  233.6  PUE 1.263
+  exp17 sweep 5 value Inf   JR     fulfil 100.0%  net_adj(k)  228.0  PUE 1.262
+  (1 min)
+  exp17 sweep 5 value 4     IR-O*  fulfil  56.3%  net_adj(k)  279.8  PUE 1.264
+  exp17 sweep 5 value 4     IR-P   fulfil  64.9%  net_adj(k)  254.5  PUE 1.262
+  exp17 sweep 5 value 4     JR     fulfil  82.9%  net_adj(k)  244.4  PUE 1.262
+  (1 min)
+  exp17 sweep 5 value 2     IR-O*  fulfil  14.6%  net_adj(k)  312.7  PUE 1.265
+  exp17 sweep 5 value 2     IR-P   fulfil  41.2%  net_adj(k)  283.1  PUE 1.262
+  exp17 sweep 5 value 2     JR     fulfil  54.6%  net_adj(k)  264.1  PUE 1.262
+  (1 min)
+  exp17 sweep 5 value 1     IR-O*  fulfil  10.4%  net_adj(k)  317.5  PUE 1.265
+  exp17 sweep 5 value 1     IR-P   fulfil  27.2%  net_adj(k)  297.7  PUE 1.261
+  exp17 sweep 5 value 1     JR     fulfil  40.2%  net_adj(k)  289.4  PUE 1.261
+  (1 min)
+  exp17 sweep 4 value NaN   IR-O*  fulfil  98.8%  net_adj(k)  232.9  PUE 1.260
+  exp17 sweep 4 value NaN   IR-P   fulfil  99.3%  net_adj(k)  221.5  PUE 1.258
+  exp17 sweep 4 value NaN   JR     fulfil  99.9%  net_adj(k)  216.6  PUE 1.258
+  (11 min)
+== all done in 10.6 min

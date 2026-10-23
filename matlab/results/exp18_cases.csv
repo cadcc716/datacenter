@@ -1,0 +1,4 @@
+label,Pcap_MW,Pbase_peak_MW,mean_cop,pv_MWh_day,alpha
+suzhou_summer,16.0307,14.5734,5.13225,38.9019,0.41084
+suzhou_winter,15.5102,14.1002,7,26.0218,0.408442
+guian_summer,15.6733,14.2484,5.7695,44.9116,0.410523

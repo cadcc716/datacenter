@@ -1,0 +1,15 @@
+== case: Pcap = 16.03 MW (gamma 1.10 x typical peak 14.57 MW), static split alpha = 0.41, MC realisations = 52
+== Exp14: computational performance (run on an idle machine)
+  exp14 MPC H=24 S=1: 520 vars (3 binary), 392 rows, 0.01 s
+  exp14 MPC H=48 S=1: 1025 vars (3 binary), 760 rows, 0.02 s
+  exp14 MPC H=72 S=1: 1193 vars (3 binary), 880 rows, 0.03 s
+  exp14 MPC H=24 S=5: 2600 vars (15 binary), 2004 rows, 0.09 s
+  exp14 MPC H=48 S=5: 5125 vars (15 binary), 3844 rows, 0.36 s
+  exp14 MPC H=72 S=5: 5965 vars (15 binary), 4444 rows, 0.47 s
+  exp14 MPC H=24 S=10: 5200 vars (30 binary), 4019 rows, 0.38 s
+  exp14 MPC H=48 S=10: 10250 vars (30 binary), 7699 rows, 1.63 s
+  exp14 MPC H=72 S=10: 11930 vars (30 binary), 8899 rows, 1.91 s
+  exp14 K=2 events: MPC 0.46 s, day-ahead coupled 2.25 s (C = [6.75 7.98])
+  exp14 K=3 events: MPC 0.48 s, day-ahead coupled 2.87 s (C = [4.7 5.22 6.58])
+  exp14 K=4 events: MPC 0.49 s, day-ahead coupled 4.32 s (C = [2.89 4.4 5.54 10.59])
+== all done in 0.6 min

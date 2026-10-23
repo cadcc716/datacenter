@@ -1,0 +1,9 @@
+== case: Pcap = 16.03 MW (gamma 1.10 x typical peak 14.57 MW), static split alpha = 0.41, MC realisations = 52
+== Exp18: season and climate generalisation (Suzhou summer / winter, Gui'an summer)
+  exp18 suzhou_summer  Pcap 16.03 MW, mean COP 5.13, PV 38.9 MWh/day, reliable C (>=99%): IR-O* 6  IR-P 6  JR 8  (0 min)
+  exp18 suzhou_summer  MC(20): fulfil IR-O* 97.4 IR-P 98.2 JR-D 99.8 | net_adj(k) 242 231 224  (8 min)
+  exp18 suzhou_winter  Pcap 15.51 MW, mean COP 7.00, PV 26.0 MWh/day, reliable C (>=99%): IR-O* 6  IR-P 7  JR 7  (8 min)
+  exp18 suzhou_winter  MC(20): fulfil IR-O* 98.1 IR-P 98.3 JR-D 99.9 | net_adj(k) 248 239 232  (16 min)
+  exp18 guian_summer   Pcap 15.67 MW, mean COP 5.77, PV 44.9 MWh/day, reliable C (>=99%): IR-O* 6  IR-P 6  JR 7  (16 min)
+  exp18 guian_summer   MC(20): fulfil IR-O* 97.3 IR-P 97.0 JR-D 99.9 | net_adj(k) 235 225 219  (24 min)
+== all done in 23.6 min

@@ -1,0 +1,18 @@
+== case: Pcap = 16.03 MW (gamma 1.10 x typical peak 14.57 MW), static split alpha = 0.41, MC realisations = 52
+== Exp16: time-of-use tariff shape (same daily mean)
+  exp16 jiangsu   C=6 open: net_adj(k) IR-O* 245  IR-P 234  JR 228  (0 min)
+  exp16 jiangsu   C=8 open: net_adj(k) IR-O* 268  IR-P 241  JR 231  (0 min)
+  exp16 jiangsu   MC(20): mean net_adj(k) IR-O* 242  IR-P 231  JR-D 224  (8 min)
+  exp16 flat      C=6 open: net_adj(k) IR-O* 284  IR-P 274  JR 270  (8 min)
+  exp16 flat      C=8 open: net_adj(k) IR-O* 306  IR-P 281  JR 273  (8 min)
+  exp16 flat      MC(20): mean net_adj(k) IR-O* 279  IR-P 271  JR-D 265  (15 min)
+  exp16 two_tier  C=6 open: net_adj(k) IR-O* 254  IR-P 243  JR 238  (15 min)
+  exp16 two_tier  C=8 open: net_adj(k) IR-O* 277  IR-P 250  JR 241  (15 min)
+  exp16 two_tier  MC(20): mean net_adj(k) IR-O* 249  IR-P 240  JR-D 234  (22 min)
+  exp16 critical  C=6 open: net_adj(k) IR-O* 244  IR-P 232  JR 227  (23 min)
+  exp16 critical  C=8 open: net_adj(k) IR-O* 267  IR-P 239  JR 230  (23 min)
+  exp16 critical  MC(20): mean net_adj(k) IR-O* 241  IR-P 230  JR-D 223  (30 min)
+  exp16 duck      C=6 open: net_adj(k) IR-O* 255  IR-P 243  JR 237  (30 min)
+  exp16 duck      C=8 open: net_adj(k) IR-O* 277  IR-P 251  JR 240  (30 min)
+  exp16 duck      MC(20): mean net_adj(k) IR-O* 252  IR-P 242  JR-D 235  (38 min)
+== all done in 37.7 min

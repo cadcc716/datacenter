@@ -1,9 +1,9 @@
-# Created by Octave 8.4.0, Wed Oct 21 08:13:19 2026 UTC <root@vm>
+# Created by Octave 8.4.0, Fri Oct 23 07:52:49 2026 UTC <root@vm>
 # name: DA
 # type: scalar struct
 # ndims: 2
  1 1
-# length: 7
+# length: 11
 # name: C
 # type: matrix
 # rows: 3
@@ -27,7 +27,7 @@ coupled
 
 # name: time
 # type: scalar
-2.2794399261474609
+2.0221550464630127
 
 
 # name: Eplan
@@ -291,6 +291,43 @@ coupled
  1
 
 
+# name: prob
+# type: matrix
+# rows: 5
+# columns: 1
+ 0.20000000000000001
+ 0.20000000000000001
+ 0.20000000000000001
+ 0.20000000000000001
+ 0.20000000000000001
+
+
+# name: risk
+# type: matrix
+# rows: 0
+# columns: 0
+
+
+# name: fs
+# type: matrix
+# rows: 5
+# columns: 1
+ 183027.04968885222
+ 197065.98101269841
+ 222319.90376308386
+ 173787.39431099914
+ 219697.29319614876
+
+
+# name: Z
+# type: matrix
+# rows: 3
+# columns: 5
+ 1 1 1 1 1
+ 1 1 1 1 1
+ 1 1 1 1 1
+
+
 
 
 # name: SE
@@ -316,7 +353,7 @@ single
 
 # name: time
 # type: scalar
-4.8854959011077881
+5.1065118312835693
 
 
 
@@ -325,7 +362,7 @@ single
 # type: scalar struct
 # ndims: 2
  1 1
-# length: 7
+# length: 11
 # name: C
 # type: matrix
 # rows: 3
@@ -349,7 +386,7 @@ coupled
 
 # name: time
 # type: scalar
-2.1107239723205566
+2.2638008594512939
 
 
 # name: Eplan
@@ -613,6 +650,43 @@ coupled
  1
 
 
+# name: prob
+# type: matrix
+# rows: 5
+# columns: 1
+ 0.20000000000000001
+ 0.20000000000000001
+ 0.20000000000000001
+ 0.20000000000000001
+ 0.20000000000000001
+
+
+# name: risk
+# type: matrix
+# rows: 0
+# columns: 0
+
+
+# name: fs
+# type: matrix
+# rows: 5
+# columns: 1
+ 154838.6613981621
+ 165543.77982756984
+ 185478.90770371907
+ 154159.01914648118
+ 184146.88106868885
+
+
+# name: Z
+# type: matrix
+# rows: 3
+# columns: 5
+ 1 1 1 1 1
+ 1 1 1 1 1
+ 1 1 1 1 1
+
+
 
 
 # name: SE0
@@ -638,7 +712,7 @@ single
 
 # name: time
 # type: scalar
-5.0668301582336426
+5.2769026756286621
 
 
 

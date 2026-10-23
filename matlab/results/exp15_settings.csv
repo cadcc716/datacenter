@@ -1,0 +1,11 @@
+label,index
+SP,1
+DRO-0.1,2
+DRO-0.2,3
+DRO-0.4,4
+DRO-0.8,5
+DRO-1.2,6
+RO,7
+CVaR-0.8-w1,8
+CVaR-0.9-w0.5,9
+single,10

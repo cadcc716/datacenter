@@ -1,0 +1,154 @@
+== case: Pcap = 16.03 MW (gamma 1.10 x typical peak 14.57 MW), static split alpha = 0.41, MC realisations = 52
+== Exp3: sensitivity (perfect information, c_rb = 3000)
+  exp3 dur=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR = 100.0 100.0 100.0 100.0 100.0   maxRb 6.61 3.48 3.61 3.47 0.01   net_adj(k)   230   226   226   227   234 
+  exp3 dur=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  89.2 100.0 100.0 100.0   maxRb 6.52 6.45 6.45 6.31 6.06   net_adj(k)   264   212   201   205   208 
+  exp3 dur=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  53.8  67.9 100.0  90.8 100.0   maxRb 6.69 5.67 6.39 6.41 6.41   net_adj(k)   287   221   182   192   182 
+  exp3 dur=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  45.6  67.9  75.7  66.7  66.7   maxRb 6.61 6.52 6.52 5.57 3.56   net_adj(k)   344   216   208   217   219 
+  exp3 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.6  54.4  85.3  85.2  85.3   maxRb 6.61 6.54 6.69 5.87 1.90   net_adj(k)   282   256   230   229   234 
+  exp3 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.9  60.6  91.8  87.8  87.8   maxRb 6.61 6.52 6.61 2.77 2.79   net_adj(k)   279   244   220   226   228 
+  exp3 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  89.2 100.0 100.0 100.0   maxRb 6.52 6.45 6.45 6.31 6.06   net_adj(k)   264   212   201   205   208 
+  exp3 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  94.0 100.0   maxRb 6.69 6.31 6.06 5.31 5.31   net_adj(k)   211   192   193   202   199 
+  exp3 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  85.6 100.0   maxRb 6.69 6.37 6.36 4.19 4.90   net_adj(k)   209   192   192   224   191 
+  exp3 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0 100.0 100.0   maxRb 6.61 2.61 2.35 1.65 1.06   net_adj(k)   208   192   192   193   191 
+  exp3 gamma=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.5  66.7 100.0  96.6 100.0   maxRb 5.06 4.99 4.99 4.85 4.85   net_adj(k)   272   231   205   209   207 
+  exp3 gamma=1.05  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.8  81.7 100.0 100.0 100.0   maxRb 5.79 5.75 5.72 5.58 5.58   net_adj(k)   269   223   204   206   208 
+  exp3 gamma=1.1   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  89.2 100.0 100.0 100.0   maxRb 6.52 6.45 6.45 6.31 6.06   net_adj(k)   264   212   201   205   208 
+  exp3 gamma=1.15  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  77.5  97.8 100.0 100.0 100.0   maxRb 7.25 7.18 7.17 6.38 6.06   net_adj(k)   260   203   199   204   207 
+  exp3 gamma=1.2   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  84.7 100.0 100.0 100.0 100.0   maxRb 7.97 7.91 7.90 6.38 6.06   net_adj(k)   255   201   198   204   207 
+  exp3 gamma=1.3   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  87.5 100.0 100.0 100.0 100.0   maxRb 9.43 8.89 8.61 6.38 6.06   net_adj(k)   231   196   198   204   206 
+  exp3 C=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  91.3 100.0 100.0 100.0 100.0   maxRb 6.52 3.85 4.18 3.02 0.00   net_adj(k)   246   227   227   227   232 
+  exp3 C=4     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  89.5 100.0 100.0 100.0 100.0   maxRb 6.52 5.50 4.69 2.27 1.03   net_adj(k)   243   217   219   226   226 
+  exp3 C=5     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  80.9 100.0 100.0  95.6 100.0   maxRb 6.52 6.44 5.67 2.63 3.42   net_adj(k)   246   210   211   219   218 
+  exp3 C=6     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  89.2 100.0 100.0 100.0   maxRb 6.52 6.45 6.45 6.31 6.06   net_adj(k)   264   212   201   205   208 
+  exp3 C=7     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.5  68.9  89.9  95.9 100.0   maxRb 6.52 6.44 6.45 6.31 6.31   net_adj(k)   271   228   207   202   200 
+  exp3 C=8     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  56.7  65.9  74.5  92.9  99.5   maxRb 6.52 6.44 6.44 6.37 6.31   net_adj(k)   278   232   228   202   196 
+  exp3 C=9     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  52.2  60.0  66.2  63.4  89.1   maxRb 6.52 6.44 6.44 5.05 6.31   net_adj(k)   286   241   237   246   205 
+  exp3 g1.00 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.2  54.5  85.3  85.2  85.3   maxRb 5.23 5.16 5.23 4.63 1.90   net_adj(k)   282   255   230   230   234 
+  exp3 g1.00 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.5  60.6  93.5  87.8  87.8   maxRb 5.23 5.08 5.15 2.71 2.79   net_adj(k)   279   244   221   226   228 
+  exp3 g1.00 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.5  66.7 100.0  96.6 100.0   maxRb 5.06 4.99 4.99 4.85 4.85   net_adj(k)   272   231   205   209   207 
+  exp3 g1.00 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  83.5 100.0 100.0  90.8 100.0   maxRb 5.23 4.91 4.91 4.29 4.85   net_adj(k)   233   193   192   214   199 
+  exp3 g1.00 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  87.5 100.0 100.0  85.6 100.0   maxRb 5.23 5.06 4.95 4.19 4.85   net_adj(k)   238   195   193   222   190 
+  exp3 g1.00 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  84.9 100.0 100.0  97.2 100.0   maxRb 5.15 3.04 3.00 1.49 1.67   net_adj(k)   240   190   190   195   190 
+  exp3 g1.05 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.2  54.4  85.3  85.2  85.3   maxRb 5.96 5.89 5.96 5.25 1.90   net_adj(k)   283   256   231   230   235 
+  exp3 g1.05 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.5  60.6  91.8  87.8  87.8   maxRb 5.96 5.81 5.88 2.75 2.79   net_adj(k)   280   244   222   227   229 
+  exp3 g1.05 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.8  81.7 100.0 100.0 100.0   maxRb 5.79 5.75 5.72 5.58 5.58   net_adj(k)   269   223   204   206   208 
+  exp3 g1.05 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.0 100.0 100.0  93.4 100.0   maxRb 5.96 5.64 5.64 5.14 5.31   net_adj(k)   226   192   192   203   199 
+  exp3 g1.05 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  85.6 100.0   maxRb 5.96 5.68 5.64 4.19 4.90   net_adj(k)   209   195   193   223   191 
+  exp3 g1.05 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0  99.2 100.0   maxRb 5.88 2.89 2.81 1.56 1.31   net_adj(k)   208   192   191   194   192 
+  exp3 g1.10 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.6  54.4  85.3  85.2  85.3   maxRb 6.61 6.54 6.69 5.87 1.90   net_adj(k)   282   256   230   229   234 
+  exp3 g1.10 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.9  60.6  91.8  87.8  87.8   maxRb 6.61 6.52 6.61 2.77 2.79   net_adj(k)   279   244   220   226   228 
+  exp3 g1.10 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  89.2 100.0 100.0 100.0   maxRb 6.52 6.45 6.45 6.31 6.06   net_adj(k)   264   212   201   205   208 
+  exp3 g1.10 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  94.0 100.0   maxRb 6.69 6.31 6.06 5.31 5.31   net_adj(k)   211   192   193   202   199 
+  exp3 g1.10 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  85.6 100.0   maxRb 6.69 6.37 6.36 4.19 4.90   net_adj(k)   209   192   192   224   191 
+  exp3 g1.10 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0 100.0 100.0   maxRb 6.61 2.61 2.35 1.65 1.06   net_adj(k)   208   192   192   193   191 
+  exp3 g1.20 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  51.7  54.4  85.5  85.2  85.3   maxRb 7.99 6.99 7.07 6.27 1.90   net_adj(k)   280   255   229   231   233 
+  exp3 g1.20 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.1  60.6  91.8  87.8  87.8   maxRb 8.07 6.95 7.13 2.85 2.79   net_adj(k)   275   243   219   225   227 
+  exp3 g1.20 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  84.7 100.0 100.0 100.0 100.0   maxRb 7.97 7.91 7.90 6.38 6.06   net_adj(k)   255   201   198   204   207 
+  exp3 g1.20 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  90.8 100.0   maxRb 8.07 6.58 6.32 4.52 5.24   net_adj(k)   211   192   193   218   199 
+  exp3 g1.20 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  85.6 100.0   maxRb 8.15 6.20 6.16 4.19 4.90   net_adj(k)   210   191   191   223   191 
+  exp3 g1.20 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0 100.0 100.0   maxRb 7.87 1.94 1.80 1.12 0.57   net_adj(k)   208   192   192   193   191 
+  exp3 g1.30 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.4  54.4  85.5  85.2  85.3   maxRb 9.44 6.99 7.07 6.27 1.90   net_adj(k)   278   254   228   230   233 
+  exp3 g1.30 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.4  62.8  91.8  87.8  87.8   maxRb 9.47 6.95 7.13 2.88 2.79   net_adj(k)   271   240   219   225   227 
+  exp3 g1.30 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  87.5 100.0 100.0 100.0 100.0   maxRb 9.43 8.89 8.61 6.38 6.06   net_adj(k)   231   196   198   204   206 
+  exp3 g1.30 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  90.8 100.0   maxRb 9.36 6.58 6.32 4.52 5.12   net_adj(k)   211   192   193   217   198 
+  exp3 g1.30 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  85.6 100.0   maxRb 9.52 6.20 6.16 4.19 4.90   net_adj(k)   209   191   191   223   191 
+  exp3 g1.30 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0 100.0 100.0   maxRb 9.32 1.70 1.56 1.05 0.01   net_adj(k)   208   191   191   192   191 
+== Exp3: sensitivity (perfect information, c_rb = 0)
+  exp3 dur=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR = 100.0 100.0 100.0  94.7 100.0   maxRb 6.61 6.61 6.61 6.61 6.61   net_adj(k)   230   222   223   231   222 
+  exp3 dur=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  91.9 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   264   209   199   199   193 
+  exp3 dur=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  53.8  72.9 100.0  91.7 100.0   maxRb 6.69 6.69 6.69 6.69 6.69   net_adj(k)   287   212   179   228   177 
+  exp3 dur=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  45.6  67.9  77.6  68.0  77.6   maxRb 6.61 6.61 6.61 6.61 6.61   net_adj(k)   344   214   206   206   204 
+  exp3 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.6  67.6 100.0 100.0 100.0   maxRb 6.61 6.61 6.69 6.69 6.69   net_adj(k)   282   238   211   210   210 
+  exp3 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.9  66.7 100.0 100.0 100.0   maxRb 6.61 6.61 6.69 6.69 6.69   net_adj(k)   279   235   206   205   203 
+  exp3 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  91.9 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   264   209   199   199   193 
+  exp3 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  98.1 100.0   maxRb 6.69 6.61 6.45 6.61 6.52   net_adj(k)   211   191   190   197   189 
+  exp3 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  99.1 100.0   maxRb 6.69 6.53 6.61 6.53 6.56   net_adj(k)   209   190   189   195   188 
+  exp3 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0  99.1 100.0   maxRb 6.61 6.29 6.29 6.29 6.50   net_adj(k)   208   191   190   195   188 
+  exp3 gamma=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.5  69.2 100.0  82.8 100.0   maxRb 5.06 5.06 5.06 5.06 5.06   net_adj(k)   272   228   203   221   198 
+  exp3 gamma=1.05  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.8  83.3 100.0  94.2 100.0   maxRb 5.79 5.79 5.79 5.79 5.79   net_adj(k)   269   220   202   207   196 
+  exp3 gamma=1.1   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  91.9 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   264   209   199   199   193 
+  exp3 gamma=1.15  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  77.5 100.0 100.0  96.5 100.0   maxRb 7.25 7.25 7.25 7.25 7.25   net_adj(k)   260   200   196   198   191 
+  exp3 gamma=1.2   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  84.7 100.0 100.0 100.0 100.0   maxRb 7.97 7.97 7.97 7.97 7.97   net_adj(k)   255   195   192   193   189 
+  exp3 gamma=1.3   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  87.5 100.0 100.0 100.0 100.0   maxRb 9.43 9.43 9.43 9.43 9.43   net_adj(k)   231   190   189   193   188 
+  exp3 C=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  91.3 100.0 100.0 100.0 100.0   maxRb 6.52 6.52 6.41 6.31 6.52   net_adj(k)   246   223   223   222   222 
+  exp3 C=4     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  89.5 100.0 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.47 6.52   net_adj(k)   243   212   211   211   210 
+  exp3 C=5     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  80.9 100.0 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   246   205   202   203   200 
+  exp3 C=6     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  91.9 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   264   209   199   199   193 
+  exp3 C=7     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.5  74.7  92.1  88.8 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   271   223   204   206   190 
+  exp3 C=8     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  56.7  72.0  79.8  77.7  99.5   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   278   227   223   222   191 
+  exp3 C=9     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  52.2  65.7  71.6  69.0  89.1   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   286   235   232   233   201 
+  exp3 g1.00 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.2  67.6  99.1  98.7  98.8   maxRb 5.23 5.23 5.23 5.23 5.23   net_adj(k)   282   239   214   214   213 
+  exp3 g1.00 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.5  66.7 100.0 100.0 100.0   maxRb 5.23 5.23 5.23 5.23 5.23   net_adj(k)   279   236   209   208   207 
+  exp3 g1.00 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.5  69.2 100.0  82.8 100.0   maxRb 5.06 5.06 5.06 5.06 5.06   net_adj(k)   272   228   203   221   198 
+  exp3 g1.00 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  83.5 100.0 100.0  94.3 100.0   maxRb 5.23 5.15 5.15 4.99 5.23   net_adj(k)   233   191   190   199   188 
+  exp3 g1.00 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  87.5 100.0 100.0  89.1 100.0   maxRb 5.23 5.15 5.23 4.88 5.15   net_adj(k)   238   189   188   204   187 
+  exp3 g1.00 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  84.9 100.0 100.0  96.3 100.0   maxRb 5.15 4.95 4.95 4.91 5.15   net_adj(k)   240   190   189   197   187 
+  exp3 g1.05 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.2  67.6 100.0 100.0 100.0   maxRb 5.96 5.96 5.96 5.96 5.96   net_adj(k)   283   239   213   212   212 
+  exp3 g1.05 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.5  66.7 100.0 100.0 100.0   maxRb 5.96 5.96 5.96 5.96 5.96   net_adj(k)   280   236   208   206   205 
+  exp3 g1.05 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.8  83.3 100.0  94.2 100.0   maxRb 5.79 5.79 5.79 5.79 5.79   net_adj(k)   269   220   202   207   196 
+  exp3 g1.05 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.0 100.0 100.0  93.1 100.0   maxRb 5.96 5.88 5.88 5.88 5.96   net_adj(k)   226   191   190   202   189 
+  exp3 g1.05 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  94.1 100.0   maxRb 5.96 5.88 5.88 5.79 5.88   net_adj(k)   209   190   189   200   188 
+  exp3 g1.05 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0  98.3 100.0   maxRb 5.88 5.64 5.68 5.64 5.79   net_adj(k)   208   191   190   197   188 
+  exp3 g1.10 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.6  67.6 100.0 100.0 100.0   maxRb 6.61 6.61 6.69 6.69 6.69   net_adj(k)   282   238   211   210   210 
+  exp3 g1.10 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  48.9  66.7 100.0 100.0 100.0   maxRb 6.61 6.61 6.69 6.69 6.69   net_adj(k)   279   235   206   205   203 
+  exp3 g1.10 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  70.2  91.9 100.0 100.0 100.0   maxRb 6.52 6.52 6.52 6.52 6.52   net_adj(k)   264   209   199   199   193 
+  exp3 g1.10 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  98.1 100.0   maxRb 6.69 6.61 6.45 6.61 6.52   net_adj(k)   211   191   190   197   189 
+  exp3 g1.10 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  99.1 100.0   maxRb 6.69 6.53 6.61 6.53 6.56   net_adj(k)   209   190   189   195   188 
+  exp3 g1.10 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0  99.1 100.0   maxRb 6.61 6.29 6.29 6.29 6.50   net_adj(k)   208   191   190   195   188 
+  exp3 g1.20 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  51.7  66.7 100.0 100.0 100.0   maxRb 7.99 7.98 7.98 7.98 7.98   net_adj(k)   280   235   207   206   206 
+  exp3 g1.20 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.1  68.7 100.0 100.0 100.0   maxRb 8.07 8.02 8.02 8.02 8.02   net_adj(k)   275   230   202   201   198 
+  exp3 g1.20 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  84.7 100.0 100.0 100.0 100.0   maxRb 7.97 7.97 7.97 7.97 7.97   net_adj(k)   255   195   192   193   189 
+  exp3 g1.20 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  98.7 100.0   maxRb 8.07 7.19 7.19 7.19 8.06   net_adj(k)   211   191   190   196   189 
+  exp3 g1.20 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  99.9 100.0   maxRb 8.15 7.37 7.48 7.07 8.02   net_adj(k)   210   189   189   193   187 
+  exp3 g1.20 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0 100.0 100.0   maxRb 7.87 7.98 7.15 7.21 6.29   net_adj(k)   208   189   189   192   187 
+  exp3 g1.30 tau=0.25  fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  55.4  68.9 100.0 100.0 100.0   maxRb 9.44 9.44 9.44 9.22 9.44   net_adj(k)   278   233   205   205   204 
+  exp3 g1.30 tau=0.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  62.4  82.9 100.0 100.0 100.0   maxRb 9.47 9.47 9.47 9.47 9.47   net_adj(k)   271   221   198   198   196 
+  exp3 g1.30 tau=1     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  87.5 100.0 100.0 100.0 100.0   maxRb 9.43 9.43 9.43 9.43 9.43   net_adj(k)   231   190   189   193   188 
+  exp3 g1.30 tau=1.5   fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  93.9 100.0 100.0  98.7 100.0   maxRb 9.36 7.19 7.19 7.19 9.32   net_adj(k)   211   190   189   195   188 
+  exp3 g1.30 tau=2     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  94.8 100.0 100.0  99.9 100.0   maxRb 9.52 7.07 7.14 7.07 9.33   net_adj(k)   209   189   188   193   187 
+  exp3 g1.30 tau=3     fulfil IR-R/IR-O/IR-O*(hindsight)/IR-P/JR =  95.6 100.0 100.0 100.0 100.0   maxRb 9.32 6.42 6.42 7.74 6.42   net_adj(k)   208   189   188   191   187 
+== Exp10: realism (liquid cooling, IT ramp limits, load-up charge)
+  benchmarks: alpha* = 0.80 (static share 0.41), max lambda_hr = 3425 CNY/MWh (78s)
+  exp10 base            NoDR   ful=  0.00% valid=0 rb=0.93 pre=0.00 payG=0.00 net_adj=330534 exrb=326442
+  exp10 base            IR-O*  ful=100.00% valid=3 rb=6.45 pre=1.40 payG=11.85 net_adj=245656 exrb=202050
+  exp10 base            IR-P   ful= 96.59% valid=3 rb=4.37 pre=1.40 payG=5.90 net_adj=236116 exrb=209014
+  exp10 base            JR-M   ful= 92.40% valid=2 rb=6.44 pre=1.12 payG=6.16 net_adj=264185 exrb=244857
+  exp10 base            JR-D   ful=100.00% valid=3 rb=5.77 pre=1.40 payG=5.93 net_adj=228417 exrb=207775
+  benchmarks: alpha* = 0.80 (static share 0.40), max lambda_hr = 3594 CNY/MWh (80s)
+  exp10 liquid_cooling  NoDR   ful=  0.00% valid=0 rb=0.95 pre=0.00 payG=0.00 net_adj=305549 exrb=301415
+  exp10 liquid_cooling  IR-O*  ful= 94.33% valid=3 rb=5.95 pre=1.42 payG=10.91 net_adj=226571 exrb=185792
+  exp10 liquid_cooling  IR-P   ful= 80.83% valid=2 rb=4.31 pre=1.42 payG=4.19 net_adj=231019 exrb=209470
+  exp10 liquid_cooling  JR-M   ful= 89.03% valid=2 rb=5.95 pre=1.40 payG=5.67 net_adj=243529 exrb=225140
+  exp10 liquid_cooling  JR-D   ful=100.00% valid=3 rb=5.87 pre=1.42 payG=7.35 net_adj=209755 exrb=184803
+  benchmarks: alpha* = 0.80 (static share 0.41), max lambda_hr = 3541 CNY/MWh (119s)
+  exp10 it_ramp_2MW     NoDR   ful=  0.00% valid=0 rb=0.93 pre=0.00 payG=0.00 net_adj=330534 exrb=326442
+  exp10 it_ramp_2MW     IR-O*  ful=100.00% valid=3 rb=5.00 pre=1.40 payG=6.71 net_adj=234481 exrb=209466
+  exp10 it_ramp_2MW     IR-P   ful= 98.06% valid=3 rb=5.49 pre=1.40 payG=5.76 net_adj=233675 exrb=209658
+  exp10 it_ramp_2MW     JR-M   ful= 90.46% valid=2 rb=6.21 pre=1.16 payG=5.92 net_adj=267071 exrb=248455
+  exp10 it_ramp_2MW     JR-D   ful=100.00% valid=3 rb=6.31 pre=1.40 payG=6.16 net_adj=229843 exrb=208502
+  benchmarks: alpha* = 1.00 (static share 0.41), max lambda_hr = 3774 CNY/MWh (123s)
+  exp10 it_ramp_1MW     NoDR   ful=  0.00% valid=0 rb=0.93 pre=0.00 payG=0.00 net_adj=330534 exrb=326442
+  exp10 it_ramp_1MW     IR-O*  ful=100.00% valid=3 rb=4.39 pre=1.40 payG=7.14 net_adj=235624 exrb=210783
+  exp10 it_ramp_1MW     IR-P   ful= 95.47% valid=3 rb=4.27 pre=1.40 payG=5.53 net_adj=234725 exrb=214586
+  exp10 it_ramp_1MW     JR-M   ful= 81.39% valid=2 rb=5.07 pre=0.72 payG=4.79 net_adj=275133 exrb=258480
+  exp10 it_ramp_1MW     JR-D   ful=100.00% valid=3 rb=4.36 pre=1.40 payG=6.43 net_adj=232873 exrb=210487
+  benchmarks: alpha* = 0.80 (static share 0.41), max lambda_hr = 3425 CNY/MWh (107s)
+  exp10 preload_charge  NoDR   ful=  0.00% valid=0 rb=0.93 pre=0.00 payG=0.00 net_adj=333809 exrb=326442
+  exp10 preload_charge  IR-O*  ful=100.00% valid=3 rb=6.45 pre=1.40 payG=11.85 net_adj=253145 exrb=202050
+  exp10 preload_charge  IR-P   ful= 96.59% valid=3 rb=4.37 pre=1.40 payG=5.90 net_adj=243605 exrb=209014
+  exp10 preload_charge  JR-M   ful= 91.05% valid=2 rb=6.44 pre=-0.22 payG=9.17 net_adj=280553 exrb=247475
+  exp10 preload_charge  JR-D   ful=100.00% valid=3 rb=5.77 pre=1.40 payG=5.93 net_adj=235907 exrb=207776
+  benchmarks: alpha* = 0.40 (static share 0.41), max lambda_hr = 3560 CNY/MWh (130s)
+  exp10 power_capping   NoDR   ful=  0.00% valid=0 rb=0.93 pre=0.00 payG=0.00 net_adj=330534 exrb=326442
+  exp10 power_capping   IR-O*  ful= 92.24% valid=3 rb=6.47 pre=1.40 payG=11.87 net_adj=246231 exrb=207632
+  exp10 power_capping   IR-P   ful= 97.13% valid=3 rb=3.77 pre=1.40 payG=4.43 net_adj=229335 exrb=206595
+  exp10 power_capping   JR-M   ful= 95.25% valid=3 rb=6.47 pre=0.90 payG=6.18 net_adj=241898 exrb=222474
+  exp10 power_capping   JR-D   ful=100.00% valid=3 rb=4.02 pre=1.40 payG=4.65 net_adj=223002 exrb=206209
+== Exp12: reliably deliverable capacity (c_rb = 0, Monte-Carlo commitment sweep)
+  exp12_crb0 C=4 alpha*=0.4 | fulfil  94.7  94.8 100.0 | all-valid 0.75 0.85 1.00 | net_adj(k)   216   214   207  (7 min)
+  exp12_crb0 C=5 alpha*=0.6 | fulfil  93.7  90.7  99.7 | all-valid 0.80 0.75 1.00 | net_adj(k)   208   211   198  (14 min)
+  exp12_crb0 C=6 alpha*=0.9 | fulfil  98.7  92.4  99.7 | all-valid 0.95 0.80 1.00 | net_adj(k)   197   203   190  (22 min)
+  exp12_crb0 C=7 alpha*=0.7 | fulfil  91.1  92.4  99.2 | all-valid 0.80 0.70 0.95 | net_adj(k)   203   203   189  (29 min)
+  exp12_crb0 C=8 alpha*=0.7 | fulfil  84.4  85.0  95.8 | all-valid 0.50 0.40 0.95 | net_adj(k)   214   217   192  (37 min)
+  exp12_crb0 C=9 alpha*=0.6 | fulfil  74.8  75.1  85.3 | all-valid 0.25 0.25 0.65 | net_adj(k)   230   234   210  (45 min)
+== all done in 62.4 min

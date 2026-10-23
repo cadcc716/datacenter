@@ -1,0 +1,6 @@
+label,index
+IR-O*,1
+IR-P,2
+JR-M,3
+JR-D,4
+JR-oracle,5

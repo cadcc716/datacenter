@@ -1,0 +1,89 @@
+== case: Pcap = 16.03 MW (gamma 1.10 x typical peak 14.57 MW), static split alpha = 0.41, MC realisations = 52
+== day-ahead commitments (c_rb = 3000)  coupled: [3.27 6.65 7.9]   single-event: [8.18 7.98 7.9]
+== day-ahead commitments (c_rb = 0)     coupled: [8.18 7.98 7.9]   single-event: [8.18 7.98 7.9]
+== Exp2: main comparison (c_rb = 3000)
+  benchmarks: alpha* = 1.00 (static share 0.41), max lambda_hr = 3400 CNY/MWh (187s)
+  exp2 DAcommit IR-R             ful= 69.98% valid=1/3 rb=6.52 rb6=6.52 payG=10.91 net=322590 adj=322591 exrb=273403 (0s)
+  exp2 DAcommit IR-O             ful= 92.32% valid=3/3 rb=6.47 rb6=6.47 payG=11.86 net=250008 adj=250531 exrb=207402 (5s)
+  exp2 DAcommit IR-O*            ful=100.00% valid=3/3 rb=6.39 rb6=6.39 payG=11.74 net=243013 adj=243536 exrb=201016 (4s)
+  exp2 DAcommit IR-P             ful=100.00% valid=3/3 rb=4.16 rb6=4.16 payG=5.06 net=232598 adj=233121 exrb=208515 (4s)
+  exp2 DAcommit JR-M             ful= 86.01% valid=2/3 rb=6.44 rb6=6.44 payG=6.81 net=280112 adj=280119 exrb=256735 (4s)
+  exp2 DAcommit JR-D             ful= 99.90% valid=3/3 rb=5.02 rb6=5.02 payG=4.47 net=226558 adj=227080 exrb=210777 (5s)
+  exp2 DAcommit JR-S             ful=100.00% valid=3/3 rb=3.48 rb6=3.48 payG=4.88 net=227075 adj=227591 exrb=210100 (55s)
+  exp2 DAcommit JR-oracle        ful= 99.99% valid=3/3 rb=5.30 rb6=5.30 payG=4.63 net=226565 adj=226565 exrb=210677 (0s)
+  benchmarks: alpha* = 0.80 (static share 0.41), max lambda_hr = 3425 CNY/MWh (171s)
+  exp2 uniform6 IR-R             ful= 70.15% valid=1/3 rb=6.52 rb6=6.52 payG=11.89 net=313470 adj=313471 exrb=264162 (0s)
+  exp2 uniform6 IR-O             ful= 85.35% valid=2/3 rb=6.45 rb6=6.45 payG=11.86 net=266141 adj=266664 exrb=226785 (4s)
+  exp2 uniform6 IR-O*            ful=100.00% valid=3/3 rb=6.45 rb6=6.45 payG=11.85 net=245134 adj=245656 exrb=202050 (4s)
+  exp2 uniform6 IR-P             ful= 96.59% valid=3/3 rb=4.37 rb6=4.37 payG=5.90 net=235596 adj=236119 exrb=209015 (4s)
+  exp2 uniform6 JR-M             ful= 92.40% valid=2/3 rb=6.44 rb6=6.44 payG=6.16 net=264179 adj=264185 exrb=244857 (5s)
+  exp2 uniform6 JR-D             ful=100.00% valid=3/3 rb=5.77 rb6=5.77 payG=5.93 net=227902 adj=228424 exrb=207783 (5s)
+  exp2 uniform6 JR-S             ful=100.00% valid=3/3 rb=4.77 rb6=4.77 payG=5.56 net=227938 adj=228454 exrb=208923 (55s)
+  exp2 uniform6 JR-oracle        ful=100.00% valid=3/3 rb=6.06 rb6=6.06 payG=5.85 net=228021 adj=228021 exrb=207629 (0s)
+== Exp2: main comparison (c_rb = 0)
+  benchmarks: alpha* = 0.70 (static share 0.41), max lambda_hr = 2072 CNY/MWh (185s)
+  exp2_crb0 DAcommit IR-R             ful= 56.41% valid=1/3 rb=6.52 rb6=6.52 payG=11.89 net=277723 adj=277723 exrb=277723 (0s)
+  exp2_crb0 DAcommit IR-O             ful= 68.83% valid=2/3 rb=6.52 rb6=6.52 payG=11.33 net=228449 adj=228796 exrb=228796 (4s)
+  exp2_crb0 DAcommit IR-O*            ful= 80.25% valid=2/3 rb=6.52 rb6=6.52 payG=11.89 net=226609 adj=226956 exrb=226956 (5s)
+  exp2_crb0 DAcommit IR-P             ful= 73.72% valid=1/3 rb=6.52 rb6=6.52 payG=11.53 net=246662 adj=247009 exrb=247009 (5s)
+  exp2_crb0 DAcommit JR-M             ful= 84.43% valid=2/3 rb=6.52 rb6=6.52 payG=11.89 net=246008 adj=246014 exrb=246014 (5s)
+  exp2_crb0 DAcommit JR-D             ful= 99.27% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=190983 adj=191330 exrb=191330 (5s)
+  exp2_crb0 DAcommit JR-S             ful= 99.64% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=190897 adj=191238 exrb=191238 (58s)
+  exp2_crb0 DAcommit JR-oracle        ful= 99.99% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=190432 adj=190433 exrb=190433 (0s)
+  benchmarks: alpha* = 0.90 (static share 0.41), max lambda_hr = 1467 CNY/MWh (246s)
+  exp2_crb0 uniform6 IR-R             ful= 70.15% valid=1/3 rb=6.52 rb6=6.52 payG=11.89 net=264161 adj=264162 exrb=264162 (0s)
+  exp2_crb0 uniform6 IR-O             ful= 85.35% valid=2/3 rb=6.52 rb6=6.52 payG=11.89 net=222329 adj=222677 exrb=222677 (5s)
+  exp2_crb0 uniform6 IR-O*            ful=100.00% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=199388 adj=199736 exrb=199736 (5s)
+  exp2_crb0 uniform6 IR-P             ful= 92.56% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=203823 adj=204171 exrb=204171 (5s)
+  exp2_crb0 uniform6 JR-M             ful= 99.80% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=208115 adj=208121 exrb=208121 (7s)
+  exp2_crb0 uniform6 JR-D             ful=100.00% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=193067 adj=193415 exrb=193415 (7s)
+  exp2_crb0 uniform6 JR-S             ful=100.00% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=193252 adj=193593 exrb=193593 (59s)
+  exp2_crb0 uniform6 JR-oracle        ful=100.00% valid=3/3 rb=6.52 rb6=6.52 payG=11.89 net=193118 adj=193118 exrb=193118 (0s)
+== Exp6: commitment-operation pairing (c_rb = 3000)
+  exp6 cautious conventional commitment: theta* = 0.8 -> C = [6.54 6.38 6.32]
+  exp6 SE        IR-O*  C=[8.18 7.98 7.9] | day: ful=71.6% valid=2 net_adj=272192 | MC(20): ful=81.8% allvalid=45% net_adj=256259
+  exp6 SE        JR-D   C=[8.18 7.98 7.9] | day: ful=99.3% valid=3 net_adj=231474 | MC(20): ful=96.0% allvalid=95% net_adj=230555
+  exp6 SE-theta  IR-O*  C=[6.54 6.38 6.32] | day: ful=98.1% valid=3 net_adj=246776 | MC(20): ful=97.5% allvalid=95% net_adj=240783
+  exp6 SE-theta  JR-D   C=[6.54 6.38 6.32] | day: ful=100.0% valid=3 net_adj=228636 | MC(20): ful=99.9% allvalid=100% net_adj=224439
+  exp6 DA        IR-O*  C=[3.27 6.65 7.9] | day: ful=100.0% valid=3 net_adj=243536 | MC(20): ful=97.0% allvalid=100% net_adj=237942
+  exp6 DA        JR-D   C=[3.27 6.65 7.9] | day: ful=99.9% valid=3 net_adj=227080 | MC(20): ful=98.8% allvalid=100% net_adj=223888
+== Exp6: commitment-operation pairing (c_rb = 0)
+  exp6_crb0 cautious conventional commitment: theta* = 0.8 -> C = [6.54 6.38 6.32]
+  exp6_crb0 SE        IR-O*  C=[8.18 7.98 7.9] | day: ful=80.2% valid=2 net_adj=226956 | MC(20): ful=84.3% allvalid=45% net_adj=214271
+  exp6_crb0 SE        JR-D   C=[8.18 7.98 7.9] | day: ful=99.3% valid=3 net_adj=191330 | MC(20): ful=96.0% allvalid=95% net_adj=191753
+  exp6_crb0 SE-theta  IR-O*  C=[6.54 6.38 6.32] | day: ful=100.0% valid=3 net_adj=200117 | MC(20): ful=98.2% allvalid=95% net_adj=196046
+  exp6_crb0 SE-theta  JR-D   C=[6.54 6.38 6.32] | day: ful=100.0% valid=3 net_adj=191661 | MC(20): ful=99.7% allvalid=100% net_adj=188515
+  exp6_crb0 DA        IR-O*  C=[8.18 7.98 7.9] | day: ful=80.2% valid=2 net_adj=226956 | MC(20): ful=84.3% allvalid=45% net_adj=214271
+  exp6_crb0 DA        JR-D   C=[8.18 7.98 7.9] | day: ful=99.3% valid=3 net_adj=191330 | MC(20): ful=96.0% allvalid=95% net_adj=191753
+== Exp7: ablation
+  exp7 full             IR-O fulfil=89.2% valid=3 maxRb=6.45 net=255777
+  exp7 full             JR   fulfil=100.0% valid=3 maxRb=6.06 net=228021
+  exp7 no_compute_flex  IR-O fulfil=29.0% valid=1 maxRb=2.15 net=287211
+  exp7 no_compute_flex  JR   fulfil=29.0% valid=1 maxRb=2.15 net=287211
+  exp7 no_BESS          IR-O fulfil=16.4% valid=0 maxRb=5.77 net=355406
+  exp7 no_BESS          JR   fulfil=36.1% valid=0 maxRb=3.55 net=323768
+  exp7 no_TES           IR-O fulfil=68.1% valid=2 maxRb=6.44 net=270267
+  exp7 no_TES           JR   fulfil=100.0% valid=3 maxRb=6.06 net=234858
+  exp7 best static split alpha*=0.9: fulfil=100.0% net=244860
+== Exp15: risk-averse day-ahead commitment (SP / DRO / RO / CVaR), out of sample with JR-D
+  exp15 SP             C = [3.66 6.34 7.9]  in-sample mean 197354  worst 220897  (10 s)
+  exp15 DRO-0.1        C = [3.52 6 7.9]  in-sample mean 197339  worst 220691  (14 s)
+  exp15 DRO-0.2        C = [2.66 6.01 7.9]  in-sample mean 198213  worst 220331  (15 s)
+  exp15 DRO-0.4        C = [2.8 5.06 7.9]  in-sample mean 200179  worst 220012  (17 s)
+  exp15 DRO-0.8        C = [4.65 2.13 7.9]  in-sample mean 201630  worst 219724  (25 s)
+  exp15 DRO-1.2        C = [0.96 5.77 7.9]  in-sample mean 207086  worst 219711  (17 s)
+  exp15 RO             C = [4.54 2.17 7.9]  in-sample mean 219710  worst 219710  (20 s)
+  exp15 CVaR-0.8-w1    C = [4.22 2.5 7.9]  in-sample mean 212873  worst 219711  (27 s)
+  exp15 CVaR-0.9-w0.5  C = [2.74 5.5 7.9]  in-sample mean 197447  worst 220149  (24 s)
+  exp15 single         C = [8.18 7.98 7.9]  in-sample mean NaN  worst NaN  (23 s)
+  exp15 out-of-sample C = [0.96 5.77 7.9]: mean 224432, CVaR90 272180 (5 min)
+  exp15 out-of-sample C = [2.66 6.01 7.9]: mean 224685, CVaR90 272702 (9 min)
+  exp15 out-of-sample C = [2.74 5.5 7.9]: mean 224582, CVaR90 272607 (14 min)
+  exp15 out-of-sample C = [2.8 5.06 7.9]: mean 224531, CVaR90 272426 (18 min)
+  exp15 out-of-sample C = [3.52 6 7.9]: mean 224877, CVaR90 273041 (23 min)
+  exp15 out-of-sample C = [3.66 6.34 7.9]: mean 225006, CVaR90 273254 (27 min)
+  exp15 out-of-sample C = [4.22 2.5 7.9]: mean 224507, CVaR90 272193 (32 min)
+  exp15 out-of-sample C = [4.54 2.17 7.9]: mean 224519, CVaR90 272192 (37 min)
+  exp15 out-of-sample C = [4.65 2.13 7.9]: mean 224537, CVaR90 272194 (41 min)
+  exp15 out-of-sample C = [8.18 7.98 7.9]: mean 231111, CVaR90 291171 (46 min)
+== all done in 118.0 min
