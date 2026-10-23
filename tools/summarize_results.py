@@ -208,3 +208,126 @@ d = rd("exp11_stylized.csv")
 if d is not None:
     e = max((d.G_JR_closed - d.G_JR_lp).abs().max(), (d.G_IR_closed - d.G_IR_lp).abs().max())
     print(f"Exp11: {len(d)} cases, max |closed form - LP| = {e:.2e} MW")
+
+# ------------------------------------------------------------------ helpers for the AE-upgrade experiments
+def paired(P, B, col="net_cost_adj"):
+    diff = (P[col].values - B[col].values)
+    lo, hi = ci(diff)
+    try:
+        pv = stats.wilcoxon(diff, zero_method="zsplit").pvalue if np.any(np.abs(diff) > 1e-9) else 1.0
+    except ValueError:
+        pv = np.nan
+    return diff.mean(), lo, hi, 100 * diff.mean() / abs(B[col].mean()), pv
+
+
+def rel_cap(q):
+    ok = q[(q.fulfil_rate_pct >= 99 - 1e-6) & (q.n_valid == 3)]
+    return float(ok.C.max()) if len(ok) else np.nan
+
+
+# ------------------------------------------------------------------ deadline check (all Monte-Carlo files)
+header("Deadline check: lateness (GPU-h*h) > 0 in any run")
+for f in sorted(os.listdir(RES)) if os.path.isdir(RES) else []:
+    if f.endswith(".csv") and "lateness_GPUh_h" in (open(os.path.join(RES, f)).readline()):
+        d = pd.read_csv(os.path.join(RES, f)); n = int((d.lateness_GPUh_h > 1e-3).sum())
+        if n: print(f"  {f}: {n} rows with lateness, max {d.lateness_GPUh_h.max():.1f}")
+print("  (no line above = no deadline missed anywhere)")
+
+# ------------------------------------------------------------------ Exp13 substitution
+header("Exp13  virtual-physical substitution (perfect information, c_rb = 0)")
+d = rd("exp13_substitution.csv"); s = rd("exp13_strategies.csv")
+if d is not None and s is not None:
+    names = dict(zip(s["index"], s["label"])); d["name"] = d.strategy.map(names)
+    for sw, lab in [(1, "battery energy E (MWh)"), (2, "connection margin gamma")]:
+        q = d[d.sweep == sw]; vals = sorted(q.value.unique())
+        tab = pd.DataFrame({nm: [rel_cap(q[(q.value == v) & (q.name == nm)]) for v in vals] for nm in s["label"]}, index=vals)
+        print(f"--- reliable capacity (>=99 %, all valid) vs {lab}"); print(tab.to_string())
+        base = 12 if sw == 1 else 1.1
+        if base in vals:
+            tgt = tab.loc[base, "JR"]; best = tab[["IR-O*", "IR-P"]].max(axis=1)
+            need = next((v for v in vals if best[v] >= tgt - 1e-9), None)
+            print(f"  JR at {base}: {tgt} MW; the better independent strategy reaches it at {need} (base {base})")
+        jr = q[q.name == "JR"]
+        for v in vals:
+            c = rel_cap(jr[jr.value == v]); r = jr[(jr.value == v) & (jr.C == c)]
+            if len(r): print(f"  JR {lab}={v}: virtual storage before E2/E3 at its reliable capacity {c} MW: "
+                             f"{r.virtual_E2_MWh.iloc[0]:.2f} / {r.virtual_E3_MWh.iloc[0]:.2f} MWh")
+
+# ------------------------------------------------------------------ Exp14 timing
+header("Exp14  computational performance")
+d = rd("exp14_timing.csv")
+if d is not None: print(d.round(3).to_string(index=False))
+
+# ------------------------------------------------------------------ Exp15 risk-averse commitment
+header("Exp15  risk-averse day-ahead commitment, out of sample with JR-D")
+c = rd("exp15_commit.csv"); s = rd("exp15_settings.csv"); o = rd("exp15_oos.csv")
+if c is not None and s is not None:
+    c["label"] = c.setting.map(dict(zip(s["index"], s["label"])))
+    print(c.round(2).to_string(index=False))
+if o is not None and s is not None:
+    lab = dict(zip(s["index"], s["label"])); rows = []
+    for k, q in o.groupby("setting"):
+        v = np.sort(q.net_cost_adj.values)[::-1]; n10 = max(1, int(round(0.1 * len(v))))
+        lo, hi = ci(q.net_cost_adj)
+        rows.append({"setting": lab[k], "mean": q.net_cost_adj.mean(), "ci": f"[{lo:.0f}, {hi:.0f}]", "cvar90": v[:n10].mean(),
+                     "worst": v[0], "all_valid": q.all_valid.mean(), "fulfil": q.fulfil_rate_pct.mean(), "dr_pay": q.dr_pay.mean(),
+                     "pen": (q.pen_dev + q.pen_rb).mean()})
+    t = pd.DataFrame(rows).set_index("setting"); print(t.round(3).to_string())
+    sp = o[o.setting == 1].set_index("realisation")
+    for k in sorted(o.setting.unique()):
+        if k == 1: continue
+        m, lo, hi, rel, pv = paired(o[o.setting == k].set_index("realisation").loc[sp.index], sp)
+        print(f"  {lab[k]:14s} - SP: net cost {m:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, Wilcoxon p={pv:.2g})")
+
+# ------------------------------------------------------------------ Exp16 tariff shape
+header("Exp16  tariff shape (same daily mean price)")
+d = rd("exp16_tariff.csv"); s = rd("exp16_shapes.csv"); m = rd("exp16_tariff_mc.csv")
+NM3 = {1: "IR-O*", 2: "IR-P", 3: "JR"}
+if d is not None and s is not None:
+    d["shape_name"] = d["shape"].map(dict(zip(s["index"], s["label"]))); d["name"] = d.strategy.map(NM3)
+    print(d.pivot_table(index=["shape_name", "C"], columns="name", values=["fulfil_rate_pct", "net_cost_adj"]).round(1).to_string())
+if m is not None and s is not None:
+    for j, nm in zip(s["index"], s["label"]):
+        q = m[m["shape"] == j]; J = q[q.strategy == 3].set_index("realisation")
+        best = min([1, 2], key=lambda i: q[q.strategy == i].net_cost_adj.mean()); B = q[q.strategy == best].set_index("realisation")
+        mm, lo, hi, rel, pv = paired(J, B.loc[J.index])
+        print(f"  {nm:9s} MC (N={len(J)}): means IR-O* {q[q.strategy == 1].net_cost_adj.mean():.0f}  IR-P {q[q.strategy == 2].net_cost_adj.mean():.0f}  "
+              f"JR-D {J.net_cost_adj.mean():.0f} | JR-D - {NM3[best]}: {mm:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, p={pv:.2g}) | "
+              f"fulfil {q[q.strategy == 1].fulfil_rate_pct.mean():.1f}/{q[q.strategy == 2].fulfil_rate_pct.mean():.1f}/{J.fulfil_rate_pct.mean():.1f}")
+
+# ------------------------------------------------------------------ Exp17 policy
+header("Exp17  thermal inertia, green-electricity share, PUE cap")
+d = rd("exp17_policy.csv")
+if d is not None:
+    d["name"] = d.strategy.map(NM3)
+    for sw, lab in [(1, "thermal inertia off/on x C"), (2, "green share g"), (3, "PUE cap")]:
+        q = d[d.sweep == sw]
+        idx = ["value", "C"] if sw == 1 else ["value"]
+        print(f"--- {lab}")
+        print(q.pivot_table(index=idx, columns="name", values=["fulfil_rate_pct", "net_cost_adj", "pue", "th_max_K", "cost_green"]).round(3).to_string())
+    q = d[d.sweep == 4]
+    if len(q):
+        J = q[q.strategy == 3].set_index("value")
+        for b in [1, 2]:
+            B = q[q.strategy == b].set_index("value")
+            mm, lo, hi, rel, pv = paired(J, B.loc[J.index])
+            print(f"  MC with inertia (N={len(J)}): JR-D - {NM3[b]}: {mm:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, p={pv:.2g}); "
+                  f"means {B.net_cost_adj.mean():.0f} vs {J.net_cost_adj.mean():.0f}; fulfil {B.fulfil_rate_pct.mean():.1f} vs {J.fulfil_rate_pct.mean():.1f}")
+
+# ------------------------------------------------------------------ Exp18 climate
+header("Exp18  season and climate")
+d = rd("exp18_climate.csv"); s = rd("exp18_cases.csv"); m = rd("exp18_climate_mc.csv")
+if s is not None: print(s.round(3).to_string(index=False))
+if d is not None and s is not None:
+    for j, nm in enumerate(s["label"], start=1):
+        q = d[d["case"] == j]
+        print(f"  {nm:14s} reliable capacity: " + ", ".join(f"{NM3[i]} {rel_cap(q[q.strategy == i])}" for i in [1, 2, 3]))
+if m is not None and s is not None:
+    for j, nm in enumerate(s["label"], start=1):
+        q = m[m["case"] == j]; J = q[q.strategy == 3].set_index("realisation")
+        if not len(J): continue
+        best = min([1, 2], key=lambda i: q[q.strategy == i].net_cost_adj.mean()); B = q[q.strategy == best].set_index("realisation")
+        mm, lo, hi, rel, pv = paired(J, B.loc[J.index])
+        print(f"  {nm:14s} MC (N={len(J)}): fulfil {q[q.strategy == 1].fulfil_rate_pct.mean():.1f}/{q[q.strategy == 2].fulfil_rate_pct.mean():.1f}/"
+              f"{J.fulfil_rate_pct.mean():.1f}; all valid {q[q.strategy == 1].all_valid.mean():.2f}/{q[q.strategy == 2].all_valid.mean():.2f}/{J.all_valid.mean():.2f}; "
+              f"JR-D - {NM3[best]}: {mm:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, p={pv:.2g})")

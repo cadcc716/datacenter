@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw the system-architecture and method-framework diagrams (paper Fig. 1 and Fig. 2).
 
-Usage: python3 tools/draw_diagrams.py [figure_dir] [--en]
+Usage: python3 tools/draw_diagrams.py [figure_dir] [--en]   (--en writes to <figure_dir>_en)
 Flow colours follow fixed roles: electricity, cooling, heat, gas, information, computing workload.
 """
 import os, sys
@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 FIG = args[0] if args else os.path.join(HERE, "..", "matlab", "figures")
 EN = "--en" in sys.argv
+if EN: FIG = FIG.rstrip("/\\") + "_en"             # English versions go to <figure_dir>_en, same file names
 os.makedirs(FIG, exist_ok=True)
 for f in ["Noto Sans CJK SC", "WenQuanYi Micro Hei", "SimHei", "Microsoft YaHei"]:
     if any(f in x.name for x in font_manager.fontManager.ttflist):
@@ -136,14 +137,14 @@ def architecture():
         x = lx + i * 0.095
         ax.plot([x, x + 0.03], [ly, ly], color=FLOW[k], lw=2, ls="--" if k == "info" else "-")
         ax.text(x + 0.035, ly, lab, va="center", fontsize=7, color=INK2)
-    name = "fig00_architecture_en.png" if EN else "fig00_architecture.png"
+    name = "fig00_architecture.png"
     fig.savefig(os.path.join(FIG, name), dpi=200); plt.close(fig); print("wrote", name)
 
 
 def framework():
     fig, ax = plt.subplots(figsize=(12.6, 2.4)); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
     steps = [
-        (T("历史数据", "Historical data"), T("26 个工作日联合场景\n（算力–推理–光伏–气温）", "joint scenarios of\ncompute, inference, PV, temp.")),
+        (T("历史数据", "Historical data"), T("前 20 个工作日联合场景\n（算力–推理–光伏–气温）", "20 prior workdays: joint\ncompute, inference, PV, temp.")),
         (T("日前耦合承诺", "Day-ahead commitment"), T("两阶段 MILP：C_k 共享\n场景内联合恢复；SP/CVaR/DRO", "two-stage MILP, shared C_k\njoint recovery; SP/CVaR/DRO")),
         (T("基准调优", "Benchmark tuning"), T("IR-O* 回测选 α\nIR-P 取对偶通道价格", "IR-O*: back-tested α\nIR-P: dual channel price")),
         (T("日内滚动 MPC", "Intraday MPC"), T("15 min 步长、18 h 时域\n场景树含事件调用", "15-min step, 18-h horizon\nscenario tree incl. calls")),
@@ -161,7 +162,7 @@ def framework():
             arrow(ax, (x + w, y + h / 2), (x + dx, y + h / 2), "info")
     arrow(ax, (0.02 + 4 * dx + w / 2, y), (0.02 + 3 * dx + w / 2, y), "info", ls="--", rad=-0.3)
     label(ax, 0.02 + 3.5 * dx + w / 2, 0.20, T("实测状态反馈（每步）", "measured state fed back every step"), fs=7)
-    name = "fig00_framework_en.png" if EN else "fig00_framework.png"
+    name = "fig00_framework.png"
     fig.savefig(os.path.join(FIG, name), dpi=200); plt.close(fig); print("wrote", name)
 
 
