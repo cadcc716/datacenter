@@ -67,12 +67,12 @@ def save(fig, name):
 
 # Chinese -> English phrase table (longest phrases are replaced first; generic fragments last)
 ZH2EN = {
-    "独立恢复-规则 IR-R": "IR-R: independent, rule-based", "独立恢复-固定分摊 IR-O": "IR-O: independent, fixed split",
-    "独立恢复-日前调优分摊 IR-O*": "IR-O*: independent, tuned split", "独立恢复-影子价格协调 IR-P": "IR-P: independent, price-coordinated",
-    "联合恢复-逐事件 JR-M": "JR-M: joint, event-by-event", "联合恢复-确定性MPC JR-D（本文）": "JR-D: joint, deterministic MPC (proposed)",
-    "联合恢复-场景MPC JR-S（本文）": "JR-S: joint, scenario MPC (proposed)", "联合恢复-完美信息": "JR: perfect information",
-    "不参与DR": "No DR", "独立恢复-事后最优分摊 IR-O*": "IR-O*: independent, best split in hindsight",
-    "联合恢复 JR（本文）": "JR: joint recovery (proposed)",
+    "独立恢复-规则 IR-R": "IR-R (rule-based)", "独立恢复-固定分摊 IR-O": "IR-O (fixed split)",
+    "独立恢复-日前调优分摊 IR-O*": "IR-O* (tuned split)", "独立恢复-影子价格协调 IR-P": "IR-P (price-coordinated)",
+    "联合恢复-逐事件 JR-M": "JR-M (event-by-event)", "联合恢复-确定性MPC JR-D（本文）": "JR-D (proposed)",
+    "联合恢复-场景MPC JR-S（本文）": "JR-S (proposed, scenario MPC)", "联合恢复-完美信息": "JR (perfect information)",
+    "不参与DR": "No DR", "独立恢复-事后最优分摊 IR-O*": "IR-O* (hindsight split)",
+    "联合恢复 JR（本文）": "JR (proposed)",
     "DR基线（前5个典型工作日均值）": "DR baseline (mean of 5 prior workdays)", "DR日不响应时的并网功率": "Grid import on the DR day without response",
     "并网容量上限": "Connection limit", "并网功率 / MW": "Grid import / MW", "(a) 并网功率基线": "(a) Grid import and baseline",
     "在线推理 (Flex0)": "Online inference (Flex 0)", "不可延迟训练 (Flex0)": "Non-deferrable training (Flex 0)",
@@ -94,7 +94,7 @@ ZH2EN = {
     "BESS 放电(+)/充电(-)": "BESS discharge (+) / charge (−)", "蓄冷 放冷(+)/蓄冷(-)（电当量）": "TES discharge (+) / charge (−), electric equivalent",
     "燃气内燃机出力": "Gas engine output", "功率 / MW": "Power / MW", "(b) JR-D 综合能源设备出力": "(b) JR-D dispatch of the IES devices",
     "事件持续时间 / h": "Event duration / h", "事件间隔 / h": "Event interval / h", "响应承诺 / MW": "Commitment / MW",
-    "连续响应兑现率 / %": "Fulfilment over consecutive events / %", "综合成本（期末状态折算）/ 万元": "Total cost incl. terminal-state value / 10⁴ CNY",
+    "连续响应兑现率 / %": "Fulfilment / %", "综合成本（期末状态折算）/ 万元": "Total cost / 10⁴ CNY",
     "JR 相对最强独立基准的综合成本降幅": "Cost reduction of JR vs the strongest independent benchmark",
     "JR-D 相对最强独立基准的综合成本降幅": "Cost reduction of JR-D vs the strongest independent benchmark",
     "事件确定 · c_rb=3 元/kW": "events certain · c_rb = 3 CNY/kW", "事件确定 · c_rb=0": "events certain · c_rb = 0",
@@ -163,6 +163,7 @@ ZH2EN = {
     "PUE 上限": "PUE cap", "(c) PUE 上限（6 MW）": "(c) PUE cap (6 MW)", "（点旁为实际 PUE）": " (labels: achieved PUE)", "无": "none",
     "联络线爬坡上限 / (MW/15 min)": "Tie-line ramp limit / (MW per 15 min)", "(d) 联络线爬坡约束（6 MW）": "(d) Tie-line ramp limit (6 MW)",
     "（点旁为兑现率）": " (labels: fulfilment)",
+    "(c) 独立恢复：Γ_B/Γ_B⁰（前序 6 MW×2 h）": "(c) IR: Γ_B/Γ_B⁰ (A: 6 MW × 2 h)", "(d) 联合恢复：Γ_B/Γ_B⁰（前序 6 MW×2 h）": "(d) JR: Γ_B/Γ_B⁰ (A: 6 MW × 2 h)",
     "可靠容量处": "at reliable capacity", "独立恢复": "Independent recovery", "联合恢复": "Joint recovery",
     # generic fragments
     "万元": "10⁴ CNY", "元/MWh": "CNY/MWh", "元/(GPU·h)": "CNY/(GPU·h)", "元/kWh": "CNY/kWh", "元/kW": "CNY/kW", "本文": "proposed",
