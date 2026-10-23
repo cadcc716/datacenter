@@ -124,7 +124,10 @@ ZH2EN = {
     "物理储能能量（电池）": "Physical storage energy (battery)", "联合恢复调用的算力虚拟储能（E2 前积压）": "Virtual computing storage used by JR (backlog before E2)",
     "电储能能量容量 E / MWh": "Battery energy capacity E / MWh", "MWh（下方为虚拟储能）": "MWh (below zero: virtual storage)",
     "(c) 物理—虚拟储能镜像（JR，可靠容量处）": "(c) Physical vs virtual storage (JR at its reliable capacity)",
-    "帕累托前沿（JR-D 运行）": "Pareto front (operated by JR-D)", "膝点：": "Knee: ", "样本外平均综合成本 / 万元": "Out-of-sample mean total cost / 10⁴ CNY",
+    "帕累托前沿（JR-D 运行）": "Pareto front (operated by JR-D)", "非支配点（JR-D 运行）": "Non-dominated (operated by JR-D)",
+    "随机规划（SP）": "Stochastic programme (SP)", "单事件能力评估：均值 ": "Single-event assessment: mean ", "、CVaR ": ", CVaR ",
+    " 万元（图外）": " 10⁴ CNY (off-chart)", "三次承诺合计": "Total of three events", "(b) 承诺随保守度的变化（E3 始终为 ": "(b) Commitments vs conservativeness (E3 always ",
+    " MW）": " MW)", "联合恢复调用的算力虚拟储能（E3 前积压）": "Virtual computing storage used by JR (backlog before E3)", "膝点：": "Knee: ", "样本外平均综合成本 / 万元": "Out-of-sample mean total cost / 10⁴ CNY",
     "样本外最差 10% 日平均成本（CVaR(0.9)）/ 万元": "Out-of-sample mean of worst 10% days (CVaR(0.9)) / 10⁴ CNY",
     "(a) 风险—期望权衡（52 个运行日）": "(a) Risk–expectation trade-off (52 operating days)",
     "模糊集半径 δ（0 = 随机规划，2 = 场景鲁棒）": "Ambiguity radius δ (0 = SP, 2 = scenario-robust)", "日前承诺 / MW": "Day-ahead commitment / MW",
@@ -138,10 +141,10 @@ ZH2EN = {
     "+联合分配通道\n（逐事件）": "+ joint channel\nallocation (myopic)", "+跨事件远见\n（本文）": "+ cross-event\nforesight (proposed)",
     "+场景对冲\n（E3 不确定时）": "+ scenario hedging\n(E3 uncertain)",
     "(b) 机理贡献瀑布（蓝：降低成本，红：增加成本）": "(b) Mechanism waterfall (blue: cost down, red: cost up)",
-    "规则独立恢复\n(IR-R)": "Rule-based\nindependent\n(IR-R)", "+各侧优化\n(IR-O)": "+ each side\noptimised\n(IR-O)",
-    "+日前调优\n分摊 (IR-O*)": "+ tuned\nsplit\n(IR-O*)", "+通道价格\n协调 (IR-P)": "+ channel\nprice\n(IR-P)",
-    "+联合分配\n通道 (JR-M)": "+ joint\nallocation\n(JR-M)", "+跨事件远见\n(JR-D)": "+ cross-event\nforesight\n(JR-D)",
-    "+场景对冲\n(JR-S，E3 不确定)": "+ scenario\nhedging\n(JR-S)", "合计": "Total",
+    "规则独立\n恢复\n(IR-R)": "Rule-based\nindependent\n(IR-R)", "+各侧\n优化\n(IR-O)": "+ each side\noptimised\n(IR-O)",
+    "+日前调优\n分摊\n(IR-O*)": "+ tuned\nsplit\n(IR-O*)", "+通道价格\n协调\n(IR-P)": "+ channel\nprice\n(IR-P)",
+    "+联合分配\n通道\n(JR-M)": "+ joint\nallocation\n(JR-M)", "+跨事件\n远见\n(JR-D)": "+ cross-event\nforesight\n(JR-D)",
+    "+场景对冲\n(JR-S，\nE3 不确定)": "+ scenario\nhedging\n(JR-S, E3\nuncertain)", "合计": "Total",
     "相对 IR-R 的日均成本变化 / 万元": "Change of daily mean cost vs IR-R / 10⁴ CNY",
     "DR 日 15 min 驱动因素的同期相关系数（00:00–24:00）": "Coincidence of the DR-day drivers (15-min Pearson correlation, 00:00-24:00)",
     "Pearson 相关系数": "Pearson correlation", "DR 基线": "DR baseline", "不响应购电": "Grid import without DR", "光伏出力": "PV output",
@@ -525,6 +528,7 @@ def fig_substitution():
             txt = (f"JR 在 {base:g}{' MWh' if sw == 1 else ''} 时可靠容量 {target:g} MW；"
                    + (f"独立恢复需 {need:g}{' MWh' if sw == 1 else ''}" if need is not None else "独立恢复在扫描范围内达不到"))
             a.text(0.02, 0.97, txt, transform=a.transAxes, fontsize=7, color=INK2, va="top")
+            lo_, hi_ = a.get_ylim(); a.set_ylim(lo_, hi_ + 0.35 * (hi_ - lo_))
         a.set_xlabel(xl); a.set_ylabel("≥99% 兑现且三次全有效的最大承诺 / MW")
         a.set_title(f"({'ab'[j]}) 可靠可交付容量"); a.legend(fontsize=7, loc="lower right")
     # (c) mirror: physical battery energy above, virtual storage (backlog energy carried into E2) below
@@ -532,10 +536,10 @@ def fig_substitution():
     virt = []
     for v in vals:
         cap = rel_cap(q[q.value == v]); r = q[(q.value == v) & (q.C == cap)]
-        virt.append(float(r.virtual_E2_MWh.iloc[0]) if len(r) else np.nan)
+        virt.append(float(r.virtual_E3_MWh.iloc[0]) if len(r) else np.nan)
     x = np.arange(len(vals))
     a.bar(x, vals, 0.6, color="#86b6ef", edgecolor="#fcfcfb", linewidth=2, label="物理储能能量（电池）")
-    a.bar(x, -np.array(virt), 0.6, color=C["JR-D"], edgecolor="#fcfcfb", linewidth=2, label="联合恢复调用的算力虚拟储能（E2 前积压）")
+    a.bar(x, -np.array(virt), 0.6, color=C["JR-D"], edgecolor="#fcfcfb", linewidth=2, label="联合恢复调用的算力虚拟储能（E3 前积压）")
     for xx, v, w in zip(x, vals, virt):
         a.text(xx, v + 0.3, f"{v:g}", ha="center", va="bottom", fontsize=7, color=INK2)
         if np.isfinite(w): a.text(xx, -w - 0.3, f"{w:.1f}", ha="center", va="top", fontsize=7, color=INK2)
@@ -553,34 +557,39 @@ def fig_risk():
     lab = dict(zip(s["index"], s["label"]))
     g = o.groupby("setting").net_cost_adj
     mean = g.mean(); cvar = g.apply(lambda v: np.sort(v.values)[::-1][:max(1, int(round(0.1 * len(v))))].mean())
-    allv = o.groupby("setting").all_valid.mean()
-    pts = pd.DataFrame({"mean": mean / 1e4, "cvar": cvar / 1e4, "allv": 100 * allv}).reset_index()
-    pts["label"] = pts.setting.map(lab)
-    fig, ax = plt.subplots(1, 2, figsize=(11, 3.9)); fig.subplots_adjust(wspace=0.3)
+    pts = pd.DataFrame({"mean": mean / 1e4, "cvar": cvar / 1e4}).reset_index(); pts["label"] = pts.setting.map(lab)
+    single = pts[pts.label == "single"]; pts = pts[pts.label != "single"]
+    fig, ax = plt.subplots(1, 2, figsize=(11.5, 4.1)); fig.subplots_adjust(wspace=0.3)
     a = ax[0]
-    # Pareto set (minimise both) and knee = point closest to the utopia point after normalisation
     P = pts.sort_values("mean"); front = []; best = np.inf
     for _, r in P.iterrows():
         if r.cvar < best - 1e-9: front.append(r); best = r.cvar
     F = pd.DataFrame(front)
-    a.scatter(pts["mean"], pts["cvar"], s=40, color=AXIS, edgecolor="#fcfcfb", linewidth=1, zorder=2)
-    a.plot(F["mean"], F["cvar"], color=C["JR-D"], lw=2, marker="o", ms=7, mec="#fcfcfb", mew=1, zorder=3, label="帕累托前沿（JR-D 运行）")
-    if len(F) >= 2:
-        nx = (F["mean"] - F["mean"].min()) / max(F["mean"].max() - F["mean"].min(), 1e-9)
-        ny = (F["cvar"] - F["cvar"].min()) / max(F["cvar"].max() - F["cvar"].min(), 1e-9)
-        k = (nx ** 2 + ny ** 2).idxmin(); r = F.loc[k]
-        a.scatter([r["mean"]], [r["cvar"]], s=140, facecolor="none", edgecolor=INK, linewidth=1.2, zorder=4)
-        a.annotate(f"膝点：{r.label}", (r["mean"], r["cvar"]), xytext=(10, 10), textcoords="offset points", fontsize=7.5, color=INK)
-    for _, r in pts.iterrows():
-        a.annotate(r.label, (r["mean"], r["cvar"]), xytext=(4, -10), textcoords="offset points", fontsize=6.5, color=INK2)
+    a.scatter(pts["mean"], pts["cvar"], s=46, color=AXIS, edgecolor="#fcfcfb", linewidth=1, zorder=2)
+    sp = pts[pts.label == "SP"]
+    a.scatter(sp["mean"], sp["cvar"], s=60, color=C["IR-O*"], edgecolor="#fcfcfb", linewidth=1, zorder=4, label="随机规划（SP）")
+    a.plot(F["mean"], F["cvar"], color=C["JR-D"], lw=2, marker="o", ms=7, mec="#fcfcfb", mew=1, zorder=3, label="非支配点（JR-D 运行）")
+    offs = [(6, 4), (6, -10), (-34, 6), (6, 10), (-40, -10), (6, -4), (-30, -12), (6, 2), (-38, 2)]
+    for k, (_, r) in enumerate(pts.sort_values("mean").iterrows()):
+        a.annotate(r.label, (r["mean"], r["cvar"]), xytext=offs[k % len(offs)], textcoords="offset points", fontsize=6.5, color=INK2)
+    if len(single):
+        r = single.iloc[0]
+        a.text(0.98, 0.97, f"单事件能力评估：均值 {r['mean']:.2f}、CVaR {r['cvar']:.2f} 万元（图外）", transform=a.transAxes,
+               ha="right", va="top", fontsize=7, color=INK2)
+    xr = pts["mean"].max() - pts["mean"].min(); yr = pts["cvar"].max() - pts["cvar"].min()
+    a.set_xlim(pts["mean"].min() - 0.25 * xr, pts["mean"].max() + 0.35 * xr); a.set_ylim(pts["cvar"].min() - 0.25 * yr, pts["cvar"].max() + 0.6 * yr)
     a.set_xlabel("样本外平均综合成本 / 万元"); a.set_ylabel("样本外最差 10% 日平均成本（CVaR(0.9)）/ 万元")
-    a.set_title("(a) 风险—期望权衡（52 个运行日）"); a.legend(fontsize=7, loc="upper right")
+    a.set_title("(a) 风险—期望权衡（52 个运行日）"); a.legend(fontsize=7, loc="lower right")
     b = ax[1]
     dro = c[c.kind.isin([0, 1])].copy(); dro["delta"] = np.where(dro.kind == 0, 0.0, dro.p1); dro = dro.sort_values("delta")
-    for k, col in zip([1, 2, 3], ["#86b6ef", "#3987e5", "#1c5cab"]):
-        b.plot(dro.delta, dro[f"C{k}"], color=col, lw=2, marker="o", ms=6, mec="#fcfcfb", mew=0.8, label=f"E{k} 承诺")
+    dro["tot"] = dro.C1 + dro.C2 + dro.C3
+    b.plot(dro.delta, dro.C1, color="#86b6ef", lw=2, marker="o", ms=6, mec="#fcfcfb", mew=0.8, label="E1 承诺")
+    b.plot(dro.delta, dro.C2, color="#3987e5", lw=2, marker="o", ms=6, mec="#fcfcfb", mew=0.8, label="E2 承诺")
+    b.plot(dro.delta, dro.tot, color="#1c5cab", lw=2.4, marker="s", ms=6, mec="#fcfcfb", mew=0.8, label="三次承诺合计")
+    for _, r in dro.iterrows():
+        b.annotate(f"{r.tot:.1f}", (r.delta, r.tot), xytext=(0, 6), textcoords="offset points", ha="center", fontsize=6.5, color=INK2)
     b.set_xlabel("模糊集半径 δ（0 = 随机规划，2 = 场景鲁棒）"); b.set_ylabel("日前承诺 / MW")
-    b.set_title("(b) 承诺随保守度的变化"); b.legend(fontsize=7, loc="upper right")
+    b.set_title(f"(b) 承诺随保守度的变化（E3 始终为 {dro.C3.iloc[0]:.1f} MW）"); b.legend(fontsize=7, loc="center right")
     save(fig, "fig15_risk_pareto.png")
 
 
@@ -609,20 +618,20 @@ def fig_decomposition():
         a.barh(y, diff, h, color=shades[i], edgecolor="#fcfcfb", linewidth=1.5, label=f"{lab}（对 {bench}，合计 {tot:.2f} 万元/日）")
     a.axvline(0, color=AXIS, lw=0.8); a.set_yticks(np.arange(len(COMP))); a.set_yticklabels([c_[0] for c_ in COMP]); a.invert_yaxis()
     a.set_xlabel("JR-D 相对较强调优基准的日均节省 / 万元（>0 有利于 JR-D）"); a.set_title("(a) 收益来源拆解（蒙特卡洛均值）")
-    a.legend(fontsize=6.8, loc="best")
+    a.legend(fontsize=6.8, loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=1)
     # (b) mechanism waterfall: each step adds one coordination mechanism (events certain, c_rb = 3); bars show
     #     the change of the Monte-Carlo mean cost relative to IR-R, so the axis keeps its zero
     b = ax[1]; d, s, lab = data[0]; idx = dict(zip(s["label"], s["index"]))
     m = d.groupby("strategy").net_cost_adj.mean() / 1e4
-    steps = [("IR-R", "规则独立恢复\n(IR-R)"), ("IR-O", "+各侧优化\n(IR-O)"), ("IR-O*", "+日前调优\n分摊 (IR-O*)"),
-             ("IR-P", "+通道价格\n协调 (IR-P)"), ("JR-M", "+联合分配\n通道 (JR-M)"), ("JR-D", "+跨事件远见\n(JR-D)")]
+    steps = [("IR-R", "规则独立\n恢复\n(IR-R)"), ("IR-O", "+各侧\n优化\n(IR-O)"), ("IR-O*", "+日前调优\n分摊\n(IR-O*)"),
+             ("IR-P", "+通道价格\n协调\n(IR-P)"), ("JR-M", "+联合分配\n通道\n(JR-M)"), ("JR-D", "+跨事件\n远见\n(JR-D)")]
     steps = [(k, t) for k, t in steps if k in idx]
     vals = [m[idx[k]] for k, _ in steps]; labels = [t for _, t in steps]
     u = next((x for x in data if x[2] == "E3 不确定"), None)
     if u is not None:
         du, su, _ = u; iu = dict(zip(su["label"], su["index"])); mu = du.groupby("strategy").net_cost_adj.mean() / 1e4
         if "JR-S" in iu and "JR-D" in iu:
-            vals.append(vals[-1] + (mu[iu["JR-S"]] - mu[iu["JR-D"]])); labels.append("+场景对冲\n(JR-S，E3 不确定)")
+            vals.append(vals[-1] + (mu[iu["JR-S"]] - mu[iu["JR-D"]])); labels.append("+场景对冲\n(JR-S，\nE3 不确定)")
     rel = [v - vals[0] for v in vals]
     b.bar(0, 0.0, 0.6, color=MUTED)
     b.text(0, 0, f"IR-R\n{vals[0]:.2f}", ha="center", va="bottom", fontsize=7, color=INK2)

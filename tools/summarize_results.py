@@ -137,7 +137,7 @@ for tag in ["", "_crb0"]:
     cols = ["label", "C1", "C2", "C3", "C_total", "alpha_star", "fulfil_rate_pct", "net_cost_adj", "mc_fulfil_rate_pct", "mc_share_all_valid", "mc_net_cost_adj", "mc_net_cost_excl_rb"]
     print(d[[c for c in cols if c in d.columns]].round(2).to_string(index=False))
     th = rd(f"exp6_theta{tag}.csv")
-    if th is not None: print("  theta back-test:", th.round(0).to_dict("list"))
+    if th is not None: print("  theta back-test:", th.round(2).to_dict("list"))
 
 # ------------------------------------------------------------------ Exp8 rebound policy
 header("Exp8  rebound assessment as a policy parameter (uniform 6 MW, case day)")
