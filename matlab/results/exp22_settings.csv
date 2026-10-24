@@ -1,0 +1,7 @@
+label,index
+base,1
+ovh-base,2
+ovh-slow,3
+cap-1,4
+cap-3,5
+cap-3+ovh,6

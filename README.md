@@ -48,6 +48,15 @@ are negligible for every strategy (at most 4 GPU·h·h in a single run).
   Gui'an hub climate (−2.6 % to −2.8 %, every event valid), liquid cooling (−7.4 %), GPU power capping
   and server-room thermal inertia (−2.2 %). A PUE cap of 1.25 costs about 0.24 × 10⁴ CNY per day. Tight
   IT or tie-line ramp limits shrink the benefit.
+* **Job-level check (Exp19–20).** The fluid recovery model lets backlog catch up at any parallelism, which is
+  too optimistic for rigid gang-scheduled long jobs: its plans lose events when executed job by job (all
+  events valid on ≤ 8 % of PAI days). With the optional rigid-job recovery bound the plans are executable
+  (JR-D all valid on 98 % of Acme LLM-trace days and 86.5 % of PAI days, vs 46–87 % for the strongest
+  independent benchmarks), and joint recovery stays 3.0–5.0 % cheaper at job level. Pause / resume
+  overheads cost 2–4 % per day; gang granularity changes costs by 0.3–1.4 %.
+* **Day-ahead scenarios (Exp23).** K-means scenario reduction, DRO around it and a wrong-season scenario pool
+  all give out-of-sample costs within 0.35 % of each other (every event valid); the in-sample estimate is
+  6–14 % optimistic in every case.
 * **Computation.** Intraday MPC solves in under 2 s with 10 scenarios; the day-ahead model in 3–25 s.
 
 ![architecture](matlab/figures/fig00_architecture.png)
@@ -128,7 +137,7 @@ tools/                       summarize_results.py, plot_results.py, draw_diagram
 | 18 | `exp18_climate` | Season and climate (Suzhou winter, Gui'an summer) |
 | 19 | `exp19_workload` | LLM-era workload (Acme 2023) and rigid-job recovery; every run also executed at job level |
 | 20 | `exp20_jobsim` | Job-level execution on the case day: job mix (PAI, Acme Seren / Kalos, larger gangs), pause overheads |
-| 21 | `exp21_wind` | Green-power direct connection: offshore wind behind the meter (0–40 MW) |
+| 21 | `exp21_wind` | Green-power direct connection: offshore wind behind the meter (curve 0–40 MW; DR at 0–20 MW, per-day day-ahead commitments) |
 | 22 | `exp22_overhead` | Pause / resume overhead and several GPU capping levels in the fluid model |
 | 23 | `exp23_scenarios` | Day-ahead scenarios: K-means reduction with non-uniform probabilities, seasonal drift |
 
