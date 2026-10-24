@@ -91,8 +91,9 @@ pdis = min([max(u.pdis, 0), par.bess.Pmax, max(st.E - par.bess.Emin, 0) * par.be
 pch  = min([max(u.pch, 0),  par.bess.Pmax, max(par.bess.Emax - st.E, 0) / (par.bess.eta_c * dt)]);
 if pch > 0 && pdis > 0, net = pch - pdis; pch = max(net, 0); pdis = max(-net, 0); end
 ppv = data.pv;
-grid = @(pch_, pdis_, qec_) (1 + fac.a_aux) * pit + fac.P_aux0 + qec_ / data.cop + pch_ - pdis_ - pgt - ppv;
-pg = grid(pch, pdis, qec);
+% grid import from the balance (ppv and pgt passed explicitly: an anonymous function would freeze them)
+grid = @(pch_, pdis_, qec_, ppv_, pgt_) (1 + fac.a_aux) * pit + fac.P_aux0 + qec_ / data.cop + pch_ - pdis_ - pgt_ - ppv_;
+pg = grid(pch, pdis, qec, ppv, pgt);
 %% connection-limit enforcement (facility controller): storage first, then compute throttling
 over = pg - d.Pcap;
 if over > 1e-9
@@ -104,15 +105,23 @@ if over > 1e-9
     if over > 1e-9 && qtc > 0
         r = min(qtc, over * data.cop); qtc = qtc - r; qec = qec - r; over = over - r / data.cop;
     end
-    pg = grid(pch, pdis, qec);
+    pg = grid(pch, pdis, qec, ppv, pgt);
 end
-if pg < par.cap.Pmin            % keep the minimum import: curtail PV, then reduce storage discharge
-    lack = par.cap.Pmin - pg;
+if pg < par.cap.Pmin            % keep the minimum import (no export): throttle the gas engine within its ramp,
+    lack = par.cap.Pmin - pg;   % curtail PV / wind, then reduce storage discharge
+    gmin = max(st.pgt_prev - par.gt.ramp, 0);
+    if pgt > gmin
+        [pgt, qac, qec] = gt_down(pgt, max(pgt - lack, gmin), qac, qec, par, d);
+        pg = grid(pch, pdis, qec, ppv, pgt); lack = max(par.cap.Pmin - pg, 0);
+    end
     r = min(ppv, lack); ppv = ppv - r; lack = lack - r;
     r = min(pdis, lack); pdis = pdis - r; lack = lack - r;
     r = min(qtd, lack * data.cop); qtd = qtd - r; qec = qec + r; lack = lack - r / data.cop;
-    pg = grid(pch, pdis, qec);
-    if pg < 0, ppv = ppv + pg; pg = 0; end
+    pg = grid(pch, pdis, qec, ppv, pgt);
+    if pg < 0                   % still exporting: the gas engine trips below its ramp limit
+        [pgt, qac, qec] = gt_down(pgt, max(pgt + pg, 0), qac, qec, par, d);
+        pg = grid(pch, pdis, qec, ppv, pgt);
+    end
 end
 %% state update
 st.E = st.E + (par.bess.eta_c * pch - pdis / par.bess.eta_d) * dt;
@@ -140,4 +149,11 @@ rec = struct('pg', pg, 'pit', pit, 'y', y, 'z', z, 'pch', pch, 'pdis', pdis, 'E'
     'cop', data.cop, 'overdue', overdue, 'backlog', sum(st.rem, 1), 'over', max(pg - d.Pcap, 0), ...
     'inf', data.inf, 'TH', st.TH, 'qth', qth, 'povh', povh);
 st.t = t + 1;
+end
+
+function [pgt, qac, qec] = gt_down(pgt, pnew, qac, qec, par, d)
+% lower the gas-engine output to pnew; the absorption chiller loses the corresponding waste heat and the
+% electric chiller takes over its cooling
+pgt = pnew;
+qa2 = min(qac, par.ac.cop * d.kh * pgt); qec = qec + (qac - qa2); qac = qa2;
 end
