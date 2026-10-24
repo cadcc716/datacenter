@@ -1042,7 +1042,7 @@ def fig_extensions():
         for i, k in enumerate(ks):
             m, lo, hi, b = _saving(o[(o.setting == k) & (o.realisation > 0)])
             if b is not None:
-                a.text(1.02, i, f"{-m:+.1f}%", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=C["JR-D"])
+                a.text(1.02, i, f"{-m:+.1f}%".replace("-", "\u2212"), transform=a.get_yaxis_transform(), va="center", fontsize=8, color=C["JR-D"])
         a.text(1.02, -0.9, "JR-D 相对最强基准", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
         a.set_yticks(range(len(ks))); a.set_yticklabels([LAB.get(lab[k], lab[k]) for k in ks]); a.invert_yaxis()
         a.set_xlabel("26 个运行日平均综合成本 / 万元"); a.legend(loc="lower right", fontsize=8)
@@ -1109,7 +1109,7 @@ def fig_wind():
         dec = [100 * (jd[jd.wind_MW == p][["C1", "C2", "C3"]] > 0).values.mean() for p in Ps]
         a.bar(x, tot, width=0.55, color=MUTED, edgecolor="#fcfcfb", linewidth=2, label="日前承诺合计（左轴）")
         for i in range(len(Ps)):
-            a.text(x[i], tot[i] + 0.2, f"申报 {dec[i]:.0f}% 的事件", ha="center", va="bottom", fontsize=7.5, color=INK2)
+            a.text(x[i], 0.4, f"申报\n{dec[i]:.0f}%", ha="center", va="bottom", fontsize=7.5, color="#fcfcfb")
         a.set_ylabel("三次事件日前承诺合计 / MW（日均）"); a.set_ylim(0, max(tot) * 1.3 + 0.5)
         b2 = a.twinx()
         for nm in ["JR-D", "IR-P"]:
@@ -1125,14 +1125,17 @@ def fig_wind():
             q = m[m.name == nm]
             if not len(q): continue
             a.plot(x, [q[q.wind_MW == p].net_cost_adj.mean() / 1e4 for p in Ps], "-" + MK[nm], color=C[nm], ms=6, lw=1.4, label=nm)
+        lows = []
         for i, p in enumerate(Ps):
             sm, lo, hi, bb = _saving(m[m.wind_MW == p])
+            yj = jd[jd.wind_MW == p].net_cost_adj.mean() / 1e4; lows.append(yj)
             if bb is not None:
-                a.annotate(f"{sm:+.1f}%", (x[i], jd[jd.wind_MW == p].net_cost_adj.mean() / 1e4), textcoords="offset points",
-                           xytext=(0, -14), ha="center", fontsize=8, color=C["JR-D"])
+                a.annotate(f"{-sm:+.1f}%".replace("-", "\u2212"), (x[i], yj), textcoords="offset points", xytext=(0, -15), ha="center",
+                           fontsize=8, color=C["JR-D"])
+        a.set_ylim(bottom=min(lows) - 1.6); a.set_xlim(-0.4, len(Ps) - 0.6)
         a.set_xticks(x); a.set_xticklabels([f"{p:g}" for p in Ps]); a.set_xlabel("表后风电装机 / MW")
         a.set_ylabel("日均综合成本 / 万元"); a.legend(loc="upper right", fontsize=8)
-        a.set_title("(c) 综合成本与 JR-D 相对最强独立基准的节省")
+        a.set_title("(c) 日均综合成本（数字为 JR-D 相对最强独立基准）")
     else:
         ax[1].set_visible(False); ax[2].set_visible(False)
     save(fig, "fig26_wind.png")

@@ -1,0 +1,5 @@
+  benchmarks: alpha* = 1.00 (static share 0.41), max lambda_hr = 1800 CNY/MWh (628s)
+  exp21 wind  5 MW C = [5.8 5 4.9] r= 0 wind  61.0 MWh  valid 3 3 3 3 3 3 | net(k)   229   177   175   166   170   159 | renewable share 23.3 23.4 23.4 23.4 23.4 23.4 % (12 min)
+  exp21 wind  5 MW C = [1.4 3.7 4.9] r=13 wind  81.3 MWh  valid 3 3 3 3 | net(k)   187   174   179   168 | renewable share 32.6 32.7 32.7 32.7 % (21 min)
+  exp21 wind  5 MW C = [2 0 4.9] r=26 wind  26.9 MWh  valid 3 2 3 3 | net(k)   225   252   223   220 | renewable share 13.3 13.3 13.3 13.3 % (29 min)
+DONE

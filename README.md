@@ -54,6 +54,13 @@ are negligible for every strategy (at most 4 GPU·h·h in a single run).
   (JR-D all valid on 98 % of Acme LLM-trace days and 86.5 % of PAI days, vs 46–87 % for the strongest
   independent benchmarks), and joint recovery stays 3.0–5.0 % cheaper at job level. Pause / resume
   overheads cost 2–4 % per day; gang granularity changes costs by 0.3–1.4 %.
+* **Green-power direct connection (Exp21).** Behind-the-meter offshore wind of 10 / 20 MW covers 40 % / 58 % of
+  the consumption (no-DR operation); at 20 MW both Document-650 shares are met on 94 % of days. The
+  meter-based baseline inherits the reference days' wind, so day-ahead commitments fall by 63 % at 20 MW,
+  while joint recovery's cost advantage over the strongest benchmark widens to 5.9–6.6 % (2.5 % without wind).
+* **Pause / resume overhead and capping levels (Exp22).** Overheads of 6 / 25 min per paused GPU raise costs by
+  3 % / 7 % and hurt the independent benchmarks' reliability most; power capping widens the joint-recovery
+  advantage to 4.5–4.8 %, and three capping levels add only 0.2 % over one.
 * **Day-ahead scenarios (Exp23).** K-means scenario reduction, DRO around it and a wrong-season scenario pool
   all give out-of-sample costs within 0.35 % of each other (every event valid); the in-sample estimate is
   6–14 % optimistic in every case.
