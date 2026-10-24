@@ -219,6 +219,18 @@ ZH2EN = {
     "比例 / %（线：均值；带：10%–90% 日）": "Share / % (line: mean; band: 10–90 % of days)", "申报": "declared",
     "自发自用占可用发电量比例": "Self-use share of available generation", "自用 ≥60%": "Self-use ≥60 %",
     "表后风电装机 / MW": "Behind-the-meter wind capacity / MW", "需求响应收入 / 万元·日⁻¹": "DR revenue / 10⁴ CNY per day",
+    "燃气锅炉供热": "Gas boiler only", "热泵（无蓄热）": "Heat pump, no tank", "热泵 + 20 MWh 蓄热": "Heat pump + 20 MWh tank",
+    "热泵 + 40 MWh 蓄热": "Heat pump + 40 MWh tank", "热泵\n（无蓄热）": "Heat pump\n(no tank)",
+    "热泵\n+ 20 MWh 蓄热": "Heat pump\n+ 20 MWh tank", "热泵\n+ 40 MWh 蓄热": "Heat pump\n+ 40 MWh tank",
+    "26 个冬季运行日平均综合成本 / 万元": "Mean total cost over 26 winter days / 10⁴ CNY",
+    "(a) 综合成本（含供热燃气）": "(a) Total cost (incl. heating gas)", "：热泵回收": ": heat pump", "：燃气锅炉": ": gas boiler",
+    "供热量 / MWh·日⁻¹（含次日 6 h）": "Heat supplied / MWh per day (incl. 6 h of D+1)",
+    "(b) 热源构成（26 日平均）": "(b) Heat sources (26-day mean)", "蓄热量 JR-D": "Tank level JR-D", "蓄热量 IR-P": "Tank level IR-P",
+    "蓄热量 / MWh": "Tank level / MWh_th", "热泵电功率 JR-D": "Heat-pump power JR-D", "热泵电功率 IR-P": "Heat-pump power IR-P",
+    "热泵电功率 / MW": "Heat-pump power / MW", "(c) 案例日蓄热与热泵（20 MWh 蓄热）": "(c) Case day: tank and heat pump (20 MWh tank)",
+    "热泵": "Heat pump", "锅炉": "Boiler", "热泵\n+20 MWh 罐": "HP, tank\n20 MWh", "热泵\n+40 MWh 罐": "HP, tank\n40 MWh",
+    "产热量 / MWh（含次日 6 h）": "Heat produced / MWh (incl. 6 h of D+1)", "蓄热量（两者相同）": "Tank level (same for both)",
+    "(c) 案例日热泵出力（20 MWh 罐）": "(c) Case day: heat-pump power (20 MWh tank)",
     "积压": "backlog", "承诺": "commitment", "（": " (", "）": ")", "，": ", ", "：": ": ", "；": "; ",
 }
 _ZH_KEYS = sorted(ZH2EN, key=len, reverse=True)
@@ -1124,24 +1136,24 @@ def fig_heat():
         x = np.arange(len(ks)) + (j - 0.5) * w
         a.bar(x, hpq, width=w, color=C[nm], edgecolor="#fcfcfb", linewidth=1, label=f"{nm}：热泵回收")
         a.bar(x, bq, width=w, bottom=hpq, color=C[nm], alpha=0.35, edgecolor="#fcfcfb", linewidth=1, label=f"{nm}：燃气锅炉")
-    a.set_xticks(range(len(ks))); a.set_xticklabels([LAB.get(lab[k], lab[k]).replace("（", "\n（").replace(" + ", "\n+ ") for k in ks], fontsize=8)
-    a.set_ylabel("供热量 / MWh·日⁻¹（含次日 6 h）"); a.legend(loc="upper left", fontsize=7.5, ncol=1, bbox_to_anchor=(1.0, 1.0), frameon=False)
+    SH = {"boiler": "锅炉", "hp": "热泵", "hp+tank20": "热泵\n+20 MWh 罐", "hp+tank40": "热泵\n+40 MWh 罐"}
+    a.set_xticks(range(len(ks))); a.set_xticklabels([SH.get(lab[k], lab[k]) for k in ks], fontsize=8)
+    a.set_ylabel("产热量 / MWh（含次日 6 h）"); a.legend(loc="upper left", fontsize=7.5, ncol=1, bbox_to_anchor=(1.0, 1.0), frameon=False)
     a.set_title("(b) 热源构成（26 日平均）")
     a = ax[2]
     t1 = rd("ts_heat_hp_tank20_JRD.csv"); t2 = rd("ts_heat_hp_tank20_IRP.csv")
     if t1 is not None and t2 is not None:
         h = t1.hour.values; sel = (h >= 12) & (h <= 30)
         shade(a)
-        a.plot(h[sel], t1.H.values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="蓄热量 JR-D")
-        a.plot(h[sel], t2.H.values[sel], color=C["IR-P"], lw=1.6, ls="--", drawstyle="steps-post", label="蓄热量 IR-P")
-        a.set_ylabel("蓄热量 / MWh"); a.set_xlabel("时刻 / h（24 以后为次日）")
+        a.plot(h[sel], t1.php.values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="热泵电功率 JR-D")
+        a.plot(h[sel], t2.php.values[sel], color=C["IR-P"], lw=1.6, ls="--", drawstyle="steps-post", label="热泵电功率 IR-P")
+        a.set_ylabel("热泵电功率 / MW"); a.set_ylim(0, 3.6); a.set_xlabel("时刻 / h（24 以后为次日）")
         b2 = a.twinx()
-        b2.plot(h[sel], t1.php.values[sel], color=C["JR-D"], lw=1, alpha=0.6, drawstyle="steps-post", label="热泵电功率 JR-D")
-        b2.plot(h[sel], t2.php.values[sel], color=C["IR-P"], lw=1, alpha=0.6, ls=":", drawstyle="steps-post", label="热泵电功率 IR-P")
-        b2.set_ylabel("热泵电功率 / MW"); b2.set_ylim(0, 3.5)
+        b2.plot(h[sel], t1.H.values[sel], color=MUTED, lw=1, drawstyle="steps-post", label="蓄热量（两者相同）")
+        b2.set_ylabel("蓄热量 / MWh"); b2.set_ylim(0, 24)
         h1, l1 = a.get_legend_handles_labels(); h2, l2 = b2.get_legend_handles_labels()
-        a.legend(h1 + h2, l1 + l2, loc="upper right", fontsize=7.5)
-        a.set_title("(c) 案例日蓄热与热泵（20 MWh 蓄热）")
+        a.legend(h1 + h2, l1 + l2, loc="center", bbox_to_anchor=(0.6, 0.7), fontsize=7, framealpha=0.95)
+        a.set_title("(c) 案例日热泵出力（20 MWh 罐）")
     else:
         a.set_visible(False)
     save(fig, "fig27_heat.png")

@@ -1,0 +1,5 @@
+  benchmarks: alpha* = 0.80 (static share 0.41), max lambda_hr = 3333 CNY/MWh (311s)
+  exp24 hp         r= 0 heat 127.0 MWh_th valid 1 3 3 3 3 3 | net(k)   328   260   254   247   248   240 | boiler 15.5 27.9 30.0 35.9 23.0 27.3  MWh_th (6 min)
+  exp24 hp         r=13 heat 106.3 MWh_th valid 3 2 3 3 | net(k)   230   236   220   214 | boiler 18.9 23.7 17.2 20.4  MWh_th (12 min)
+  exp24 hp         r=26 heat  94.8 MWh_th valid 3 3 3 3 | net(k)   251   245   248   238 | boiler 23.8 28.1 18.1 21.7  MWh_th (17 min)
+DONE

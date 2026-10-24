@@ -61,6 +61,11 @@ are negligible for every strategy (at most 4 GPU·h·h in a single run).
 * **Pause / resume overhead and capping levels (Exp22).** Overheads of 6 / 25 min per paused GPU raise costs by
   3 % / 7 % and hurt the independent benchmarks' reliability most; power capping widens the joint-recovery
   advantage to 4.5–4.8 %, and three capping levels add only 0.2 % over one.
+* **Winter waste-heat recovery (Exp24).** A 3 MW heat pump on the chilled-water return supplying a nearby heat
+  network costs about 16 % less per day than a gas boiler (16–19 t CO₂ less). Without a tank, its post-event heat
+  recharge competes with catch-up computing (IR-P keeps every event valid on only 69 % of days; joint recovery
+  −4.4 %); a 20 MWh hot-water tank decouples heating from the events, and joint recovery recovers about 6 points
+  more of the waste heat. An oversized tank lowers the baseline, like a large battery.
 * **Day-ahead scenarios (Exp23).** K-means scenario reduction, DRO around it and a wrong-season scenario pool
   all give out-of-sample costs within 0.35 % of each other (every event valid); the in-sample estimate is
   6–14 % optimistic in every case.
