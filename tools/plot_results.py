@@ -202,6 +202,23 @@ ZH2EN = {
     "日前承诺 / MW": "Day-ahead commitment / MW", "(f) 各场景设定下的日前承诺": "(f) Day-ahead commitments per scenario setting",
     # generic fragments
     "万元": "10⁴ CNY", "元/MWh": "CNY/MWh", "元/(GPU·h)": "CNY/(GPU·h)", "元/kWh": "CNY/kWh", "元/kW": "CNY/kW", "本文": "proposed",
+    "(a) 暂停/恢复开销与多档功率封顶": "(a) Pause / resume overhead and power-capping levels",
+    "(b) 场景生成（夏季，52 个样本外日）": "(b) Scenario generation (summer, 52 out-of-sample days)",
+    "(c) 季节漂移（冬季日，26 个样本外日）": "(c) Seasonal drift (winter day, 26 out-of-sample days)",
+    "(d) 各场景设定下的日前承诺": "(d) Day-ahead commitments of each setting",
+    "26 个运行日平均综合成本 / 万元": "Mean total cost over 26 days / 10⁴ CNY", "JR-D 相对最强基准": "JR-D vs best IR",
+    "样本内低估": "In-sample underestimate", "样本外成本相对 ": "Out-of-sample cost vs ",
+    " 的差 / %（JR-D 运行，95% 置信区间）": " / % (operated by JR-D, 95 % CI)",
+    "(a) 绿电直连曲线（无需求响应运行，53 日）": "(a) Green-power curve (no DR, 53 days)",
+    "(b) 关口表基线下的可交付承诺与收入（26 日）": "(b) Commitments and DR revenue (26 days)",
+    "(c) 日均综合成本（数字为 JR-D 相对最强独立基准）": "(c) Mean daily cost (labels: JR-D vs best IR)",
+    "三次事件日前承诺合计 / MW（日均）": "Day-ahead commitments, sum of 3 events / MW (daily mean)",
+    "IR-P 需求响应收入（右轴）": "IR-P DR revenue (right axis)", "JR-D 需求响应收入（右轴）": "JR-D DR revenue (right axis)",
+    "≥30%（2030 年前 ≥35%）": "≥30 % (≥35 % until 2030)", "可再生占用电量比例": "Renewable share of consumption",
+    "日前承诺合计（左轴）": "Day-ahead commitments, sum (left axis)", "日均综合成本 / 万元": "Mean daily total cost / 10⁴ CNY",
+    "比例 / %（线：均值；带：10%–90% 日）": "Share / % (line: mean; band: 10–90 % of days)", "申报": "declared",
+    "自发自用占可用发电量比例": "Self-use share of available generation", "自用 ≥60%": "Self-use ≥60 %",
+    "表后风电装机 / MW": "Behind-the-meter wind capacity / MW", "需求响应收入 / 万元·日⁻¹": "DR revenue / 10⁴ CNY per day",
     "积压": "backlog", "承诺": "commitment", "（": " (", "）": ")", "，": ", ", "：": ": ", "；": "; ",
 }
 _ZH_KEYS = sorted(ZH2EN, key=len, reverse=True)
