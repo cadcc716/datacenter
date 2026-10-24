@@ -233,6 +233,18 @@ ZH2EN = {
     "热泵": "Heat pump", "锅炉": "Boiler", "热泵\n+20 MWh 罐": "HP, tank\n20 MWh", "热泵\n+40 MWh 罐": "HP, tank\n40 MWh",
     "产热量 / MWh（含次日 6 h）": "Heat produced / MWh (incl. 6 h of D+1)", "蓄热量（两者相同）": "Tank level (same for both)",
     "(c) 案例日热泵出力（20 MWh 罐）": "(c) Case day: heat-pump power (20 MWh tank)",
+    "单事件能力盒": "Single-event box", "JR：三个 C₃ 取值下相同": "JR: same for all three C₃",
+    "事件 1 承诺 C₁ / MW": "Commitment of event 1, C₁ / MW", "事件 2 承诺 C₂ / MW": "Commitment of event 2, C₂ / MW",
+    "(a) 基准算例": "(a) Base case", "(b) 间隔短、无并网裕度": "(b) Short intervals, no connection margin",
+    "：C₃ 固定时的 (C₁, C₂) 截面": ": (C₁, C₂) slices at fixed C₃", "JR 能力域 = 盒 ∩ ": "JR region = box ∩ ",
+    "能量界 ": "energy bound ", "JR 能力域 = 单事件能力盒": "JR region = single-event box", "多事件能量界 ": "multi-event energy bound ", "单事件能力 min G_k": "single-event capability min G_k", "能量界 / 3": "energy bound / 3",
+    "本文统一承诺 6 MW": "uniform commitment of the paper, 6 MW", "事件间隔 τ / h": "Interval between events τ / h",
+    "三次事件统一承诺能力 / MW": "Uniform capability of the three events / MW",
+    "(c) 统一承诺能力随事件间隔的变化（案例日）": "(c) Uniform capability vs. the interval (case day)",
+    "联合恢复\nJR": "Joint\nJR", "价格协调\n最有利响应\nIR-P+": "Price-coordinated\nbest response\nIR-P+",
+    "日前调优分摊\nIR-O*（事后最优）": "Tuned split\nIR-O* (hindsight)", "固定分摊\nIR-O": "Fixed split\nIR-O",
+    "价格协调\n求解器响应\nIR-P": "Price-coordinated\nsolver's response\nIR-P", "统一承诺能力 / MW": "Uniform capability / MW",
+    " 个运行日（基准事件时段）的统一承诺能力": " operating days (base event times): uniform capability",
     "积压": "backlog", "承诺": "commitment", "（": " (", "）": ")", "，": ", ", "：": ": ", "；": "; ",
 }
 _ZH_KEYS = sorted(ZH2EN, key=len, reverse=True)
@@ -1223,6 +1235,90 @@ def fig_wind():
     save(fig, "fig26_wind.png")
 
 
+def _slice_poly(G1, G2, h12, h13, h23, h123, c):
+    """slice C3 = c of the template {0 <= C_k <= G_k, sum_S C <= h_S} (1-h events), as a polygon"""
+    a1 = min(G1, h13 - c); a2 = min(G2, h23 - c); sm = min(h12, h123 - c)
+    P = [(0.0, 0.0), (a1, 0.0), (a1, a2), (0.0, a2)]; out = []
+    for i in range(4):
+        p, q = P[i], P[(i + 1) % 4]
+        fp, fq = p[0] + p[1] - sm, q[0] + q[1] - sm
+        if fp <= 1e-9: out.append(p)
+        if fp * fq < 0:
+            t = fp / (fp - fq); out.append((p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])))
+    return np.array(out)
+
+
+def fig_region():
+    """Fig. 28: cross-event deliverable capability region (Exp25)"""
+    cs = rd("exp25_case.csv"); sl = rd("exp25_slices.csv"); sw = rd("exp25_sweep.csv"); mc = rd("exp25_mc.csv")
+    if cs is None: return
+    fig, ax = plt.subplots(2, 2, figsize=(13, 10)); fig.subplots_adjust(wspace=0.28, hspace=0.34)
+    LS = ["-", "--", ":"]
+    for pi, ci in enumerate([1, 2]):
+        a = ax[0, pi]; r = cs[cs["case"] == ci]
+        if not len(r): a.set_visible(False); continue
+        r = r.iloc[0]
+        G1, G2, G3 = r.G1, r.G2, r.G3
+        a.add_patch(plt.Rectangle((0, 0), G1, G2, fill=False, ec=MUTED, lw=0.9, ls="-"))
+        a.text(G1, G2 + 0.12, "单事件能力盒", ha="right", va="bottom", fontsize=7.5, color=MUTED)
+        lev = sorted(sl[sl["case"] == ci].C3.unique()) if sl is not None else [0.0, 6.0, G3]
+        polys = [_slice_poly(G1, G2, r.h12, r.h13, r.h23, r.h123, c3) for c3 in lev]
+        same = all(len(p_) == len(polys[0]) and np.allclose(p_, polys[0], atol=1e-3) for p_ in polys)
+        for j, (c3, P) in enumerate(zip(lev, polys)):
+            if same and j > 0: break
+            lbl = "JR：三个 C₃ 取值下相同" if same else f"JR，C₃ = {c3:.1f} MW"
+            a.fill(P[:, 0], P[:, 1], color=C["JR"], alpha=0.07 if not same else 0.10, lw=0)
+            a.plot(np.r_[P[:, 0], P[0, 0]], np.r_[P[:, 1], P[0, 1]], color=C["JR"], lw=1.8, ls="-" if same else LS[j], label=lbl)
+        if sl is not None:
+            for j, c3 in enumerate(lev):
+                q = sl[(sl["case"] == ci) & (np.abs(sl.C3 - c3) < 1e-6)].sort_values("C1")
+                x = q.C1.values; y = q.C2_IROs.values; ok = ~np.isnan(y)
+                if not ok.any(): continue
+                xx = np.r_[x[ok], x[ok][-1]]; yy = np.r_[y[ok], 0.0]
+                a.plot(xx, yy, color=C["IR-O*"], lw=1.6, ls=LS[j], label=f"IR-O*，C₃ = {c3:.1f} MW")
+        a.set_xlim(0, G1 * 1.08); a.set_ylim(0, G2 * 1.22); a.set_aspect("equal", adjustable="box")
+        a.set_xlabel("事件 1 承诺 C₁ / MW"); a.set_ylabel("事件 2 承诺 C₂ / MW")
+        a.legend(loc="lower left", fontsize=7.5, framealpha=0.92, frameon=True, edgecolor="none")
+        ttl = "(a) 基准算例" if ci == 1 else "(b) 间隔短、无并网裕度"
+        a.set_title(f"{ttl}（τ = {r.tau_h:g} h，γ = {r.gamma:.2f}）：C₃ 固定时的 (C₁, C₂) 截面")
+        txt = ("JR 能力域 = 单事件能力盒" if r.h123 >= G1 + G2 + G3 - 0.01 else f"JR 能力域 = 盒 ∩ {{C₁+C₂+C₃ ≤ {r.h123:.2f}}}")
+        a.text(0.98, 0.97, f"{txt}\n多事件能量界 ΣC ≤ {r.bound123:.2f}", transform=a.transAxes, ha="right", va="top",
+               fontsize=7.5, color=C["JR"])
+    a = ax[1, 0]
+    if sw is not None:
+        for g, ls, mf in [(1.1, "-", None), (1.0, "--", "#fcfcfb")]:
+            q = sw[np.abs(sw.gamma - g) < 1e-9].sort_values("tau_h")
+            if not len(q): continue
+            for nm, col, mk in [("JR", "u_JR", "o"), ("IR-O*", "u_IROs", "s")]:
+                a.plot(q.tau_h, q[col], ls=ls, marker=mk, color=C[nm], ms=5, lw=1.5, mfc=mf if mf else C[nm],
+                       label=f"{nm}，γ = {g:.2f}")
+            a.plot(q.tau_h, q[["G1", "G2", "G3"]].min(axis=1), ls=ls, color=MUTED, lw=0.9, label=f"单事件能力 min G_k，γ = {g:.2f}")
+            a.plot(q.tau_h, q.bound123 / 3, ls=ls, color=INK2, lw=0.7, alpha=0.6, label=f"能量界 / 3，γ = {g:.2f}")
+        a.axhline(6, color=INK2, lw=0.6, ls=":"); a.text(0.02, 6.05, "本文统一承诺 6 MW", fontsize=7.5, color=INK2, va="bottom")
+        a.set_xlabel("事件间隔 τ / h"); a.set_ylabel("三次事件统一承诺能力 / MW")
+        a.set_ylim(4.5, 9.2); a.legend(loc="lower right", fontsize=7, ncol=2)
+        a.set_title("(c) 统一承诺能力随事件间隔的变化（案例日）")
+    else:
+        a.set_visible(False)
+    a = ax[1, 1]
+    if mc is not None:
+        cols = [("JR", "u_JR", C["JR"]), ("IR-P+", "u_IRPp", C["IR-P"]), ("IR-O*", "u_IROs", C["IR-O*"]),
+                ("IR-O", "u_IRO", C["IR-O"]), ("IR-P", "u_IRP", C["IR-P"])]
+        data = [mc[c_].values for _, c_, _ in cols]
+        bp = a.boxplot(data, widths=0.5, patch_artist=True, showfliers=True, medianprops=dict(color=INK, lw=1.2))
+        for i, (nm, _, col) in enumerate(cols):
+            bp["boxes"][i].set_facecolor(col); bp["boxes"][i].set_alpha(0.35 if nm != "IR-P+" else 0.15)
+            bp["boxes"][i].set_edgecolor(col)
+            med = np.median(data[i]); a.text(i + 1.32, med, f"{med:.2f}", va="center", fontsize=7.5, color=INK2)
+        a.set_xticks(range(1, len(cols) + 1))
+        a.set_xticklabels(["联合恢复\nJR", "价格协调\n最有利响应\nIR-P+", "日前调优分摊\nIR-O*（事后最优）", "固定分摊\nIR-O", "价格协调\n求解器响应\nIR-P"], fontsize=7.5)
+        a.set_ylabel("统一承诺能力 / MW"); a.axhline(6, color=INK2, lw=0.6, ls=":")
+        a.set_title(f"(d) {len(mc)} 个运行日（基准事件时段）的统一承诺能力")
+    else:
+        a.set_visible(False)
+    save(fig, "fig28_region.png")
+
+
 if __name__ == "__main__":
     fig_case(); fig_mechanism()
     for case in ["DAcommit", "uniform6"]:
@@ -1231,4 +1327,4 @@ if __name__ == "__main__":
     fig_pareto(); fig_capacity(); fig_stylized(); fig_robust()
     fig_substitution(); fig_risk(); fig_decomposition()
     fig_drivers(); fig_typical_day(); fig_channel(); fig_generalization(); fig_policy()
-    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind(); fig_heat()
+    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind(); fig_heat(); fig_region()

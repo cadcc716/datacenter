@@ -8,6 +8,8 @@ function [P, ix] = build_model(par, st, sc, ev, opt)
 %     'settle'  Jiangsu settlement (validity >= 80 %, pay <= 120 %), MILP if opt.milp
 %     'hard'    reduction >= C in every step (capability analysis)
 %     'max'     maximise a common reduction level (capability analysis)
+%     'hardm'   mean reduction over the event >= C (capability region, REGION_CHECK)
+%     'maxm'    maximise the mean reduction (capability region, REGION_RADIUS)
 %     'commit'  day-ahead: commitment C is a first-stage decision variable
 %     'none'    ignored
 %   opt: milp, nonant, fix_y (Hx3), terminal, Eref_end, Sref_end, no_late, visible (Kx1 logical),
@@ -351,6 +353,16 @@ for k = 1:numel(ev)                     % (day-ahead 'commit' rows keep treating
                 [m, Cv] = addb(m, 1, 1, 0, Inf, -opt.w_max); m.scen(Cv) = 0;
                 for s = find(act(k, :))
                     m = lpb_addle(m, [(1:nh)'; (1:nh)'], [PG(hk, s); repmat(Cv, nh, 1)], ones(2*nh,1), sc.Pb(hk));
+                end
+                ix.ev(k).C = Cv;
+            case 'hardm'                % mean reduction over the event >= C (full delivery, Jiangsu basis)
+                for s = find(act(k, :))
+                    m = lpb_addle(m, ones(nh,1), PG(hk, s), ones(nh,1)/nk, rhs0 - e.C);
+                end
+            case 'maxm'                 % maximise the mean reduction level
+                [m, Cv] = addb(m, 1, 1, 0, Inf, -opt.w_max); m.scen(Cv) = 0;
+                for s = find(act(k, :))
+                    m = lpb_addle(m, ones(nh+1,1), [Cv; PG(hk, s)], [1; ones(nh,1)/nk], rhs0);
                 end
                 ix.ev(k).C = Cv;
         end

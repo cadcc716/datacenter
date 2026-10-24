@@ -11,12 +11,14 @@ function sol = solve_milp(P, opts)
 %   glpk LPs that do not finish within opts.tmlim_lp seconds (default opts.tmlim) or within
 %   max(5000, 10 (n + m)) simplex iterations (the primal simplex can cycle on rare degenerate presolved
 %   LPs; regular solves need a few hundred iterations) are solved again without presolve, then by the
-%   interior-point method.
+%   interior-point method. opts.retry_infeas = false skips these retries when glpk reports the LP
+%   infeasible (capability-region checks, where infeasibility is a regular answer).
 if nargin < 2, opts = struct(); end
 if ~isfield(opts, 'solver') || isempty(opts.solver), opts.solver = pick_solver(); end
 if ~isfield(opts, 'duals'), opts.duals = false; end
 if ~isfield(opts, 'tmlim') || isempty(opts.tmlim), opts.tmlim = 300; end
 if ~isfield(opts, 'tmlim_lp') || isempty(opts.tmlim_lp), opts.tmlim_lp = opts.tmlim; end   % first LP attempt
+retry_infeas = ~isfield(opts, 'retry_infeas') || opts.retry_infeas;   % false: trust glpk's infeasibility verdict
 n = numel(P.f);
 lb = P.lb; ub = P.ub;
 tic0 = tic;
@@ -69,6 +71,7 @@ switch opts.solver
         % rare degenerate LPs make glpk's default primal simplex cycle until the time limit: solve them
         % again without presolve, then with the interior-point method (same optimum)
         alts = {struct('presol', 0), struct('lpsolver', 2)}; ia = 1;
+        if ~retry_infeas && infeasible(err, extra), ia = numel(alts) + 1; end
         while ~isMIP && ~(err == 0 && extra.status == 5) && ia <= numel(alts)
             p2 = prm; fa = fieldnames(alts{ia});
             for q = 1:numel(fa), p2.(fa{q}) = alts{ia}.(fa{q}); end
@@ -91,6 +94,11 @@ switch opts.solver
         error('solve_milp:solver', 'unknown solver %s', opts.solver);
 end
 sol.time = toc(tic0);
+end
+
+function r = infeasible(err, extra)
+% glpk verdict "no primal feasible solution" (presolver: err 10/15; simplex: status 3 or 4)
+r = any(err == [10 15]) || (err == 0 && any(extra.status == [3 4]));
 end
 
 function s = pick_solver()

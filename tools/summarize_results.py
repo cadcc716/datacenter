@@ -486,3 +486,41 @@ if o is not None and se is not None:
             if k == 1: continue
             m, lo, hi, rel, pv = paired(q[q.setting == k].set_index("realisation").loc[ref.index], ref)
             print(f"  {lab[(p, k)]:16s} - {lab[(p, 1)]}: {m:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, p={pv:.2g})")
+
+# ------------------------------------------------------------------ Exp25 capability region
+header("Exp25  cross-event deliverable capability region (virtual-battery description)")
+cs = rd("exp25_case.csv"); sw = rd("exp25_sweep.csv"); mc = rd("exp25_mc.csv"); ip = rd("exp25_irp.csv"); rad = rd("exp25_radial.csv")
+if cs is not None:
+    for _, r in cs.iterrows():
+        box = r.G1 + r.G2 + r.G3
+        print(f"--- case {int(r['case'])}: gamma {r.gamma:.2f}, tau {r.tau_h:g} h; G = ({r.G1:.2f}, {r.G2:.2f}, {r.G3:.2f}) MW (sum {box:.2f})")
+        print(f"  support h12 {r.h12:.2f} h13 {r.h13:.2f} h23 {r.h23:.2f} h123 {r.h123:.2f}; energy bound {r.bound123:.2f} "
+              f"= Xbar {r.Xbar:.2f} + Es {r.Es:.2f} + H {r.H:.2f} + gD {r.gD:.2f} + Delta {r.Delta:+.2f} (gap {r.bound123 - r.h123:.2f} MWh)")
+        print(f"  template exact {int(r.exact)} (theta {r.theta:.4f}, {int(r.n_vertices)} vertices); volume template {r.vol_template:.1f}, box {r.vol_box:.1f}")
+        print(f"  uniform capability: JR {r.u_JR:.2f}, IR-P+ {r.u_IRPp:.2f}, IR-O* {r.u_IROs:.2f} (alpha {r.alpha_u_IROs:.1f}), IR-O {r.u_IRO:.2f}, IR-P {r.u_IRP:.2f} MW")
+        print(f"  largest total commitment: JR {r.h123:.2f}, IR-O* {r.tmax_IROs:.2f}, IR-O {r.tmax_IRO:.2f} MW; volume / JR: IR-O* {r.vol_IROs / r.vol_JR:.3f}, "
+              f"IR-O {r.vol_IRO / r.vol_JR:.3f}, IR-P {r.vol_IRP / r.vol_JR:.3f}, IR-P+ {r.vol_IRPp / r.vol_JR:.3f}")
+    if rad is not None:
+        for ci_, q in rad.groupby("case"):
+            ok = q.t_JR > 1e-6; rr = (q.t_IROs / q.t_JR)[ok]
+            print(f"  case {ci_}: IR-O*/JR along the rays min {rr.min():.3f} (at d = {q[ok].loc[rr.idxmin(), ['d1', 'd2', 'd3']].values.round(2)}), "
+                  f"share of rays with no loss {np.mean(rr > 0.999):.2f}")
+if ip is not None:
+    print(ip.round(3).to_string(index=False))
+if sw is not None:
+    print("--- interval x margin (uniform capability, MW; bound gap where the energy cut binds)")
+    sw["box"] = sw[["G1", "G2", "G3"]].sum(axis=1); sw["binding"] = sw.h123 < sw.box - 0.01
+    print(sw[["gamma", "tau_h", "h123", "box", "bound123", "u_JR", "u_IRPp", "u_IROs", "u_IRO", "u_IRP"]].round(2).to_string(index=False))
+    b = sw[sw.binding]
+    if len(b): print(f"  energy bound - h123 where the cut binds ({len(b)} cases): max {(b.bound123 - b.h123).max():.2f} MWh, "
+                     f"max relative {100 * ((b.bound123 - b.h123) / b.h123).max():.1f}%")
+if mc is not None:
+    mc["box"] = mc[["G1", "G2", "G3"]].sum(axis=1); bind = mc.h123 < mc.box - 0.01
+    print(f"--- Monte-Carlo days (N = {len(mc)}): cut binding on {bind.sum()} days")
+    for col in ["u_JR", "u_IRPp", "u_IROs", "u_IRO", "u_IRP"]:
+        r_ = mc[col] / mc.u_JR
+        print(f"  {col:7s}: mean {mc[col].mean():.2f} MW [min {mc[col].min():.2f}, max {mc[col].max():.2f}]; ratio to JR mean {r_.mean():.3f} min {r_.min():.3f}")
+    if bind.any():
+        g_ = (mc.bound123 - mc.h123)[bind]
+        print(f"  energy bound - h123 on binding days: mean {g_.mean():.2f}, max {g_.max():.2f} MWh ({100 * (g_ / mc.h123[bind]).max():.1f}%)")
+    print(f"  bound >= h123 on all days: {bool((mc.bound123 >= mc.h123 - 1e-6).all())}")
