@@ -1,0 +1,9 @@
+  benchmarks: alpha* = 0.40 (static share 0.41), max lambda_hr = 3560 CNY/MWh (635s)
+  exp22 cap-3      r= 0 valid 1 3 3 3 3 3 | net(k)   313   245   246   229   242   222  (11 min)
+  exp22 cap-3      r=13 valid 3 2 3 3 | net(k)   227   225   214   204  (21 min)
+  exp22 cap-3      r=26 valid 2 3 2 3 | net(k)   276   236   268   229  (31 min)
+  benchmarks: alpha* = 0.20 (static share 0.41), max lambda_hr = 3560 CNY/MWh (946s)
+  exp22 cap-3+ovh  r= 0 valid 1 3 3 3 3 3 | net(k)   320   256   245   231   244   226  (49 min)
+  exp22 cap-3+ovh  r=13 valid 2 2 3 3 | net(k)   239   227   232   208  (61 min)
+  exp22 cap-3+ovh  r=26 valid 2 3 3 3 | net(k)   275   239   244   236  (69 min)
+DONE

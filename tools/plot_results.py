@@ -1042,8 +1042,8 @@ def fig_extensions():
         for i, k in enumerate(ks):
             m, lo, hi, b = _saving(o[(o.setting == k) & (o.realisation > 0)])
             if b is not None:
-                a.text(1.02, i, f"{m:+.1f}%", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=C["JR-D"])
-        a.text(1.02, -0.9, "JR-D 节省", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
+                a.text(1.02, i, f"{-m:+.1f}%", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=C["JR-D"])
+        a.text(1.02, -0.9, "JR-D 相对最强基准", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
         a.set_yticks(range(len(ks))); a.set_yticklabels([LAB.get(lab[k], lab[k]) for k in ks]); a.invert_yaxis()
         a.set_xlabel("26 个运行日平均综合成本 / 万元"); a.legend(loc="lower right", fontsize=8)
         a.set_title("(a) 暂停/恢复开销与多档功率封顶")
