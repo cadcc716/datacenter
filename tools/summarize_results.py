@@ -407,16 +407,30 @@ if d is not None and se is not None and s is not None:
 
 # ------------------------------------------------------------------ Exp21 wind
 header("Exp21  green-power direct connection: offshore wind behind the meter")
+cu = rd("exp21_curve.csv")
+if cu is not None:
+    g = cu.groupby("wind_MW")
+    t = pd.DataFrame({"wind_MWh": g.wind_MWh.mean(), "share_cons_mean": 100 * g.res_share_cons.mean(),
+                      "share_cons_p10": 100 * g.res_share_cons.quantile(0.1), "selfuse_mean": 100 * g.res_selfuse.mean(),
+                      "selfuse_p10": 100 * g.res_selfuse.quantile(0.1), "days_share>=30%": 100 * g.res_share_cons.apply(lambda v: (v >= 0.3).mean()),
+                      "days_selfuse>=60%": 100 * g.res_selfuse.apply(lambda v: (v >= 0.6).mean()), "grid_cost_kCNY": g.grid_cost_CNY.mean() / 1e3})
+    print("green-power curve (no-DR operation, case day + all Monte-Carlo days):"); print(t.round(1).to_string())
 d = rd_parts("exp21_wind"); s = rd("exp21_strategies.csv")
 if d is not None and s is not None:
     d["name"] = d.strategy.map(dict(zip(s["index"], s["label"])))
     for p, q in d.groupby("wind_MW"):
         c0 = q[q.realisation == 0]; m = q[q.realisation > 0]
-        print(f"\n--- wind {p:g} MW: case-day wind {c0.wind_MWh_day.iloc[0]:.1f} MWh; MC mean wind {m.groupby('realisation').wind_MWh_day.first().mean():.1f} MWh/day")
-        print(c0.set_index("name")[["n_valid", "net_cost_adj", "green_share_pv", "res_selfuse", "cost_energy", "dr_pay"]].round(3).to_string())
-        t = m.groupby("name")[["fulfil_rate_pct", "all_valid", "net_cost_adj", "green_share_pv", "res_selfuse"]].mean()
+        jd = m[m.name == "JR-D"]
+        cs = jd[["C1", "C2", "C3"]]
+        print(f"\n--- wind {p:g} MW: case-day wind {c0.wind_MWh_day.iloc[0]:.1f} MWh, C {c0[['C1', 'C2', 'C3']].iloc[0].tolist()}; "
+              f"MC: wind {jd.wind_MWh_day.mean():.1f} MWh/day, declared C sum {cs.sum(axis=1).mean():.2f} MW/day "
+              f"(mean C {cs.mean().round(2).tolist()}), events declared {100 * (cs > 0).values.mean():.0f}%")
+        print(c0.set_index("name")[["n_valid", "net_cost_adj", "net_cost_excl_rb", "green_share_pv", "res_selfuse", "cost_energy", "dr_pay", "pen_rb"]].round(3).to_string())
+        t = m.groupby("name")[["fulfil_rate_pct", "all_valid", "net_cost_adj", "net_cost_excl_rb", "dr_pay", "pen_dev", "pen_rb",
+                               "cost_energy", "cost_delay", "green_share_pv", "res_selfuse"]].mean()
         print(t.round(3).to_string())
         jr_vs_best(m, "net_cost_adj", "MC")
+        jr_vs_best(m, "net_cost_excl_rb", "MC (Jiangsu rules only)")
 
 # ------------------------------------------------------------------ Exp22 overhead and capping levels
 header("Exp22  pause / resume overhead and several capping levels (fluid model)")

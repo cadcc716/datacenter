@@ -23,7 +23,7 @@ function out = exp21_wind(par0, root, opts)
 %   all Monte-Carlo days per capacity, renewable share of the consumption and self-use share of the
 %   available generation (the two Document 650 thresholds), results/exp21_curve.csv.
 if nargin < 3, opts = struct(); end
-P = getf(opts, 'P', [0 5 10 20]);
+P = getf(opts, 'P', [0 5 10 20]); if isfield(opts, 'P') && isempty(opts.P), P = []; end
 N = getf(opts, 'N', 26);
 C = getf(opts, 'C', [6 6 6]);
 cmode = getf(opts, 'commit', 'dayahead'); tag = getf(opts, 'tag', '');

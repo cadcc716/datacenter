@@ -1012,73 +1012,130 @@ def _saving(q, col="net_cost_adj"):
     return d.mean(), d.mean() - h, d.mean() + h, b
 
 
+def _paired_pct(q, ref_mask, k_mask, col="net_cost_adj"):
+    """mean paired difference (setting - reference) in % of the reference mean, with a 95 % CI"""
+    from scipy import stats
+    R = q[ref_mask].set_index("realisation")[col]; K = q[k_mask].set_index("realisation")[col].loc[R.index]
+    d = 100 * (K.values - R.values) / R.mean()
+    h = stats.t.ppf(0.975, len(d) - 1) * d.std(ddof=1) / np.sqrt(len(d)) if len(d) > 1 else np.nan
+    return d.mean(), d.mean() - h, d.mean() + h
+
+
 def fig_extensions():
-    w = rd_parts("exp21_wind"); ws = rd("exp21_strategies.csv")
+    """Fig. 25: pause / resume overhead and capping levels (Exp22); day-ahead scenario generation (Exp23)"""
     o = rd_parts("exp22_overhead"); os_ = rd("exp22_settings.csv"); ost = rd("exp22_strategies.csv")
     c = rd("exp23_commit.csv"); cs = rd("exp23_settings.csv"); oo = rd("exp23_oos.csv")
-    if w is None and o is None and c is None: return
-    fig, ax = plt.subplots(2, 3, figsize=(16, 8.4)); fig.subplots_adjust(hspace=0.5, wspace=0.42)
-    # (a), (b) wind
-    if w is not None and ws is not None:
-        w["name"] = w.strategy.map(dict(zip(ws["index"], ws["label"])))
-        Ps = sorted(w.wind_MW.unique()); a = ax[0, 0]
-        tot = [w[w.wind_MW == p][["C1", "C2", "C3"]].iloc[0].sum() for p in Ps]
-        a.bar(range(len(Ps)), tot, width=0.55, color=MUTED, edgecolor="#fcfcfb", linewidth=2)
-        for i, p in enumerate(Ps):
-            q = w[(w.wind_MW == p) & (w.realisation > 0) & (w.name == "JR-D")]
-            a.text(i, tot[i] + 0.3, f"绿电占比 {100 * q.green_share_pv.mean():.0f}%\n自用率 {100 * q.res_selfuse.mean():.0f}%",
-                   ha="center", va="bottom", fontsize=7.5, color=INK2)
-        a.set_xticks(range(len(Ps))); a.set_xticklabels([f"{p:g}" for p in Ps]); a.set_xlabel("风电装机 / MW")
-        a.set_ylabel("三次事件日前承诺合计 / MW"); a.set_ylim(0, max(tot) * 1.35 + 1)
-        a.set_title("(a) 绿电直连：表后风电压低可交付的DR承诺")
-        a = ax[0, 1]
-        for i, p in enumerate(Ps):
-            q = w[(w.wind_MW == p) & (w.realisation > 0)]
-            m, lo, hi, b = _saving(q)
-            if b is None: continue
-            a.errorbar(i, m, yerr=[[m - lo], [hi - m]], fmt="o", color=C["JR-D"], ms=7, capsize=4, lw=1.4)
-            a.text(i + 0.08, m, f"{m:+.1f}%（对 {b}）", fontsize=7.5, color=INK2, va="center")
-        a.axhline(0, color=AXIS, lw=0.8); a.set_xticks(range(len(Ps))); a.set_xticklabels([f"{p:g}" for p in Ps])
-        a.set_xlim(-0.4, len(Ps) - 0.2); a.set_xlabel("风电装机 / MW"); a.set_ylabel("JR-D 相对较强独立基准的日均节省 / %")
-        a.set_title("(b) 风电下联合恢复的收益（52 个运行日，95% 置信区间）")
-    else:
-        ax[0, 0].set_visible(False); ax[0, 1].set_visible(False)
-    # (c) overhead and capping levels
+    if o is None and c is None: return
+    fig, ax = plt.subplots(2, 2, figsize=(13.5, 8.6)); fig.subplots_adjust(hspace=0.42, wspace=0.62)
+    # (a) overhead and capping levels
+    a = ax[0, 0]
     if o is not None and os_ is not None and ost is not None:
         o["name"] = o.strategy.map(dict(zip(ost["index"], ost["label"]))); lab = dict(zip(os_["index"], os_["label"]))
         LAB = {"base": "基准（流体）", "ovh-base": "暂停开销 6 min", "ovh-slow": "暂停开销 25 min", "cap-1": "单档封顶",
                "cap-3": "三档封顶", "cap-3+ovh": "三档封顶 + 暂停开销"}
-        a = ax[0, 2]; ks = sorted(o.setting.unique())
+        ks = sorted(o.setting.unique())
         for j, nm in enumerate(["JR-D", "IR-O*", "IR-P"]):
             xs = [o[(o.setting == k) & (o.realisation > 0) & (o.name == nm)].net_cost_adj.mean() / 1e4 for k in ks]
-            a.scatter(xs, np.arange(len(ks)) + (j - 1) * 0.16, s=40, color=C[nm], marker=MK[nm], label=nm, zorder=3, edgecolor="#fcfcfb", linewidth=0.8)
+            a.scatter(xs, np.arange(len(ks)) + (j - 1) * 0.16, s=40, color=C[nm], marker=MK[nm], label=nm, zorder=3,
+                      edgecolor="#fcfcfb", linewidth=0.8)
+        x1 = a.get_xlim()[1]
+        for i, k in enumerate(ks):
+            m, lo, hi, b = _saving(o[(o.setting == k) & (o.realisation > 0)])
+            if b is not None:
+                a.text(1.02, i, f"{m:+.1f}%", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=C["JR-D"])
+        a.text(1.02, -0.9, "JR-D 节省", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
         a.set_yticks(range(len(ks))); a.set_yticklabels([LAB.get(lab[k], lab[k]) for k in ks]); a.invert_yaxis()
-        a.set_xlabel("52 个运行日平均综合成本 / 万元"); a.legend(loc="lower right", fontsize=8)
-        a.set_title("(c) 暂停/恢复开销与多档功率封顶")
+        a.set_xlabel("26 个运行日平均综合成本 / 万元"); a.legend(loc="lower right", fontsize=8)
+        a.set_title("(a) 暂停/恢复开销与多档功率封顶")
     else:
-        ax[0, 2].set_visible(False)
-    # (d), (e) scenario generation; (f) commitments
+        a.set_visible(False)
+    # (b), (c) scenario generation and seasonal drift: paired out-of-sample difference to the reference
     if c is not None and cs is not None and oo is not None:
         lab = {(p, k): l for p, k, l in zip(cs["part"], cs["setting"], cs["label"])}
-        for j, (part, title) in enumerate([(1, "(d) 场景生成：分位 vs K-means（样本外，JR-D 运行）"), (2, "(e) 季节漂移：冬季日用夏季场景承诺（样本外）")]):
-            a = ax[1, j]; q = oo[oo.part == part]
+        for j, (part, title, nd) in enumerate([(1, "(b) 场景生成（夏季，52 个样本外日）", 52), (2, "(c) 季节漂移（冬季日，26 个样本外日）", 26)]):
+            a = ax[0, 1] if j == 0 else ax[1, 0]; q = oo[oo.part == part]
             if not len(q): a.set_visible(False); continue
-            for k, z in q.groupby("setting"):
-                v = np.sort(z.net_cost_adj.values)[::-1] / 1e4; n10 = max(1, int(round(0.1 * len(v))))
+            ks = sorted(q.setting.unique())
+            for i, k in enumerate(ks):
+                m, lo, hi = _paired_pct(q, q.setting == 1, q.setting == k)
                 ref = (k == 1)
-                a.scatter(v.mean(), v[:n10].mean(), s=46, color=INK if ref else C["JR-D"], marker="s" if ref else "o", zorder=3,
-                          edgecolor="#fcfcfb", linewidth=0.8)
-                a.annotate(lab[(part, k)], (v.mean(), v[:n10].mean()), textcoords="offset points", xytext=(5, 4), fontsize=7.5, color=INK2)
-            a.set_xlabel("样本外平均综合成本 / 万元"); a.set_ylabel("最差 10% 日平均 / 万元"); a.set_title(title)
-        a = ax[1, 2]; cc = c.copy(); cc["lab"] = [lab[(p, k)] for p, k in zip(cc.part, cc.setting)]
+                a.errorbar(m, i, xerr=None if ref else [[m - lo], [hi - m]], fmt="s" if ref else "o", color=INK if ref else C["JR-D"],
+                           ms=6.5, capsize=3, lw=1.2, zorder=3)
+                cc = c[(c.part == part) & (c.setting == k)].iloc[0]
+                oos = q[q.setting == k].net_cost_adj.mean()
+                a.text(1.02, i, f"{100 * (oos / cc.is_mean - 1):.1f}%", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
+            a.text(1.02, -0.9, "样本内低估", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
+            a.axvline(0, color=AXIS, lw=0.8)
+            a.set_yticks(range(len(ks))); a.set_yticklabels([lab[(part, k)] for k in ks]); a.invert_yaxis()
+            a.set_xlabel(f"样本外成本相对 {lab[(part, 1)]} 的差 / %（JR-D 运行，95% 置信区间）"); a.set_title(title)
+        a = ax[1, 1]; cc = c.copy(); cc["lab"] = [lab[(p, k)] for p, k in zip(cc.part, cc.setting)]
         y = np.arange(len(cc)); hgt = 0.26
         for i, (col, shade_) in enumerate([("C1", "#9ec5f0"), ("C2", "#2a78d6"), ("C3", "#123e70")]):
             a.barh(y + (i - 1) * hgt, cc[col], height=hgt, color=shade_, label=f"E{i + 1}", edgecolor="#fcfcfb", linewidth=1)
-        a.set_yticks(y); a.set_yticklabels(cc.lab); a.invert_yaxis(); a.set_xlabel("日前承诺 / MW"); a.legend(loc="lower right", fontsize=8)
-        a.set_title("(f) 各场景设定下的日前承诺")
+        a.set_yticks(y); a.set_yticklabels(cc.lab); a.invert_yaxis(); a.set_xlabel("日前承诺 / MW")
+        a.legend(loc="upper left", bbox_to_anchor=(1.0, 1.0), fontsize=8, frameon=False)
+        a.set_title("(d) 各场景设定下的日前承诺")
     else:
-        for k in range(3): ax[1, k].set_visible(False)
+        for a in [ax[0, 1], ax[1, 0], ax[1, 1]]: a.set_visible(False)
     save(fig, "fig25_extensions.png")
+
+
+def fig_wind():
+    """Fig. 26: green-power direct connection with offshore wind (Exp21)"""
+    cu = rd("exp21_curve.csv"); w = rd_parts("exp21_wind"); ws = rd("exp21_strategies.csv")
+    if cu is None and w is None: return
+    fig, ax = plt.subplots(1, 3, figsize=(16, 4.6)); fig.subplots_adjust(wspace=0.38)
+    a = ax[0]
+    if cu is not None:
+        g = cu.groupby("wind_MW")
+        Ps = np.array(sorted(cu.wind_MW.unique()))
+        for col, nm, colr in [("res_share_cons", "可再生占用电量比例", C["JR-D"]), ("res_selfuse", "自发自用占可用发电量比例", C["IR-O*"])]:
+            mn, lo, hi = 100 * g[col].mean().values, 100 * g[col].quantile(0.1).values, 100 * g[col].quantile(0.9).values
+            a.fill_between(Ps, lo, hi, color=colr, alpha=0.12, lw=0)
+            a.plot(Ps, mn, "-o", color=colr, ms=4.5, lw=1.6, label=nm)
+        a.axhline(30, color=C["JR-D"], lw=0.9, ls="--"); a.axhline(35, color=C["JR-D"], lw=0.9, ls=":")
+        a.axhline(60, color=C["IR-O*"], lw=0.9, ls="--")
+        a.text(Ps[-1], 30.8, "≥30%（2030 年前 ≥35%）", ha="right", va="bottom", fontsize=7.5, color=C["JR-D"])
+        a.text(Ps[-1], 60.8, "自用 ≥60%", ha="right", va="bottom", fontsize=7.5, color=C["IR-O*"])
+        a.set_xlabel("表后风电装机 / MW"); a.set_ylabel("比例 / %（线：均值；带：10%–90% 日）"); a.set_ylim(0, 105)
+        a.legend(loc="center right", fontsize=8); a.set_title("(a) 绿电直连曲线（无需求响应运行，53 日）")
+    else:
+        a.set_visible(False)
+    if w is not None and ws is not None:
+        w["name"] = w.strategy.map(dict(zip(ws["index"], ws["label"])))
+        m = w[w.realisation > 0]; Ps = sorted(m.wind_MW.unique()); x = np.arange(len(Ps))
+        a = ax[1]; jd = m[m.name == "JR-D"]
+        tot = [jd[jd.wind_MW == p][["C1", "C2", "C3"]].sum(axis=1).mean() for p in Ps]
+        dec = [100 * (jd[jd.wind_MW == p][["C1", "C2", "C3"]] > 0).values.mean() for p in Ps]
+        a.bar(x, tot, width=0.55, color=MUTED, edgecolor="#fcfcfb", linewidth=2, label="日前承诺合计（左轴）")
+        for i in range(len(Ps)):
+            a.text(x[i], tot[i] + 0.2, f"申报 {dec[i]:.0f}% 的事件", ha="center", va="bottom", fontsize=7.5, color=INK2)
+        a.set_ylabel("三次事件日前承诺合计 / MW（日均）"); a.set_ylim(0, max(tot) * 1.3 + 0.5)
+        b2 = a.twinx()
+        for nm in ["JR-D", "IR-P"]:
+            q = m[m.name == nm]
+            b2.plot(x, [q[q.wind_MW == p].dr_pay.mean() / 1e4 for p in Ps], "-" + MK[nm], color=C[nm], ms=6, lw=1.4, label=f"{nm} 需求响应收入（右轴）")
+        b2.set_ylabel("需求响应收入 / 万元·日⁻¹"); b2.set_ylim(bottom=0)
+        h1, l1 = a.get_legend_handles_labels(); h2, l2 = b2.get_legend_handles_labels()
+        a.legend(h1 + h2, l1 + l2, loc="upper right", fontsize=7.5)
+        a.set_xticks(x); a.set_xticklabels([f"{p:g}" for p in Ps]); a.set_xlabel("表后风电装机 / MW")
+        a.set_title("(b) 关口表基线下的可交付承诺与收入（26 日）")
+        a = ax[2]
+        for nm in ["IR-O*", "IR-P", "JR-M", "JR-D"]:
+            q = m[m.name == nm]
+            if not len(q): continue
+            a.plot(x, [q[q.wind_MW == p].net_cost_adj.mean() / 1e4 for p in Ps], "-" + MK[nm], color=C[nm], ms=6, lw=1.4, label=nm)
+        for i, p in enumerate(Ps):
+            sm, lo, hi, bb = _saving(m[m.wind_MW == p])
+            if bb is not None:
+                a.annotate(f"{sm:+.1f}%", (x[i], jd[jd.wind_MW == p].net_cost_adj.mean() / 1e4), textcoords="offset points",
+                           xytext=(0, -14), ha="center", fontsize=8, color=C["JR-D"])
+        a.set_xticks(x); a.set_xticklabels([f"{p:g}" for p in Ps]); a.set_xlabel("表后风电装机 / MW")
+        a.set_ylabel("日均综合成本 / 万元"); a.legend(loc="upper right", fontsize=8)
+        a.set_title("(c) 综合成本与 JR-D 相对最强独立基准的节省")
+    else:
+        ax[1].set_visible(False); ax[2].set_visible(False)
+    save(fig, "fig26_wind.png")
 
 
 if __name__ == "__main__":
@@ -1089,4 +1146,4 @@ if __name__ == "__main__":
     fig_pareto(); fig_capacity(); fig_stylized(); fig_robust()
     fig_substitution(); fig_risk(); fig_decomposition()
     fig_drivers(); fig_typical_day(); fig_channel(); fig_generalization(); fig_policy()
-    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions()
+    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind()

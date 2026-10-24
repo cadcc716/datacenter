@@ -136,7 +136,7 @@ if any(RUN == 20)
 end
 if any(RUN == 21)
     fprintf('== Exp21: green-power direct connection (offshore wind behind the meter)\n');
-    if QUICK, E21 = exp21_wind(par, root, struct('P', [0 20], 'N', 1)); else, E21 = exp21_wind(par, root); end
+    if QUICK, E21 = exp21_wind(par, root, struct('P', [0 20], 'N', 1, 'Pcurve', [0 20])); else, E21 = exp21_wind(par, root); end
 end
 if any(RUN == 22)
     fprintf('== Exp22: pause / resume overhead and several capping levels\n');
