@@ -5,7 +5,7 @@
 %   Runs in MATLAB (Optimization Toolbox, or Gurobi if on the path) or GNU Octave (glpk).
 %   Results are written to matlab/results/*.csv, figures by tools/plot_results.py.
 %   Options (set before calling):  QUICK = true  -> smoke run (tiny samples / grids)
-%                                  RUN = [...]   -> subset of experiments (default 1:18; Exp14 timing runs last)
+%                                  RUN = [...]   -> subset of experiments (default 1:23; Exp14 timing runs last)
 %                                  NMC = n       -> Monte-Carlo realisations (default: all, 52)
 %                                  MC_PART = 'certain' | 'uncertain' | 'all' (parts of Exp4; default 'all')
 %   Base case: Jiangsu settlement rules + gap-rebound assessment c_rb = 3 CNY/kW per event (a policy
@@ -15,7 +15,7 @@ root = fileparts(mfilename('fullpath'));
 addpath(fullfile(root, 'src')); addpath(fullfile(root, 'config')); addpath(fullfile(root, 'experiments'));
 dcdr_setup_paths();
 if ~exist('QUICK', 'var'), QUICK = false; end
-if ~exist('RUN', 'var'), RUN = 1:18; end
+if ~exist('RUN', 'var'), RUN = 1:23; end
 if ~exist('NMC', 'var'), NMC = []; end
 if ~exist('MC_PART', 'var'), MC_PART = 'all'; end
 if ~exist('LOGTAG', 'var'), LOGTAG = ''; end
@@ -123,6 +123,28 @@ if any(RUN == 18)
     fprintf('== Exp18: season and climate generalisation (Suzhou summer / winter, Gui''an summer)\n');
     if QUICK, E18 = exp18_climate(ctx, root, struct('Cs', [6 8], 'N', 1));
     else, E18 = exp18_climate(ctx, root); end
+end
+if any(RUN == 19)
+    fprintf('== Exp19: LLM-era workload (Acme) and rigid-job recovery, every run also executed at job level\n');
+    if QUICK, E19 = exp19_workload(par, root, struct('N', 1, 'variants', {{'acme_rigid'}}));
+    else, E19 = exp19_workload(par, root); end
+end
+if any(RUN == 20)
+    fprintf('== Exp20: job-level execution on the case day (job mix, pause overheads)\n');
+    if QUICK, E20 = exp20_jobsim(par, root, struct('workloads', 1, 'models', 1, 'settings', [1 2]));
+    else, E20 = exp20_jobsim(par, root); end
+end
+if any(RUN == 21)
+    fprintf('== Exp21: green-power direct connection (offshore wind behind the meter)\n');
+    if QUICK, E21 = exp21_wind(par, root, struct('P', [0 20], 'N', 1)); else, E21 = exp21_wind(par, root); end
+end
+if any(RUN == 22)
+    fprintf('== Exp22: pause / resume overhead and several capping levels\n');
+    if QUICK, E22 = exp22_overhead(par, root, struct('settings', [2 5], 'N', 1)); else, E22 = exp22_overhead(par, root); end
+end
+if any(RUN == 23)
+    fprintf('== Exp23: day-ahead scenarios (K-means reduction, seasonal drift)\n');
+    if QUICK, E23 = exp23_scenarios(par, root, struct('N', 2, 'NB', 2)); else, E23 = exp23_scenarios(par, root); end
 end
 if any(RUN == 14)
     fprintf('== Exp14: computational performance (run on an idle machine)\n');

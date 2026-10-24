@@ -67,6 +67,8 @@ M.green_buy = min(max(gmin * consE - pvE, 0), sum(L.pg) * dt);       % MWh of gr
 M.cost_green = 0; if gmin > 0, M.cost_green = par.pol.c_green * M.green_buy; end
 M.pue_excess = 0;                                                       % facility MWh above the PUE cap
 if isfield(par, 'pol') && par.pol.pue_max < Inf, M.pue_excess = max(sum(fac) - par.pol.pue_max * sum(L.pit), 0) * dt; end
+M.res_selfuse = sum(L.ppv) / max(sum(L.pv), 1e-9);                    % on-site renewable (PV + wind) used / available
+M.pause_ovh = 0; if isfield(L, 'povh'), M.pause_ovh = sum(L.povh); end  % GPU-h of pause / resume overhead (M6)
 M.th_max_K = 0; M.th_end = 0;
 if isfield(L, 'TH') && isfield(par, 'th') && par.th.on, M.th_max_K = max(L.TH) / par.th.C; M.th_end = L.TH(end); end
 M.cost_op = M.cost_energy + M.cost_gas + M.cost_deg + M.cost_green;

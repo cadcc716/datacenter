@@ -39,6 +39,14 @@ sc.H = H; sc.S = S; sc.prob = ones(S, 1) / S;
 sc.flex = reshape(flex, H, 3, S);
 sc.inf = inf; sc.fix = fix; sc.pv = max(pv, 0);
 sc.cop = repmat(inp.real.cop(hh), 1, S);
+% optional (A3, KMEANS_SCEN): non-uniform scenario probabilities; day-ahead COP from the weather pool
+if strcmp(ctx.fmode, 'scenario') && isfield(ctx.sidx, 'prob') && numel(ctx.sidx.prob) == S
+    sc.prob = ctx.sidx.prob(:) / sum(ctx.sidx.prob);
+end
+if strcmp(ctx.fmode, 'scenario') && da && isfield(ctx.sidx, 'cop')
+    for s = 1:S, sc.cop(:, s) = inp.pool.cop(hh, ctx.sidx.cop(s)); end
+    sc.cop(1, :) = inp.real.cop(hh(1));
+end
 sc.price = inp.price(hh);
 sc.Pb = base(hh);
 end

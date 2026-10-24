@@ -6,8 +6,10 @@ function inp = load_inputs(par, datadir)
 if nargin < 2, datadir = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'data'); end
 dt = par.dt; T = par.Tsim; Td = par.Tday;
 
-%% --- PAI deferrable GPU occupancy (busy GPUs per 15 min, 3 runtime classes) ---
-M = dlmread(fullfile(datadir, 'pai_gpu_occupancy_15min.csv'), ',', 1, 0);
+%% --- deferrable GPU occupancy (busy GPUs per 15 min, 3 runtime classes; PAI 2020 or Acme 2023) ---
+wlfile = 'pai_gpu_occupancy_15min.csv';
+if isfield(par.case, 'workload_file') && ~isempty(par.case.workload_file), wlfile = par.case.workload_file; end
+M = dlmread(fullfile(datadir, wlfile), ',', 1, 0);
 days = unique(M(:,1));
 nd = numel(days);
 occ = zeros(Td, 3, nd); dow = zeros(nd,1);
@@ -58,12 +60,12 @@ wD = weather_day(wt, Tamb, ghi, par.case.weather_date);
 wN = weather_day(wt, Tamb, ghi, next_date(par.case.weather_date));
 wB = cell(1, numel(par.case.base_dates));
 for i = 1:numel(wB), wB{i} = weather_day(wt, Tamb, ghi, par.case.base_dates{i}); end
-wP = {};
+wP = {}; dP = {};
 d0 = par.case.weather_date;
 for k = 1:20      % previous 20 days (scenario pool for PV)
     dk = add_days(d0, -k);
     w = weather_day(wt, Tamb, ghi, dk);
-    if ~isempty(w), wP{end+1} = w; end %#ok<AGROW>
+    if ~isempty(w), wP{end+1} = w; dP{end+1} = dk; end %#ok<AGROW>
 end
 
 %% --- assemble realised DR-day profiles (Tsim steps: day D + 6 h of D+1) ---
@@ -144,6 +146,26 @@ for r = 1:Nmc
     inp.mc.label{r} = sprintf('pai%d_%s_%s', days(cand(ip)), dates{a1}, wsel{iw}{3});
 end
 
+%% --- optional green-power direct connection (offshore wind behind the meter, par.wind) ---
+%  Wind power is added to the on-site renewable supply (curtailable like PV, no export) of the DR day,
+%  the baseline days, the forecast pool and the Monte-Carlo days, for the same calendar dates as the weather.
+inp.real.wind = zeros(T, 1);
+if isfield(par, 'wind') && par.wind.Prated > 0
+    [tw, vw] = read_wind(fullfile(datadir, par.wind.file));
+    wd = @(dstr) wind_day(tw, vw, dstr, par);
+    a = wd(par.case.weather_date); b = wd(next_date(par.case.weather_date));
+    inp.real.wind = [a; b(nxt)]; inp.real.pv = inp.real.pv + inp.real.wind;
+    for i = 1:nb, a = wd(par.case.base_dates{i}); inp.base.pv{i} = inp.base.pv{i} + [a; a(nxt)]; end
+    for i = 1:numel(wP), a = wd(dP{i}); b = wd(next_date(dP{i})); inp.pool.pv(:, i) = inp.pool.pv(:, i) + [a; b(nxt)]; end
+    inp.fc.pv = mean(inp.pool.pv(:, 1:3), 2);
+    inp.mc.wind = zeros(T, inp.mc.N);
+    for r = 1:inp.mc.N
+        dw = inp.mc.label{r}(find(inp.mc.label{r} == '_', 1, 'last') + 1:end);
+        a = wd(dw); b = wd(next_date(dw)); inp.mc.wind(:, r) = [a; b(nxt)];
+        inp.mc.pv(:, r) = inp.mc.pv(:, r) + inp.mc.wind(:, r);
+    end
+end
+
 %% --- admission control: nominal demand never exceeds the schedulable capacity ---
 gmax = par.it.u_max * par.it.Ngpu;
 [inp.real.flex, inp.real.fix] = clip_util(inp.real.flex, inp.real.fix, inp.real.inf, gmax);
@@ -156,7 +178,7 @@ inp.fc.fix  = mean(inp.pool.fix(:,end-4:end), 2);
 %% --- tariff and events ---
 inp.price = tou_price(par);
 inp.ev = make_events(par);
-inp.info.scale_flex = scale_flex;
+inp.info.scale_flex = scale_flex; inp.info.workload_file = wlfile;
 inp.info.pai_day = par.case.pai_day; inp.info.pai_prev = days(prevwk)'; inp.info.pai_pool = days(poolwk)';
 inp.info.azure_date = par.case.azure_date; inp.info.azure_pool = dates(azpool);
 end
@@ -187,6 +209,27 @@ Gm = G(i0+1:i0+24); tg = (0.5:1:23.5)';   % mean over (h, h+1] centred at h+0.5
 tq = ((0:95)' + 0.5) * 0.25;
 w.T = interp1(th, Th, tq, 'linear');
 w.G = max(0, interp1([0; tg; 24], [0; Gm; 0], tq, 'linear'));
+end
+
+function [t, v] = read_wind(f)
+fid = fopen(f, 'r');
+if fid < 0, error('load_inputs:wind', 'wind file %s not found (data_prep/fetch_wind.py)', f); end
+fgetl(fid);
+C = textscan(fid, '%s %f', 'Delimiter', ',');
+fclose(fid);
+t = C{1}; v = C{2};
+end
+
+function p = wind_day(t, v, d, par)
+% hourly 100-m wind speed (instantaneous) -> 15-min wind-farm power (MW): generic offshore power curve
+% (cubic between cut-in and rated speed), farm efficiency par.wind.eta
+i0 = find(strncmp(t, d, 10), 1);
+if isempty(i0) || i0 + 24 > numel(t), error('load_inputs:windday', 'no wind data for %s', d); end
+vq = interp1((0:24)', v(i0:i0+24), ((0:95)' + 0.5) * 0.25, 'linear');
+w = par.wind;
+cf = (vq.^3 - w.v_in^3) / (w.v_r^3 - w.v_in^3);
+cf(vq < w.v_in | vq >= w.v_out) = 0; cf(vq >= w.v_r & vq < w.v_out) = 1;
+p = w.Prated * w.eta * cf;
 end
 
 function [pv, cop, Tq] = pv_cop(w, par)

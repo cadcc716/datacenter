@@ -66,10 +66,13 @@ if ~isempty(opt.fix_y)
 end
 n = H * S; one = ones(n, 1); r = (1:n)';
 
-%% optional GPU power capping during DR events (Z = capped GPUs, Z <= Y, only in event steps)
-capon = isfield(par.it, 'cap_on') && par.it.cap_on;
+%% optional GPU power capping during DR events: ZC = capped dynamic power (GPU equivalents),
+%  ZC <= rmax*Y, only in event steps; throughput loss LC >= s_k*ZC + i_k*Y (convex, CAP_CURVE)
+cv = cap_curve(par); capon = cv.on;
 for c = 1:3
     if capon, [m, ZC{c}] = addb(m, H, S, 0, Inf, 0); else, ZC{c} = zeros(H, S); end
+    LC{c} = [];
+    if capon && ~cv.linear, [m, LC{c}] = addb(m, H, S, 0, Inf, 0); end
 end
 if capon
     evstep = false(H, S);
@@ -82,11 +85,25 @@ if capon
     rc = (1:H*S)';
     for c = 1:3
         m.ub(ZC{c}(~evstep)) = 0;
-        m = lpb_addle(m, [rc; rc], [ZC{c}(:); Y{c}(:)], [ones(H*S,1); -ones(H*S,1)], zeros(H*S,1));
+        m = lpb_addle(m, [rc; rc], [ZC{c}(:); Y{c}(:)], [ones(H*S,1); -cv.rmax * ones(H*S,1)], zeros(H*S,1));
         if ~isempty(opt.fix_z)
             v = repmat(opt.fix_z(:, c), 1, S); m.lb(ZC{c}(:)) = v(:); m.ub(ZC{c}(:)) = v(:);
         end
+        if ~cv.linear
+            m.ub(LC{c}(~evstep)) = 0;
+            for k = 1:cv.K
+                m = lpb_addle(m, [rc; rc; rc], [ZC{c}(:); Y{c}(:); LC{c}(:)], ...
+                    [cv.s(k) * ones(H*S,1); cv.i(k) * ones(H*S,1); -ones(H*S,1)], zeros(H*S,1));
+            end
+        end
     end
+end
+% optional pause / resume overhead (M6): every GPU newly paused w.r.t. the nominal load (increase of
+% the deferral flex - y) adds par.it.pause_ovh_h GPU-h of work (checkpoint + restart), PI >= increase
+povh = zeros(1, 3); if isfield(par.it, 'pause_ovh_h'), povh = par.it.pause_ovh_h(:)'; end
+for c = 1:3
+    PI{c} = [];
+    if povh(c) > 0, [m, PI{c}] = addb(m, H, S, 0, Inf, 0); end
 end
 
 %% GPU capacity
@@ -109,12 +126,34 @@ for c = 1:3
     % B(h) - B(h-1) + dt*y(h) = arr(h)
     Bc = B{c}; rhs = arr; rhs(1, :) = rhs(1, :) + B0;
     I = [r; r]; J = [Bc(:); Y{c}(:)]; Vv = [one; dt * one];
-    if capon, I = [I; r]; J = [J; ZC{c}(:)]; Vv = [Vv; -dt * par.it.cap_beta * par.it.cap_rho * one]; end
+    if capon && cv.linear, I = [I; r]; J = [J; ZC{c}(:)]; Vv = [Vv; -dt * cv.s(1) * one]; end
+    if capon && ~cv.linear, I = [I; r]; J = [J; LC{c}(:)]; Vv = [Vv; -dt * one]; end
+    if povh(c) > 0, I = [I; r]; J = [J; PI{c}(:)]; Vv = [Vv; -povh(c) * one]; end
     prev = Bc(1:end-1, :); cur = (2:H)' + (0:S-1) * H;
     I = [I; cur(:)]; J = [J; prev(:)]; Vv = [Vv; -ones(numel(prev), 1)];
     [m, ix.row_B{c}] = lpb_addeq(m, I, J, Vv, rhs(:));
     [m, ix.row_Bmax{c}] = lpb_addle(m, [r; r], [Bc(:); V{c}(:)], [one; -one], Bmax(:));
     ix.Bmax{c} = Bmax;
+    % optional rigid-job recovery bound: y(h) - B(h-1)/tau <= flex(h); step 1 uses the backlog before
+    % the arrivals of t0 (already in B0)
+    tau = rec_tau(par, c);
+    if tau > 0
+        a0 = 0; if isfield(st, 'arr'), a0 = st.arr(c); end
+        fl = squeeze(sc.flex(:, c, :)); if S == 1, fl = fl(:); end
+        rb = fl; rb(1, :) = a0 + max(B0 - a0 * dt, 0) / tau;
+        m = lpb_addle(m, [r; cur(:)], [Y{c}(:); prev(:)], [one; -ones(numel(prev), 1) / tau], rb(:));
+    end
+    % pause overhead: -PI(h) - Y(h) + Y(h-1) <= -(flex(h) - flex(h-1)); step 1 against the realised
+    % deferral of the previous step (st.dprev)
+    if povh(c) > 0
+        a0 = 0; if isfield(st, 'arr'), a0 = st.arr(c); end
+        dp = 0; if isfield(st, 'dprev'), dp = st.dprev(c); end
+        fl = squeeze(sc.flex(:, c, :)); if S == 1, fl = fl(:); end
+        fl(1, :) = a0;
+        rb = -[fl(1, :) - dp; diff(fl, 1, 1)];
+        Yp = Y{c}(1:end-1, :);
+        m = lpb_addle(m, [r; r; cur(:)], [PI{c}(:); Y{c}(:); Yp(:)], [-one; -one; ones(numel(Yp), 1)], rb(:));
+    end
 end
 
 %% cooling balance:  qec + COP_ac*hac + qtd - qtc - theta*pdyn*sum(y) = theta*(Pfix + pdyn*k_inf*inf) + Q0
@@ -124,7 +163,7 @@ I = [r; r; r; r; r; r; r]; J = [QEC(:); HAC(:); QTD(:); QTC(:); Y{1}(:); Y{2}(:)
 Vv = [one; par.ac.cop * one; one; -one; -th * d.pdyn * [one; one; one]];
 if th_on, I = [I; r; r]; J = [J; QHC(:); QHD(:)]; Vv = [Vv; one; -one]; end   % supply + accumulation = load
 if capon
-    I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; th * d.pdyn * par.it.cap_rho * [one; one; one]];
+    I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; th * d.pdyn * [one; one; one]];
 end
 m = lpb_addeq(m, I, J, Vv, th * base_it(:) + par.fac.Q0);
 
@@ -133,7 +172,7 @@ I = repmat(r, 9, 1);
 J = [PG(:); PPV(:); PGT(:); PDS(:); PCH(:); QEC(:); Y{1}(:); Y{2}(:); Y{3}(:)];
 Vv = [one; one; one; one; -one; -1 ./ sc.cop(:); -(1 + a) * d.pdyn * [one; one; one]];
 if capon
-    I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; (1 + a) * d.pdyn * par.it.cap_rho * [one; one; one]];
+    I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; (1 + a) * d.pdyn * [one; one; one]];
 end
 [m, ix.row_el] = lpb_addeq(m, I, J, Vv, (1 + a) * base_it(:) + par.fac.P_aux0);
 
@@ -336,7 +375,7 @@ if pol.pue_max < Inf                          % electric PUE: sum facility <= PU
         cols = [Y{1}(:, s); Y{2}(:, s); Y{3}(:, s); QEC(:, s); SLP(s)];
         vals = [repmat(dt * kk, 3 * H, 1); dt ./ sc.cop(:, s); -1];
         if capon
-            cols = [cols; ZC{1}(:, s); ZC{2}(:, s); ZC{3}(:, s)]; vals = [vals; repmat(-dt * kk * par.it.cap_rho, 3 * H, 1)];
+            cols = [cols; ZC{1}(:, s); ZC{2}(:, s); ZC{3}(:, s)]; vals = [vals; repmat(-dt * kk, 3 * H, 1)];
         end
         rhs = -acc(1) + U * acc(2) - sum(dt * ((1 + a - U) * base_it(:, s) + par.fac.P_aux0));
         m = lpb_addle(m, ones(numel(cols), 1), cols, vals, rhs);
@@ -439,4 +478,10 @@ for i = 1:size(f,1)
     if ~isfield(opt, f{i,1}), opt.(f{i,1}) = f{i,2}; end
 end
 if numel(opt.visible) == 1, opt.visible = repmat(opt.visible, K, 1); end
+end
+
+function tau = rec_tau(par, c)
+%REC_TAU  Recovery time constant of class c (h), 0 = unbounded (see par.it.rec_tau).
+tau = 0;
+if isfield(par.it, 'rec_tau') && numel(par.it.rec_tau) >= c, tau = par.it.rec_tau(c); end
 end

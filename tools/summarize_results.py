@@ -28,6 +28,13 @@ def rd(n):
     return pd.read_csv(p) if os.path.exists(p) else None
 
 
+def rd_parts(prefix):
+    """concatenate <prefix>.csv and <prefix>_<part>.csv (experiments split over several processes)"""
+    fs = sorted(f for f in os.listdir(RES) if f.startswith(prefix) and f.endswith(".csv")) if os.path.isdir(RES) else []
+    parts = [pd.read_csv(os.path.join(RES, f)) for f in fs]
+    return pd.concat(parts, ignore_index=True) if parts else None
+
+
 def ci(x):
     x = np.asarray(x, float); x = x[~np.isnan(x)]
     if len(x) < 2: return (np.nan, np.nan)
@@ -228,6 +235,7 @@ def rel_cap(q):
 # ------------------------------------------------------------------ deadline check (all Monte-Carlo files)
 header("Deadline check: lateness (GPU-h*h) > 0 in any run")
 for f in sorted(os.listdir(RES)) if os.path.isdir(RES) else []:
+    if f.startswith(("exp19", "exp20")): continue      # job-level experiments: see the job-level service check
     if f.endswith(".csv") and "lateness_GPUh_h" in (open(os.path.join(RES, f)).readline()):
         d = pd.read_csv(os.path.join(RES, f)); n = int((d.lateness_GPUh_h > 1e-3).sum())
         if n: print(f"  {f}: {n} rows with lateness, max {d.lateness_GPUh_h.max():.1f}")
@@ -332,3 +340,113 @@ if m is not None and s is not None:
         print(f"  {nm:14s} MC (N={len(J)}): fulfil {q[q.strategy == 1].fulfil_rate_pct.mean():.1f}/{q[q.strategy == 2].fulfil_rate_pct.mean():.1f}/"
               f"{J.fulfil_rate_pct.mean():.1f}; all valid {q[q.strategy == 1].all_valid.mean():.2f}/{q[q.strategy == 2].all_valid.mean():.2f}/{J.all_valid.mean():.2f}; "
               f"JR-D - {NM3[best]}: {mm:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, p={pv:.2g})")
+
+# ------------------------------------------------------------------ helpers for the job-level experiments
+def best_ir(q, col):
+    """name of the independent strategy (IR-O*, IR-P) with the lower mean of col"""
+    m = {nm: q[q.name == nm][col].mean() for nm in ["IR-O*", "IR-P"] if (q.name == nm).any()}
+    return min(m, key=m.get) if m else None
+
+
+def jr_vs_best(q, col, lab):
+    b = best_ir(q, col)
+    if b is None or not (q.name == "JR-D").any(): return
+    J = q[q.name == "JR-D"].set_index("realisation"); B = q[q.name == b].set_index("realisation").loc[J.index]
+    m, lo, hi, rel, pv = paired(J, B, col)
+    print(f"    {lab:9s} JR-D - {b:5s}: {m:+8.0f} [{lo:+.0f}, {hi:+.0f}] CNY/day ({rel:+.2f}%, Wilcoxon p={pv:.2g}), "
+          f"cheaper on {(J[col].values < B[col].values).sum()}/{len(J)} days")
+
+
+# ------------------------------------------------------------------ Exp19 workload and recovery model
+header("Exp19  LLM-era workload (Acme) and rigid-job recovery, every run also executed at job level")
+s = rd("exp19_strategies.csv"); v = rd("exp19_variants.csv")
+parts = [rd(f) for f in sorted(os.listdir(RES)) if f.startswith("exp19_workload") and f.endswith(".csv")] if os.path.isdir(RES) else []
+parts = [q for q in parts if q is not None]
+if parts and s is not None and v is not None:
+    d = pd.concat(parts, ignore_index=True)
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"]))); vl = dict(zip(v["index"], v["label"]))
+    for k in sorted(d.variant.unique()):
+        q = d[(d.variant == k) & (d.realisation > 0)]; c0 = d[(d.variant == k) & (d.realisation == 0)]
+        print(f"\n--- {vl[k]}  (N = {q.realisation.nunique()} Monte-Carlo days)")
+        if len(c0):
+            t = c0.set_index("name")[["n_valid", "net_cost_adj", "job_n_valid", "job_net_cost_adj", "job_rmse_pg", "job_rec_short",
+                                      "job_lag_ratio_C1", "job_lag_ratio_C2", "job_lag_ratio_C3", "job_ovh_GPUh", "job_lost_GPUh",
+                                      "job_B_end", "B_start_E3", "term_backlog_GPUh"]]
+            print("  case day:"); print(t.round(2).to_string())
+        rows = []
+        for nm in s["label"]:
+            z = q[q.name == nm]
+            if not len(z): continue
+            rows.append({"strategy": nm, "fluid_net": z.net_cost_adj.mean(), "fluid_allvalid": z.all_valid.mean(),
+                         "fluid_fulfil": z.fulfil_rate_pct.mean(), "fluid_late": z.lateness_GPUh_h.mean(),
+                         "job_net": z.job_net_cost_adj.mean(), "job_allvalid": z.job_all_valid.mean(),
+                         "job_fulfil": z.job_fulfil_rate_pct.mean(), "job_vs_fluid_pct": 100 * (z.job_net_cost_adj.mean() / z.net_cost_adj.mean() - 1),
+                         "rmse_MW": z.job_rmse_pg.mean(), "rec_short_GPUh": z.job_rec_short.mean(), "late_share_max": z[["job_late_share_C1", "job_late_share_C2", "job_late_share_C3"]].max(axis=1).mean(),
+                         "ovh_MWh": z.job_ovh_MWh.mean(), "pauses": z.job_n_pause.mean()})
+        if rows: print(pd.DataFrame(rows).set_index("strategy").round(3).to_string())
+        jr_vs_best(q, "net_cost_adj", "fluid")
+        jr_vs_best(q, "job_net_cost_adj", "job-level")
+    print("\n  job-level service check: max lateness (GPU-h*h) over all job-level executions: "
+          f"{d.job_lateness.max():.2f} (the executor runs a job when its slack is exhausted)")
+
+# ------------------------------------------------------------------ Exp20 job-level sensitivity
+header("Exp20  job-level execution on the case day: job mix and pause overheads")
+d = rd("exp20_jobsim.csv"); se = rd("exp20_settings.csv"); s = rd("exp20_strategies.csv")
+if d is not None and se is not None and s is not None:
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"])))
+    lab = {(w, i): l for w, i, l in zip(se["workload"], se["index"], se["label"])}
+    for (w, mdl), q in d.groupby(["workload", "model"]):
+        print(f"\n--- workload {'PAI' if w == 1 else 'Acme'}, {'fluid' if mdl == 0 else 'rigid-job'} recovery model")
+        q = q.copy(); q["setting_name"] = [("fluid evaluation" if k == 0 else lab[(w, k)]) for k in q.setting]
+        t = q.pivot_table(index="setting_name", columns="name", values="net_cost_adj", sort=False)
+        t2 = q.pivot_table(index="setting_name", columns="name", values="n_valid", sort=False)
+        print("  net cost (CNY):"); print(t.round(0).to_string())
+        print("  valid events:"); print(t2.round(0).to_string())
+        x = q[q.setting > 0].groupby("setting_name", sort=False)[["job_rmse_pg", "job_rec_short", "job_ovh_GPUh", "job_lost_GPUh", "job_n_pause", "job_step_max_MW", "job_gang_max_MW"]].mean()
+        print("  job-level statistics (mean over strategies):"); print(x.round(2).to_string())
+
+# ------------------------------------------------------------------ Exp21 wind
+header("Exp21  green-power direct connection: offshore wind behind the meter")
+d = rd_parts("exp21_wind"); s = rd("exp21_strategies.csv")
+if d is not None and s is not None:
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"])))
+    for p, q in d.groupby("wind_MW"):
+        c0 = q[q.realisation == 0]; m = q[q.realisation > 0]
+        print(f"\n--- wind {p:g} MW: case-day wind {c0.wind_MWh_day.iloc[0]:.1f} MWh; MC mean wind {m.groupby('realisation').wind_MWh_day.first().mean():.1f} MWh/day")
+        print(c0.set_index("name")[["n_valid", "net_cost_adj", "green_share_pv", "res_selfuse", "cost_energy", "dr_pay"]].round(3).to_string())
+        t = m.groupby("name")[["fulfil_rate_pct", "all_valid", "net_cost_adj", "green_share_pv", "res_selfuse"]].mean()
+        print(t.round(3).to_string())
+        jr_vs_best(m, "net_cost_adj", "MC")
+
+# ------------------------------------------------------------------ Exp22 overhead and capping levels
+header("Exp22  pause / resume overhead and several capping levels (fluid model)")
+d = rd_parts("exp22_overhead"); se = rd("exp22_settings.csv"); s = rd("exp22_strategies.csv")
+if d is not None and se is not None and s is not None:
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"]))); lab = dict(zip(se["index"], se["label"]))
+    for k, q in d.groupby("setting"):
+        c0 = q[q.realisation == 0]; m = q[q.realisation > 0]
+        print(f"\n--- {lab[k]}: case day " + ", ".join(f"{a} {b:.0f}" for a, b in zip(c0.name, c0.net_cost_adj)))
+        t = m.groupby("name")[["fulfil_rate_pct", "all_valid", "net_cost_adj", "pause_ovh_GPUh"]].mean()
+        print(t.round(3).to_string())
+        jr_vs_best(m, "net_cost_adj", "MC")
+
+# ------------------------------------------------------------------ Exp23 scenario generation
+header("Exp23  day-ahead scenarios: K-means reduction and seasonal drift (out of sample with JR-D)")
+c = rd("exp23_commit.csv"); se = rd("exp23_settings.csv"); o = rd("exp23_oos.csv")
+if c is not None and se is not None:
+    c["label"] = [l for l in se["label"]]
+    print(c.round(2).to_string(index=False))
+if o is not None and se is not None:
+    lab = {(p, k): l for p, k, l in zip(se["part"], se["setting"], se["label"])}
+    for p, q in o.groupby("part"):
+        rows = []
+        for k, z in q.groupby("setting"):
+            v_ = np.sort(z.net_cost_adj.values)[::-1]; n10 = max(1, int(round(0.1 * len(v_))))
+            rows.append({"setting": lab[(p, k)], "mean": z.net_cost_adj.mean(), "cvar90": v_[:n10].mean(), "all_valid": z.all_valid.mean(),
+                         "fulfil": z.fulfil_rate_pct.mean(), "dr_pay": z.dr_pay.mean()})
+        print(f"--- part {p}"); print(pd.DataFrame(rows).set_index("setting").round(3).to_string())
+        ref = q[q.setting == 1].set_index("realisation")
+        for k in sorted(q.setting.unique()):
+            if k == 1: continue
+            m, lo, hi, rel, pv = paired(q[q.setting == k].set_index("realisation").loc[ref.index], ref)
+            print(f"  {lab[(p, k)]:16s} - {lab[(p, 1)]}: {m:+.0f} [{lo:+.0f}, {hi:+.0f}] ({rel:+.2f}%, p={pv:.2g})")

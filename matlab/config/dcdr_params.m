@@ -26,9 +26,21 @@ par.it.lag_h     = [0.5 1.5 3];  % [A] max lag L_c (h): Emerald AI Flex1-3 (10/2
 par.it.cap_on    = false;        % [A] power capping available during DR events
 par.it.cap_rho   = 0.30;         % [A] dynamic-power reduction of a capped GPU
 par.it.cap_beta  = 0.40;         % [A] throughput loss per unit power reduction (30 % less power -> 12 % slower)
+% several capping levels (M6): power reduction cap_rho(k) costs throughput cap_loss(k), convex piecewise-linear
+% curve through (0,0); [] = the single level above. Exp22 uses cap_rho = [0.15 0.30 0.45], cap_loss = [0.03 0.12 0.30]
+par.it.cap_loss  = [];           % [A] throughput losses at the levels cap_rho (same length as cap_rho)
+% pause / resume overhead (M6): GPU-h of extra work per GPU newly paused (checkpoint written before the pause
+% + restart after it), e.g. (1 + 5)/60 h with asynchronous checkpointing; 0 = none (base case)
+par.it.pause_ovh_h = [0 0 0];    % [A] per class (h)
 par.it.class_name = {'C1 short batch (<=1h)', 'C2 medium (1-12h)', 'C3 long training (>12h)'};
 par.it.ramp_max  = Inf;          % [A] max change of deferrable IT power per step (MW/15 min); Inf = no limit
 par.it.c_ramp    = 5e4;          % [A] penalty on ramping beyond ramp_max (CNY per MW and step; soft so GPUs may idle)
+% Rigid-job recovery bound (review issue 6f, checked by the job-level simulator JOB_REPLAY): a paused gang job
+% cannot run faster later, its delay is only worked off once it passes its nominal end. A class can then
+% run at most B_c/tau_c GPUs above its nominal load, tau_c = gang-weighted mean run time of the class.
+% 0 = no bound (fluid model, base case). Trace values (data/job_class_stats.csv) [D]:
+%   PAI 2020 [0.26 3.60 26.3] h,  Acme Seren 2023 [0.11 4.19 39.5] h
+par.it.rec_tau   = [0 0 0];      % [D] recovery time constants (h); 0 = unbounded recovery
 
 %% ---------------- facility & cooling ----------------
 par.fac.a_aux    = 0.05;         % [A] UPS / distribution losses + air handlers (fraction of IT power)
@@ -67,6 +79,14 @@ par.pv.Prated    = 8;            % [A] MWp (rooftop + carport + adjacent "green 
 par.pv.gamma     = -0.0037;      % [S] temperature coefficient (PVWatts v5 default, Dobos 2014)
 par.pv.noct      = 45;           % [A] deg C
 par.pv.eta_sys   = 0.86;         % [S] system derate (PVWatts v5 default losses 14 %)
+% optional offshore wind under a green-power direct connection (NDRC/NEA Fagai Nengyuan [2025] No. 650:
+% self-consumption >= 60 % of usable generation and >= 30 % of the user's consumption); off in the base case
+par.wind.Prated  = 0;            % [A] MW of wind capacity behind the meter (0 = none; Exp21 sweep)
+par.wind.file    = 'wind_rudong_2024summer.csv';   % [D] ERA5 100-m wind, Rudong offshore area (32.6 N 121.6 E)
+par.wind.v_in    = 3;            % [S] cut-in speed (m/s), IEA 15-MW reference turbine (Gaertner et al., NREL 2020)
+par.wind.v_r     = 10.59;        % [S] rated speed (m/s), same source
+par.wind.v_out   = 25;           % [S] cut-out speed (m/s), same source
+par.wind.eta     = 0.90;         % [A] wake and collection losses of the farm
 
 %% ---------------- grid & tariff (Jiangsu, summer, from June 2025) ----------------
 % periods (consultation draft, Apr 2025): peak 14-22, valley 0-6 & 11-13, flat otherwise
@@ -135,7 +155,9 @@ par.bench.it_gas = 'available';     % IT power budget of the independent benchma
 %% ---------------- case selection ----------------
 par.case.weather_date = '2024-08-05';          % hot weekday (Tmax 38.3 C, Suzhou-Wujiang)
 par.case.base_dates   = {'2024-07-29','2024-07-30','2024-07-31','2024-08-01','2024-08-02'}; % 5 prior workdays
-par.case.pai_day      = 27;                    % PAI trace weekday used as DR day
+par.case.pai_day      = 27;                    % PAI trace weekday used as DR day (day index of the workload file)
+par.case.workload_file = 'pai_gpu_occupancy_15min.csv';   % deferrable workload trace; LLM-era alternative:
+                                               % 'acme_seren_gpu_occupancy_15min.csv' with pai_day = 83 (2023-05-23)
 par.case.azure_date   = '2024-05-14';          % Azure LLM weekday used as DR day
 par.case.lat = 31.16; par.case.lon = 120.64;
 

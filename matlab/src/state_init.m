@@ -15,4 +15,6 @@ st.late  = 0;               % accumulated lateness (GPU-h * h)
 st.y_prev = NaN;            % deferrable GPUs executed in the previous step (for the ramp limit)
 st.TH = 0;                  % heat stored in the data hall above the set-point (MWh_th, thermal-inertia option)
 st.acc = zeros(1, 4);       % accrued facility, IT, PV and consumption energy (MWh) for the policy constraints
+st.arr = zeros(1, 3);       % arrivals of the current step (busy GPUs, set by add_arrivals)
+st.dprev = zeros(1, 3);     % deferral (nominal - executed GPUs) of the previous step (pause-overhead option)
 end

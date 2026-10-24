@@ -55,6 +55,13 @@ def rd(name):
     return pd.read_csv(p) if os.path.exists(p) else None
 
 
+def rd_parts(prefix):
+    """concatenate <prefix>.csv and <prefix>_<part>.csv (experiments split over several processes)"""
+    fs = sorted(f for f in os.listdir(RES) if f.startswith(prefix) and f.endswith(".csv")) if os.path.isdir(RES) else []
+    parts = [pd.read_csv(os.path.join(RES, f)) for f in fs]
+    return pd.concat(parts, ignore_index=True) if parts else None
+
+
 def shade(ax, ev=EV):
     for a, b in ev:
         ax.axvspan(a, b, color="#2a78d6", alpha=0.07, lw=0)
@@ -168,6 +175,31 @@ ZH2EN = {
     "（点旁为兑现率）": " (labels: fulfilment)",
     "(c) 独立恢复：Γ_B/Γ_B⁰（前序 6 MW×2 h）": "(c) IR: Γ_B/Γ_B⁰ (A: 6 MW × 2 h)", "(d) 联合恢复：Γ_B/Γ_B⁰（前序 6 MW×2 h）": "(d) JR: Γ_B/Γ_B⁰ (A: 6 MW × 2 h)",
     "可靠容量处": "at reliable capacity", "独立恢复": "Independent recovery", "联合恢复": "Joint recovery",
+    "52 个运行日的综合成本分布（核密度；竖线与右侧数字为均值）": "Total cost over the 52 operating days (kernel density; vertical line and right-hand number: mean)",
+    "(a) 流体恢复模型的计划（JR-D，PAI 病例日）": "(a) Plan of the fluid recovery model (JR-D, PAI case day)",
+    "(b) 刚性作业恢复约束下的计划（JR-D，PAI 病例日）": "(b) Plan with the rigid-job recovery bound (JR-D, PAI case day)",
+    "流体模型计划": "Fluid-model plan", "作业级执行": "Job-level execution", "可延迟 IT 负荷相对名义值 / MW": "Deferrable IT load vs nominal / MW",
+    "(c) 作业级执行：三次事件全部有效的天数占比 / %": "(c) Job-level execution: days with all three events valid / %",
+    "(d) 作业级执行：日均综合成本相对 JR-D / %": "(d) Job-level execution: mean daily cost vs JR-D / %",
+    "PAI·流体": "PAI · fluid", "PAI·刚性": "PAI · rigid", "Acme·流体": "Acme · fluid", "Acme·刚性": "Acme · rigid",
+    "PAI 作业·基准开销": "PAI jobs · base overheads", "PAI 作业·无开销": "PAI jobs · no overheads", "PAI 作业·慢检查点/重启": "PAI jobs · slow checkpoint/restart",
+    "PAI 作业·仅周期检查点": "PAI jobs · periodic checkpoints only", "Seren 作业·基准开销": "Seren jobs · base overheads",
+    "Kalos 作业·基准开销": "Kalos jobs · base overheads", "PAI 作业×4 卡数": "PAI jobs, gangs ×4", "Seren 作业·无开销": "Seren jobs · no overheads",
+    "Seren 作业·慢检查点/重启": "Seren jobs · slow checkpoint/restart", "Seren 作业·仅周期检查点": "Seren jobs · periodic checkpoints only",
+    "Seren 作业×2 卡数": "Seren jobs, gangs ×2", "(a) PAI 负荷，刚性作业恢复约束": "(a) PAI workload, rigid-job recovery bound",
+    "(b) Acme 负荷，刚性作业恢复约束": "(b) Acme workload, rigid-job recovery bound", "流体模型评价": "Fluid-model evaluation",
+    "综合成本 / 万元（空心：有事件无效）": "Total cost / 10⁴ CNY (hollow: an event invalid)",
+    "(a) 绿电直连：表后风电压低可交付的DR承诺": "(a) Green-power direct connection: wind behind the meter lowers the DR commitment",
+    "绿电占比 ": "Green share ", "自用率 ": "self-use ", "风电装机 / MW": "Wind capacity / MW", "三次事件日前承诺合计 / MW": "Day-ahead commitment, three events / MW",
+    "（对 ": " (vs ", "JR-D 相对较强独立基准的日均节省 / %": "Daily saving of JR-D vs the stronger benchmark / %",
+    "(b) 风电下联合恢复的收益（52 个运行日，95% 置信区间）": "(b) Value of joint recovery with wind (52 days, 95% CI)",
+    "基准（流体）": "Base (fluid)", "暂停开销 6 min": "Pause overhead 6 min", "暂停开销 25 min": "Pause overhead 25 min", "单档封顶": "One capping level",
+    "三档封顶": "Three capping levels", "三档封顶 + 暂停开销": "Three levels + pause overhead", "52 个运行日平均综合成本 / 万元": "Mean total cost over 52 days / 10⁴ CNY",
+    "(c) 暂停/恢复开销与多档功率封顶": "(c) Pause / resume overhead and capping levels",
+    "(d) 场景生成：分位 vs K-means（样本外，JR-D 运行）": "(d) Scenario generation: quantiles vs K-means (out of sample, JR-D)",
+    "(e) 季节漂移：冬季日用夏季场景承诺（样本外）": "(e) Seasonal drift: winter day committed with summer scenarios (out of sample)",
+    "样本外平均综合成本 / 万元": "Out-of-sample mean total cost / 10⁴ CNY", "最差 10% 日平均 / 万元": "Mean of the worst 10% days / 10⁴ CNY",
+    "日前承诺 / MW": "Day-ahead commitment / MW", "(f) 各场景设定下的日前承诺": "(f) Day-ahead commitments per scenario setting",
     # generic fragments
     "万元": "10⁴ CNY", "元/MWh": "CNY/MWh", "元/(GPU·h)": "CNY/(GPU·h)", "元/kWh": "CNY/kWh", "元/kW": "CNY/kW", "本文": "proposed",
     "积压": "backlog", "承诺": "commitment", "（": " (", "）": ")", "，": ", ", "：": ": ", "；": "; ",
@@ -843,6 +875,212 @@ def fig_policy():
     save(fig, "fig21_policy.png")
 
 
+# ---------------------------------------------------------------- fig24 ridge plot of the Monte-Carlo days
+ORDER = ["IR-R", "IR-O", "IR-O*", "IR-P", "JR-M", "JR-D", "JR-S", "JR-oracle"]
+
+
+def fig_ridge():
+    from scipy.stats import gaussian_kde
+    sets = [("_certain", "事件确定 · c_rb=3 元/kW"), ("_certain_crb0", "事件确定 · c_rb=0"), ("_e3uncertain", "E3 不确定（p=0.6，提前1 h确认）")]
+    rows = [(rd(f"exp4{t}.csv"), rd(f"exp4{t}_strategies.csv"), lab) for t, lab in sets]
+    rows = [r for r in rows if r[0] is not None and r[1] is not None]
+    if not rows: return
+    fig, ax = plt.subplots(1, len(rows), figsize=(4.8 * len(rows), 4.6), squeeze=False); fig.subplots_adjust(wspace=0.32)
+    for j, (d, s, lab) in enumerate(rows):
+        a = ax[0, j]; names = [n for n in ORDER if n in list(s["label"])]; idx = dict(zip(s["label"], s["index"]))
+        vals = {n: d[d.strategy == idx[n]].net_cost_adj.values / 1e4 for n in names}
+        lo = min(v.min() for v in vals.values()); hi = max(v.max() for v in vals.values()); pad = 0.08 * (hi - lo)
+        xs = np.linspace(lo - pad, hi + pad, 400); step = 1.0
+        dens = {n: gaussian_kde(v)(xs) for n, v in vals.items()}
+        sc = 1.45 * step / max(x.max() for x in dens.values())
+        for i, n in enumerate(names):                    # top row first so lower ridges overlap upper ones
+            base = (len(names) - 1 - i) * step; y = base + dens[n] * sc
+            a.fill_between(xs, base, y, color=C[n], alpha=0.30, lw=0, zorder=2 + i)
+            a.plot(xs, y, color="#fcfcfb", lw=3.2, zorder=2.1 + i)      # surface ring separates overlapping ridges
+            a.plot(xs, y, color=C[n], lw=1.6, zorder=2.2 + i)
+            a.plot([xs[0], xs[-1]], [base, base], color=AXIS, lw=0.6, zorder=2.05 + i)
+            m = vals[n].mean(); ym = base + np.interp(m, xs, dens[n]) * sc
+            a.plot([m, m], [base, ym], color=INK, lw=1.2, zorder=2.3 + i)
+            a.text(xs[-1], base + 0.12, f"{m:.2f}", ha="right", va="bottom", fontsize=7.5, color=INK2, zorder=20)
+        a.set_yticks([(len(names) - 1 - i) * step for i in range(len(names))])
+        a.set_yticklabels(names)
+        a.set_ylim(-0.3, (len(names) - 1) * step + 1.7); a.grid(axis="y", visible=False)
+        a.set_xlabel("综合成本 / 万元"); a.set_title(f"({'abc'[j]}) {lab}")
+    fig.suptitle("52 个运行日的综合成本分布（核密度；竖线与右侧数字为均值）", fontsize=10)
+    save(fig, "fig24_ridge_montecarlo.png")
+
+
+# ---------------------------------------------------------------- fig22 job-level validation of the fluid model
+PDYN = 0.75 * 8.4 / 8 / 1000          # MW per busy GPU (dynamic part), as par.it
+VAR = [("pai_fluid", "PAI·流体"), ("pai_rigid", "PAI·刚性"), ("acme_fluid", "Acme·流体"), ("acme_rigid", "Acme·刚性")]
+
+
+def exp19_frame():
+    parts = [rd(f) for f in sorted(os.listdir(RES)) if f.startswith("exp19_workload") and f.endswith(".csv")] if os.path.isdir(RES) else []
+    parts = [q for q in parts if q is not None]
+    s = rd("exp19_strategies.csv"); v = rd("exp19_variants.csv")
+    if not parts or s is None or v is None: return None
+    d = pd.concat(parts, ignore_index=True)
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"]))); d["variant_name"] = d.variant.map(dict(zip(v["index"], v["label"])))
+    return d
+
+
+def _heat(a, M, rows, cols, fmt, title, cmap, vmin, vmax, lab):
+    im = a.imshow(M, cmap=cmap, vmin=vmin, vmax=vmax, aspect="auto")
+    a.set_xticks(range(len(cols))); a.set_xticklabels(cols); a.set_yticks(range(len(rows))); a.set_yticklabels(rows)
+    a.grid(False)
+    for i in range(len(rows)):
+        for j in range(len(cols)):
+            if np.isnan(M[i, j]): continue
+            val = (M[i, j] - vmin) / (vmax - vmin + 1e-12)
+            a.text(j, i, fmt.format(M[i, j]), ha="center", va="center", fontsize=8, color="#fcfcfb" if val > 0.6 else INK)
+    a.set_title(title)
+    return im
+
+
+def fig_jobsim():
+    ts = {m: rd(f"ts_job_pai_m{m}_JRD.csv") for m in (0, 1)}
+    d = exp19_frame()
+    if all(t is None for t in ts.values()) and d is None: return
+    fig, ax = plt.subplots(2, 2, figsize=(12, 7.6)); fig.subplots_adjust(hspace=0.42, wspace=0.3)
+    for k, (m, lab) in enumerate([(0, "(a) 流体恢复模型的计划（JR-D，PAI 病例日）"), (1, "(b) 刚性作业恢复约束下的计划（JR-D，PAI 病例日）")]):
+        a = ax[0, k]; t = ts[m]
+        if t is None: a.set_visible(False); continue
+        h = t.hour.values; sel = (h >= 15) & (h <= 28)
+        a.axhline(0, color=AXIS, lw=0.8)
+        a.plot(h[sel], PDYN * (t.y_fluid - t.flex).values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="流体模型计划")
+        a.plot(h[sel], PDYN * (t.y_job - t.flex).values[sel], color=INK, lw=1.4, ls="--", drawstyle="steps-post", label="作业级执行")
+        shade(a); a.set_xlim(15, 28); a.set_xlabel("时刻 / h（24 以后为次日）"); a.set_ylabel("可延迟 IT 负荷相对名义值 / MW")
+        a.set_title(lab); a.legend(loc="lower left", fontsize=8)
+    if d is not None:
+        q = d[d.realisation > 0]
+        names = [n for n in ORDER if n in set(q.name)]
+        cols = [lab for v, lab in VAR if v in set(q.variant_name)]; vv = [v for v, lab in VAR if v in set(q.variant_name)]
+        A = np.full((len(names), len(vv)), np.nan); Bm = np.full((len(names), len(vv)), np.nan)
+        for j, v in enumerate(vv):
+            z = q[q.variant_name == v]; jr = z[z.name == "JR-D"].job_net_cost_adj.mean()
+            for i, n in enumerate(names):
+                w = z[z.name == n]
+                if len(w): A[i, j] = 100 * w.job_all_valid.mean(); Bm[i, j] = 100 * (w.job_net_cost_adj.mean() / jr - 1)
+        _heat(ax[1, 0], A, names, cols, "{:.0f}", "(c) 作业级执行：三次事件全部有效的天数占比 / %", "Blues", 0, 100, "")
+        _heat(ax[1, 1], Bm, names, cols, "{:+.1f}", "(d) 作业级执行：日均综合成本相对 JR-D / %", "Oranges", 0, max(5, np.nanmax(Bm)), "")
+    else:
+        ax[1, 0].set_visible(False); ax[1, 1].set_visible(False)
+    save(fig, "fig22_jobsim.png")
+
+
+# ---------------------------------------------------------------- fig23 job mix and pause overheads (case day)
+def fig_jobmix():
+    d = rd("exp20_jobsim.csv"); se = rd("exp20_settings.csv"); s = rd("exp20_strategies.csv")
+    if d is None or se is None or s is None: return
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"])))
+    LAB = {"pai-base": "PAI 作业·基准开销", "pai-none": "PAI 作业·无开销", "pai-slow": "PAI 作业·慢检查点/重启",
+           "pai-periodic": "PAI 作业·仅周期检查点", "seren-base": "Seren 作业·基准开销", "kalos-base": "Kalos 作业·基准开销",
+           "pai-x4-base": "PAI 作业×4 卡数", "seren-none": "Seren 作业·无开销", "seren-slow": "Seren 作业·慢检查点/重启",
+           "seren-periodic": "Seren 作业·仅周期检查点", "seren-x2-base": "Seren 作业×2 卡数"}
+    fig, ax = plt.subplots(1, 2, figsize=(12, 4.6)); fig.subplots_adjust(wspace=0.55)
+    for k, (w, title) in enumerate([(1, "(a) PAI 负荷，刚性作业恢复约束"), (2, "(b) Acme 负荷，刚性作业恢复约束")]):
+        a = ax[k]; q = d[(d.workload == w) & (d.model == 1)]
+        if not len(q): a.set_visible(False); continue
+        lab = {i: LAB.get(l, l) for ww, i, l in zip(se["workload"], se["index"], se["label"]) if ww == w}
+        order = [0] + sorted(lab)
+        ylab = ["流体模型评价"] + [lab[i] for i in sorted(lab)]
+        for j, nm in enumerate(["JR-D", "IR-O*", "IR-P"]):
+            z = q[q.name == nm].set_index("setting")
+            y = np.arange(len(order)) + (j - 1) * 0.18
+            x = [z.net_cost_adj.get(o, np.nan) / 1e4 for o in order]
+            ok = [z.n_valid.get(o, np.nan) == 3 for o in order]
+            a.scatter([xx for xx, o_ in zip(x, ok) if o_], [yy for yy, o_ in zip(y, ok) if o_], s=42, color=C[nm], marker=MK[nm], label=nm, zorder=3,
+                      edgecolor="#fcfcfb", linewidth=0.8)
+            a.scatter([xx for xx, o_ in zip(x, ok) if not o_], [yy for yy, o_ in zip(y, ok) if not o_], s=42, facecolor="#fcfcfb",
+                      edgecolor=C[nm], marker=MK[nm], linewidth=1.4, zorder=3)
+        a.set_yticks(range(len(order))); a.set_yticklabels(ylab); a.invert_yaxis()
+        a.set_xlabel("综合成本 / 万元（空心：有事件无效）"); a.set_title(title); a.legend(loc="lower right", fontsize=8)
+    save(fig, "fig23_jobmix.png")
+
+
+# ---------------------------------------------------------------- fig25 extensions: wind, overhead / capping, scenarios
+def _saving(q, col="net_cost_adj"):
+    """JR-D vs the better of IR-O*, IR-P (by mean): mean paired saving in % of the benchmark and 95 % CI"""
+    from scipy import stats
+    m = {nm: q[q.name == nm][col].mean() for nm in ["IR-O*", "IR-P"] if (q.name == nm).any()}
+    if not m or not (q.name == "JR-D").any(): return np.nan, np.nan, np.nan, None
+    b = min(m, key=m.get)
+    J = q[q.name == "JR-D"].set_index("realisation")[col]; B = q[q.name == b].set_index("realisation")[col].loc[J.index]
+    d = 100 * (B.values - J.values) / B.mean()
+    h = stats.t.ppf(0.975, len(d) - 1) * d.std(ddof=1) / np.sqrt(len(d)) if len(d) > 1 else np.nan
+    return d.mean(), d.mean() - h, d.mean() + h, b
+
+
+def fig_extensions():
+    w = rd_parts("exp21_wind"); ws = rd("exp21_strategies.csv")
+    o = rd_parts("exp22_overhead"); os_ = rd("exp22_settings.csv"); ost = rd("exp22_strategies.csv")
+    c = rd("exp23_commit.csv"); cs = rd("exp23_settings.csv"); oo = rd("exp23_oos.csv")
+    if w is None and o is None and c is None: return
+    fig, ax = plt.subplots(2, 3, figsize=(16, 8.4)); fig.subplots_adjust(hspace=0.5, wspace=0.42)
+    # (a), (b) wind
+    if w is not None and ws is not None:
+        w["name"] = w.strategy.map(dict(zip(ws["index"], ws["label"])))
+        Ps = sorted(w.wind_MW.unique()); a = ax[0, 0]
+        tot = [w[w.wind_MW == p][["C1", "C2", "C3"]].iloc[0].sum() for p in Ps]
+        a.bar(range(len(Ps)), tot, width=0.55, color=MUTED, edgecolor="#fcfcfb", linewidth=2)
+        for i, p in enumerate(Ps):
+            q = w[(w.wind_MW == p) & (w.realisation > 0) & (w.name == "JR-D")]
+            a.text(i, tot[i] + 0.3, f"绿电占比 {100 * q.green_share_pv.mean():.0f}%\n自用率 {100 * q.res_selfuse.mean():.0f}%",
+                   ha="center", va="bottom", fontsize=7.5, color=INK2)
+        a.set_xticks(range(len(Ps))); a.set_xticklabels([f"{p:g}" for p in Ps]); a.set_xlabel("风电装机 / MW")
+        a.set_ylabel("三次事件日前承诺合计 / MW"); a.set_ylim(0, max(tot) * 1.35 + 1)
+        a.set_title("(a) 绿电直连：表后风电压低可交付的DR承诺")
+        a = ax[0, 1]
+        for i, p in enumerate(Ps):
+            q = w[(w.wind_MW == p) & (w.realisation > 0)]
+            m, lo, hi, b = _saving(q)
+            if b is None: continue
+            a.errorbar(i, m, yerr=[[m - lo], [hi - m]], fmt="o", color=C["JR-D"], ms=7, capsize=4, lw=1.4)
+            a.text(i + 0.08, m, f"{m:+.1f}%（对 {b}）", fontsize=7.5, color=INK2, va="center")
+        a.axhline(0, color=AXIS, lw=0.8); a.set_xticks(range(len(Ps))); a.set_xticklabels([f"{p:g}" for p in Ps])
+        a.set_xlim(-0.4, len(Ps) - 0.2); a.set_xlabel("风电装机 / MW"); a.set_ylabel("JR-D 相对较强独立基准的日均节省 / %")
+        a.set_title("(b) 风电下联合恢复的收益（52 个运行日，95% 置信区间）")
+    else:
+        ax[0, 0].set_visible(False); ax[0, 1].set_visible(False)
+    # (c) overhead and capping levels
+    if o is not None and os_ is not None and ost is not None:
+        o["name"] = o.strategy.map(dict(zip(ost["index"], ost["label"]))); lab = dict(zip(os_["index"], os_["label"]))
+        LAB = {"base": "基准（流体）", "ovh-base": "暂停开销 6 min", "ovh-slow": "暂停开销 25 min", "cap-1": "单档封顶",
+               "cap-3": "三档封顶", "cap-3+ovh": "三档封顶 + 暂停开销"}
+        a = ax[0, 2]; ks = sorted(o.setting.unique())
+        for j, nm in enumerate(["JR-D", "IR-O*", "IR-P"]):
+            xs = [o[(o.setting == k) & (o.realisation > 0) & (o.name == nm)].net_cost_adj.mean() / 1e4 for k in ks]
+            a.scatter(xs, np.arange(len(ks)) + (j - 1) * 0.16, s=40, color=C[nm], marker=MK[nm], label=nm, zorder=3, edgecolor="#fcfcfb", linewidth=0.8)
+        a.set_yticks(range(len(ks))); a.set_yticklabels([LAB.get(lab[k], lab[k]) for k in ks]); a.invert_yaxis()
+        a.set_xlabel("52 个运行日平均综合成本 / 万元"); a.legend(loc="lower right", fontsize=8)
+        a.set_title("(c) 暂停/恢复开销与多档功率封顶")
+    else:
+        ax[0, 2].set_visible(False)
+    # (d), (e) scenario generation; (f) commitments
+    if c is not None and cs is not None and oo is not None:
+        lab = {(p, k): l for p, k, l in zip(cs["part"], cs["setting"], cs["label"])}
+        for j, (part, title) in enumerate([(1, "(d) 场景生成：分位 vs K-means（样本外，JR-D 运行）"), (2, "(e) 季节漂移：冬季日用夏季场景承诺（样本外）")]):
+            a = ax[1, j]; q = oo[oo.part == part]
+            if not len(q): a.set_visible(False); continue
+            for k, z in q.groupby("setting"):
+                v = np.sort(z.net_cost_adj.values)[::-1] / 1e4; n10 = max(1, int(round(0.1 * len(v))))
+                ref = (k == 1)
+                a.scatter(v.mean(), v[:n10].mean(), s=46, color=INK if ref else C["JR-D"], marker="s" if ref else "o", zorder=3,
+                          edgecolor="#fcfcfb", linewidth=0.8)
+                a.annotate(lab[(part, k)], (v.mean(), v[:n10].mean()), textcoords="offset points", xytext=(5, 4), fontsize=7.5, color=INK2)
+            a.set_xlabel("样本外平均综合成本 / 万元"); a.set_ylabel("最差 10% 日平均 / 万元"); a.set_title(title)
+        a = ax[1, 2]; cc = c.copy(); cc["lab"] = [lab[(p, k)] for p, k in zip(cc.part, cc.setting)]
+        y = np.arange(len(cc)); hgt = 0.26
+        for i, (col, shade_) in enumerate([("C1", "#9ec5f0"), ("C2", "#2a78d6"), ("C3", "#123e70")]):
+            a.barh(y + (i - 1) * hgt, cc[col], height=hgt, color=shade_, label=f"E{i + 1}", edgecolor="#fcfcfb", linewidth=1)
+        a.set_yticks(y); a.set_yticklabels(cc.lab); a.invert_yaxis(); a.set_xlabel("日前承诺 / MW"); a.legend(loc="lower right", fontsize=8)
+        a.set_title("(f) 各场景设定下的日前承诺")
+    else:
+        for k in range(3): ax[1, k].set_visible(False)
+    save(fig, "fig25_extensions.png")
+
+
 if __name__ == "__main__":
     fig_case(); fig_mechanism()
     for case in ["DAcommit", "uniform6"]:
@@ -851,3 +1089,4 @@ if __name__ == "__main__":
     fig_pareto(); fig_capacity(); fig_stylized(); fig_robust()
     fig_substitution(); fig_risk(); fig_decomposition()
     fig_drivers(); fig_typical_day(); fig_channel(); fig_generalization(); fig_policy()
+    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions()

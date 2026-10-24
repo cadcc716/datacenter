@@ -18,10 +18,10 @@ for c = 1:3
     [m, V{c}] = lpb_addvar(m, H, 0, Inf, dt * par.qos.c_late);
 end
 r = (1:H)'; one = ones(H,1);
-% optional power capping during (visible) DR events: Z{c} capped GPUs <= Y{c}
-capon = isfield(par.it, 'cap_on') && par.it.cap_on; rho = 0; bet = 0;
+% optional power capping during (visible) DR events: Z{c} capped dynamic power (GPU equivalents)
+% <= rmax*Y{c}, throughput loss as in BUILD_MODEL (CAP_CURVE)
+cv = cap_curve(par); capon = cv.on;
 if capon
-    rho = par.it.cap_rho; bet = par.it.cap_beta;
     evstep = false(H, 1);
     for k = 1:numel(ev)
         if ~opt.visible(k), continue; end
@@ -29,11 +29,19 @@ if capon
         if ~isempty(hk) && hk(1) >= 1, evstep(hk) = true; end
     end
     for c = 1:3
-        [m, Z{c}] = lpb_addvar(m, H, 0, Inf, -dt * (sc.price + lam) .* phi * d.pdyn * rho);
+        [m, Z{c}] = lpb_addvar(m, H, 0, Inf, -dt * (sc.price + lam) .* phi * d.pdyn);
         m.ub(Z{c}(~evstep)) = 0;
-        m = lpb_addle(m, [r; r], [Z{c}; Y{c}], [one; -one], zeros(H, 1));
+        m = lpb_addle(m, [r; r], [Z{c}; Y{c}], [one; -cv.rmax * one], zeros(H, 1));
+        LZ{c} = [];
+        if ~cv.linear
+            [m, LZ{c}] = lpb_addvar(m, H, 0, Inf, 0); m.ub(LZ{c}(~evstep)) = 0;
+            for k = 1:cv.K
+                m = lpb_addle(m, [r; r; r], [Z{c}; Y{c}; LZ{c}], [cv.s(k) * one; cv.i(k) * one; -one], zeros(H, 1));
+            end
+        end
     end
 end
+povh = zeros(1, 3); if isfield(par.it, 'pause_ovh_h'), povh = par.it.pause_ovh_h(:)'; end
 capfree = par.it.u_max * par.it.Ngpu - sc.inf(:,1) - sc.fix(:,1);
 m = lpb_addle(m, [r; r; r], [Y{1}; Y{2}; Y{3}], [one; one; one], capfree);
 % IT power budget: connection limit plus the on-site generation the facility EMS can dispatch (gas
@@ -47,7 +55,7 @@ fac_other = (1 + a) * base_it + par.fac.P_aux0 + (th * base_it + par.fac.Q0 - qa
             - pgt_b - sc.pv(:,1);
 budget = d.Pcap - fac_other;
 if capon
-    m = lpb_addle(m, repmat(r, 6, 1), [Y{1}; Y{2}; Y{3}; Z{1}; Z{2}; Z{3}], [repmat(phi * d.pdyn, 3, 1); -repmat(phi * d.pdyn * rho, 3, 1)], max(budget, 0));
+    m = lpb_addle(m, repmat(r, 6, 1), [Y{1}; Y{2}; Y{3}; Z{1}; Z{2}; Z{3}], [repmat(phi * d.pdyn, 3, 1); -repmat(phi * d.pdyn, 3, 1)], max(budget, 0));
 else
     m = lpb_addle(m, [r; r; r], [Y{1}; Y{2}; Y{3}], repmat(phi * d.pdyn, 3, 1), max(budget, 0));
 end
@@ -59,11 +67,26 @@ for c = 1:3
     if H > L, Dn(L+1:end) = cumsum(arr(1:H-L)); end
     Bmax = max(A - (Dk + Dn), 0);
     I = [r; r; (2:H)']; J = [B{c}; Y{c}; B{c}(1:end-1)]; Vv = [one; dt*one; -ones(H-1,1)];
-    if capon, I = [I; r]; J = [J; Z{c}]; Vv = [Vv; -dt * bet * rho * one]; end
+    if capon && cv.linear, I = [I; r]; J = [J; Z{c}]; Vv = [Vv; -dt * cv.s(1) * one]; end
+    if capon && ~cv.linear, I = [I; r]; J = [J; LZ{c}]; Vv = [Vv; -dt * one]; end
+    if povh(c) > 0                      % pause / resume overhead (as in BUILD_MODEL)
+        [m, PIc] = lpb_addvar(m, H, 0, Inf, 0);
+        I = [I; r]; J = [J; PIc]; Vv = [Vv; -povh(c) * one];
+        a0 = 0; if isfield(st, 'arr'), a0 = st.arr(c); end
+        dp = 0; if isfield(st, 'dprev'), dp = st.dprev(c); end
+        fl = sc.flex(:, c, 1); fl(1) = a0;
+        m = lpb_addle(m, [r; r; (2:H)'], [PIc; Y{c}; Y{c}(1:end-1)], [-one; -one; ones(H-1, 1)], -[fl(1) - dp; diff(fl)]);
+    end
     rhs = arr; rhs(1) = rhs(1) + B0;
     m = lpb_addeq(m, I, J, Vv, rhs);
     m = lpb_addle(m, [r; r], [B{c}; V{c}], [one; -one], Bmax);
     if t0 + H - 1 >= par.Tsim, m.f(B{c}(H)) = m.f(B{c}(H)) + d.c_B_end; end
+    % optional rigid-job recovery bound (as in BUILD_MODEL)
+    if isfield(par.it, 'rec_tau') && numel(par.it.rec_tau) >= c && par.it.rec_tau(c) > 0
+        tau = par.it.rec_tau(c); a0 = 0; if isfield(st, 'arr'), a0 = st.arr(c); end
+        rb = sc.flex(:, c, 1); rb(1) = a0 + max(B0 - a0 * dt, 0) / tau;
+        m = lpb_addle(m, [r; (2:H)'], [Y{c}; B{c}(1:end-1)], [one; -ones(H-1, 1) / tau], rb);
+    end
 end
 % limit on the swing of deferrable IT power (same soft limit as in the joint model)
 if isfinite(par.it.ramp_max)
@@ -95,7 +118,7 @@ for k = 1:numel(ev)
     I = [rr; rr; rr; rr]; J = [Y{1}(hk); Y{2}(hk); Y{3}(hk); SFC];
     Vv = [repmat(phi(hk) * d.pdyn, 3, 1); -ones(nh,1)];
     if capon
-        I = [I; rr; rr; rr]; J = [J; Z{1}(hk); Z{2}(hk); Z{3}(hk)]; Vv = [Vv; -repmat(phi(hk) * d.pdyn * rho, 3, 1)];
+        I = [I; rr; rr; rr]; J = [J; Z{1}(hk); Z{2}(hk); Z{3}(hk)]; Vv = [Vv; -repmat(phi(hk) * d.pdyn, 3, 1)];
     end
     m = lpb_addle(m, I, J, Vv, phi(hk) * d.pdyn .* ynom(hk) - tgt);
 end

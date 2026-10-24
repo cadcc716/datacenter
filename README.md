@@ -56,13 +56,14 @@ are negligible for every strategy (at most 4 GPU·h·h in a single run).
 
 ```matlab
 cd matlab
-main_run_all                              % all 18 experiments (Octave/glpk, one process: ~8-9 h)
+main_run_all                              % all 23 experiments (Octave/glpk, one process: ~14 h)
 QUICK = true; main_run_all                % smoke run (small grids, 1-2 Monte-Carlo days)
 RUN = [2 5]; main_run_all                 % subset
 ```
 
 Parallel run in GNU Octave: `tools/run_parallel.sh <tag> "RUN=[...];"` starts one part in the background
-(four parts take about 2.5 h; run Exp14, the timing study, alone on an idle machine). Then
+(Exp1–18 in four parts take about 2.5 h, Exp19–23 about 2 h more; run Exp14, the timing study, alone on an
+idle machine). Then
 `python3 tools/summarize_results.py` prints every number quoted in the paper notes (95 % confidence
 intervals, paired Wilcoxon tests), `python3 tools/plot_results.py [--en]` renders the figures and
 `python3 tools/draw_diagrams.py [--en]` the architecture and framework diagrams (numpy, pandas, scipy,
@@ -76,8 +77,10 @@ solver tolerances. The committed results come from GNU Octave 8.4 + glpk.
 ## Layout
 
 ```
-data/                        derived inputs (PAI GPU trace, Azure LLM trace, ERA5 weather: Suzhou summer/winter, Gui'an)
-data_prep/                   prepare_data.py (traces), fetch_weather.py (Open-Meteo ERA5)
+data/                        derived inputs (PAI GPU trace, Acme LLM-development trace, job-size distributions,
+                             Azure LLM trace, ERA5 weather: Suzhou summer/winter, Gui'an; ERA5 offshore wind)
+data_prep/                   prepare_data.py (PAI, Azure), prepare_acme.py (Acme, job sizes), fetch_weather.py,
+                             fetch_wind.py (Open-Meteo ERA5)
 matlab/main_run_all.m        entry point (RUN, QUICK, NMC, MC_PART options)
 matlab/config/dcdr_params.m  all parameters, each tagged [S] source / [D] data-derived / [A] assumption
 matlab/src/                  model and solvers
@@ -89,9 +92,14 @@ matlab/src/                  model and solvers
    planner_jr.m / planner_iro.m / planner_irr.m   joint / independent (optimised) / independent (rule) MPC
    event_activity.m          which events a planner sees (call probability, scenario tree, myopic JR-M)
    evaluate_run.m            Jiangsu settlement and all evaluation metrics
-   plant_step.m              plant simulator (EDF backlog tracking, IES balances, thermal state, limit enforcement)
-   solve_milp.m              solver wrapper: Gurobi | linprog/intlinprog | Octave glpk
-matlab/experiments/          exp1 ... exp18 (see below)
+   plant_step.m              plant simulator (EDF backlog tracking, IES balances, thermal state, limit enforcement;
+                             optional rigid-job recovery bound, pause overhead, capping levels)
+   job_gen.m / job_replay.m  job-level validation: gang-job population drawn from the traces, execution of a
+                             fluid schedule with rigid jobs, checkpoint / restart overheads, minimum pause
+   kmeans_scen.m             K-means reduction of the joint day-ahead scenarios (non-uniform probabilities)
+   cap_curve.m               convex piecewise-linear GPU capping curve (one or several levels)
+   solve_milp.m              solver wrapper: Gurobi | linprog/intlinprog | Octave glpk (MIP time limit 300 s)
+matlab/experiments/          exp1 ... exp23 (see below)
 matlab/tests/                smoke tests (QUICK settings, results to tempdir)
 tools/                       summarize_results.py, plot_results.py, draw_diagrams.py, run_parallel.sh
 ```
@@ -118,9 +126,15 @@ tools/                       summarize_results.py, plot_results.py, draw_diagram
 | 16 | `exp16_tariff` | Time-of-use tariff shape (flat, two-tier, critical peak, duck curve) |
 | 17 | `exp17_policy` | Thermal inertia as a third recovery state, green-electricity share, PUE cap |
 | 18 | `exp18_climate` | Season and climate (Suzhou winter, Gui'an summer) |
+| 19 | `exp19_workload` | LLM-era workload (Acme 2023) and rigid-job recovery; every run also executed at job level |
+| 20 | `exp20_jobsim` | Job-level execution on the case day: job mix (PAI, Acme Seren / Kalos, larger gangs), pause overheads |
+| 21 | `exp21_wind` | Green-power direct connection: offshore wind behind the meter (0–40 MW) |
+| 22 | `exp22_overhead` | Pause / resume overhead and several GPU capping levels in the fluid model |
+| 23 | `exp23_scenarios` | Day-ahead scenarios: K-means reduction with non-uniform probabilities, seasonal drift |
 
 ## Data licences and citations
 
-PAI trace: please cite Weng et al., NSDI 2022. Azure LLM inference trace 2024: CC-BY 4.0, cite
-Stojkovic et al., HPCA 2025. Weather: Open-Meteo / ERA5, CC-BY 4.0. Only aggregated 15-min profiles
-derived from these sources are stored in this repository.
+PAI trace: please cite Weng et al., NSDI 2022. Acme trace (Shanghai AI Lab): CC BY 4.0, cite Hu et al.,
+NSDI 2024. Azure LLM inference trace 2024: CC-BY 4.0, cite Stojkovic et al., HPCA 2025. Weather and wind:
+Open-Meteo / ERA5, CC-BY 4.0. Only aggregated 15-min profiles and binned job-size distributions derived
+from these sources are stored in this repository.

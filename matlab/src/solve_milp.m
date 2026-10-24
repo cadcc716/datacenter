@@ -4,15 +4,18 @@ function sol = solve_milp(P, opts)
 %     'gurobi'  - Gurobi MATLAB interface (if on the path)
 %     'matlab'  - Optimization Toolbox linprog / intlinprog
 %     'glpk'    - GNU Octave built-in glpk
-%   sol.x, sol.fval, sol.ok (true if optimal), sol.marg_ineq / sol.marg_eq =
-%   d(objective)/d(rhs) for LPs (empty for MILPs), sol.solver, sol.time.
+%   sol.x, sol.fval, sol.ok (true if optimal, or a feasible MILP solution at the time limit),
+%   sol.marg_ineq / sol.marg_eq = d(objective)/d(rhs) for LPs (empty for MILPs), sol.solver, sol.time,
+%   sol.timelimit (true if a MILP stopped at opts.tmlim seconds with its best feasible solution;
+%   default 300 s, so that a rare hard branch-and-bound instance cannot stall a long experiment).
 if nargin < 2, opts = struct(); end
 if ~isfield(opts, 'solver') || isempty(opts.solver), opts.solver = pick_solver(); end
 if ~isfield(opts, 'duals'), opts.duals = false; end
+if ~isfield(opts, 'tmlim') || isempty(opts.tmlim), opts.tmlim = 300; end
 n = numel(P.f);
 lb = P.lb; ub = P.ub;
 tic0 = tic;
-sol.x = []; sol.fval = NaN; sol.ok = false; sol.marg_ineq = []; sol.marg_eq = [];
+sol.x = []; sol.fval = NaN; sol.ok = false; sol.marg_ineq = []; sol.marg_eq = []; sol.timelimit = false;
 sol.solver = opts.solver;
 isMIP = ~isempty(P.intcon);
 switch opts.solver
@@ -22,8 +25,11 @@ switch opts.solver
         model.sense = [repmat('<', size(P.Aineq,1), 1); repmat('=', size(P.Aeq,1), 1)];
         model.lb = full(lb); model.ub = full(ub);
         vt = repmat('C', n, 1); vt(P.intcon) = 'B'; model.vtype = vt; model.modelsense = 'min';
-        prm.OutputFlag = 0;
+        prm.OutputFlag = 0; prm.TimeLimit = opts.tmlim;
         r = gurobi(model, prm);
+        if strcmp(r.status, 'TIME_LIMIT') && isfield(r, 'x') && ~isempty(r.x)
+            sol.x = r.x; sol.fval = r.objval; sol.ok = true; sol.timelimit = true;
+        end
         if strcmp(r.status, 'OPTIMAL')
             sol.x = r.x; sol.fval = r.objval; sol.ok = true;
             if ~isMIP && isfield(r, 'pi')
@@ -33,9 +39,10 @@ switch opts.solver
         end
     case 'matlab'
         if isMIP
-            o = optimoptions('intlinprog', 'Display', 'off');
+            o = optimoptions('intlinprog', 'Display', 'off', 'MaxTime', opts.tmlim);
             [x, fv, ef] = intlinprog(P.f, P.intcon, P.Aineq, P.bineq, P.Aeq, P.beq, lb, ub, o);
             if ef > 0, sol.x = x; sol.fval = fv; sol.ok = true; end
+            if ef == 2, sol.timelimit = true; end
         else
             o = optimoptions('linprog', 'Display', 'off');
             [x, fv, ef, ~, lam] = linprog(P.f, P.Aineq, P.bineq, P.Aeq, P.beq, lb, ub, o);
@@ -50,9 +57,12 @@ switch opts.solver
         vtype = repmat('C', n, 1); vtype(P.intcon) = 'I';
         lbg = full(lb); ubg = full(ub);
         prm.msglev = 0;
-        if isMIP, prm.presol = 1; end
+        if isMIP, prm.presol = 1; prm.tmlim = round(1000 * opts.tmlim); end
         if size(A,1) == 0, A = sparse(1, n); b = 0; ctype = 'U'; end
         [x, fv, err, extra] = glpk(full(P.f), A, b, lbg, ubg, ctype, vtype, 1, prm);
+        if isMIP && err == 9 && extra.status == 2                 % time limit: keep the best feasible solution
+            sol.x = x; sol.fval = fv; sol.ok = true; sol.timelimit = true;
+        end
         if err == 0 && (extra.status == 5 || extra.status == 2 && ~isMIP)
             sol.x = x; sol.fval = fv; sol.ok = (extra.status == 5);
             if ~isMIP && isfield(extra, 'lambda')

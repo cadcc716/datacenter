@@ -6,7 +6,20 @@ d = sys_derived(par); dt = par.dt; t = st.t;
 it = par.it; fac = par.fac;
 %% compute execution (EDF within class, clipped to capacity)
 y = max(u.y(:)', 0);
-avail = sum(st.rem, 1) / dt;
+cv = cap_curve(par); zr = zeros(1, 3);
+if cv.on && isfield(u, 'z'), zr = max(u.z(:)', 0); end
+% busy GPUs are limited by the work available; capped GPUs are slower, so they may exceed the
+% available work by the throughput they lose (the work done, y - loss, is what the backlog limits)
+lr = zeros(1, 3);
+if cv.on, for c = 1:3, zc = min(zr(c), cv.rmax * y(c)); lr(c) = max([0; cv.s * zc + cv.i * y(c)]); end, end
+avail = sum(st.rem, 1) / dt + lr;
+% rigid-job recovery bound (par.it.rec_tau): at most B_prev/tau_c GPUs above the nominal load of the class
+if isfield(it, 'rec_tau') && any(it.rec_tau > 0) && isfield(st, 'arr')
+    for c = find(it.rec_tau(:)' > 0)
+        Bp = max(sum(st.rem(:, c)) - st.arr(c) * dt, 0);
+        avail(c) = min(avail(c), st.arr(c) + Bp / it.rec_tau(c));
+    end
+end
 y = min(y, avail);
 gfree = it.u_max * it.Ngpu - data.inf - data.fix;
 if sum(y) > gfree + 1e-9
@@ -28,19 +41,32 @@ if isfinite(it.ramp_max) && isfield(st, 'y_prev') && ~isnan(st.y_prev)
         y = y + room / max(sum(room), 1e-9) * add;
     end
 end
-% optional power capping: z capped GPUs (<= y) draw (1-rho) dynamic power and do (1-beta*rho) work
-z = zeros(1, 3);
-if isfield(u, 'z') && isfield(it, 'cap_on') && it.cap_on, z = min(max(u.z(:)', 0), y); end
-rho = 0; bet = 0; if isfield(it, 'cap_on') && it.cap_on, rho = it.cap_rho; bet = it.cap_beta; end
+% optional power capping: z = capped dynamic power in GPU equivalents (<= rmax*y), throughput loss from
+% the convex capping curve (CAP_CURVE; one level: loss = beta*z)
+z = zeros(1, 3); loss = zeros(1, 3);
+if cv.on
+    z = min(zr, cv.rmax * y);
+    for c = 1:3, loss(c) = max([0; cv.s * z(c) + cv.i * y(c)]); end
+end
 for c = 1:3
-    x = (y(c) - bet * rho * z(c)) * dt;
+    x = (y(c) - loss(c)) * dt;
     r = st.rem(:, c);
     cs = cumsum(r);
     take = min(r, max(0, x - (cs - r)));
     st.rem(:, c) = r - take;
 end
 %% IT power and cooling
-pit = d.Pfix + d.pdyn * (it.k_inf * data.inf + data.fix + sum(y) - rho * sum(z));
+% optional pause / resume overhead (par.it.pause_ovh_h): GPUs newly paused w.r.t. the nominal load add
+% checkpoint + restart work to the current cohort
+povh = 0;
+if isfield(it, 'pause_ovh_h') && any(it.pause_ovh_h > 0) && isfield(st, 'arr')
+    if ~isfield(st, 'dprev'), st.dprev = zeros(1, 3); end
+    dnow = st.arr - y;
+    w = it.pause_ovh_h(:)' .* max(dnow - st.dprev, 0);
+    for c = 1:3, st.rem(t + d.lag(c), c) = st.rem(t + d.lag(c), c) + w(c); end
+    povh = sum(w); st.dprev = dnow;
+end
+pit = d.Pfix + d.pdyn * (it.k_inf * data.inf + data.fix + sum(y) - sum(z));
 qload = fac.theta * pit + fac.Q0;
 pgt = min(max(u.pgt, 0), par.gt.Pmax);
 pgt = min(max(pgt, st.pgt_prev - par.gt.ramp), st.pgt_prev + par.gt.ramp);
@@ -112,6 +138,6 @@ end
 rec = struct('pg', pg, 'pit', pit, 'y', y, 'z', z, 'pch', pch, 'pdis', pdis, 'E', st.E, 'S', st.S, ...
     'pgt', pgt, 'qac', qac, 'qec', qec, 'qtc', qtc, 'qtd', qtd, 'ppv', ppv, 'pv', data.pv, ...
     'cop', data.cop, 'overdue', overdue, 'backlog', sum(st.rem, 1), 'over', max(pg - d.Pcap, 0), ...
-    'inf', data.inf, 'TH', st.TH, 'qth', qth);
+    'inf', data.inf, 'TH', st.TH, 'qth', qth, 'povh', povh);
 st.t = t + 1;
 end
