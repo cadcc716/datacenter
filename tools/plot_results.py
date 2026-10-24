@@ -122,6 +122,8 @@ ZH2EN = {
     "JR 线性规划": "JR LP", "IR 线性规划": "IR LP", "滞后上界 L = ": "Lag bound L = ", "事件 B 可交付削减 / MW": "Deliverable reduction in event B / MW",
     "需求响应补贴单价 / (元/kWh)": "DR payment rate / (CNY/kWh)", "偏差考核系数 κ": "Shortfall coefficient κ", "基准": "Base", "液冷": "Liquid cooling",
     "IT爬坡≤2MW/15min": "IT ramp ≤ 2 MW/15 min", "IT爬坡≤1MW/15min": "IT ramp ≤ 1 MW/15 min", "事件前抬升考核": "Pre-event load-up charge",
+    "IT 爬坡\n≤2 MW/15 min": "IT ramp\n≤2 MW/15 min", "IT 爬坡\n≤1 MW/15 min": "IT ramp\n≤1 MW/15 min", "事件前\n抬升考核": "Pre-event\nload-up charge",
+    "GPU\n功率封顶": "GPU\npower capping",
     "(b) 模型设定稳健性（统一 6 MW 承诺）": "(b) Robustness to model settings (uniform 6 MW)",
     "电储能能量容量 E / MWh（功率 6 MW）": "Battery energy capacity E / MWh (power 6 MW)",
     "并网裕度 γ（并网上限 = γ × 典型日峰值）": "Connection margin γ (limit = γ × typical-day peak)",
@@ -550,7 +552,8 @@ def fig_robust():
     if r is not None:
         r["cfg"] = r.label.str.split("|").str[0]; r["nm"] = r.label.str.split("|").str[1]
         cfgs = list(dict.fromkeys(r.cfg)); x = np.arange(len(cfgs)); w = 0.26
-        lab = {"base": "基准", "liquid_cooling": "液冷", "it_ramp_2MW": "IT爬坡≤2MW/15min", "it_ramp_1MW": "IT爬坡≤1MW/15min", "preload_charge": "事件前抬升考核"}
+        lab = {"base": "基准", "liquid_cooling": "液冷", "it_ramp_2MW": "IT 爬坡\n≤2 MW/15 min", "it_ramp_1MW": "IT 爬坡\n≤1 MW/15 min",
+               "preload_charge": "事件前\n抬升考核", "power_capping": "GPU\n功率封顶"}
         for i, nm in enumerate(["IR-O*", "IR-P", "JR-D"]):
             v = [float(r[(r.cfg == c) & (r.nm == nm)].net_cost_adj.iloc[0]) / 1e4 for c in cfgs]
             ax[1].bar(x + (i - 1) * (w + 0.02), v, w, color=C[nm], label=NAME[nm], edgecolor="#fcfcfb", linewidth=2)
