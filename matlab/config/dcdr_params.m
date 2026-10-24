@@ -87,6 +87,8 @@ par.wind.v_in    = 3;            % [S] cut-in speed (m/s), IEA 15-MW reference t
 par.wind.v_r     = 10.59;        % [S] rated speed (m/s), same source
 par.wind.v_out   = 25;           % [S] cut-out speed (m/s), same source
 par.wind.eta     = 0.90;         % [A] wake and collection losses of the farm
+par.wind.fc_rmse = 0.15;         % [A] day-ahead forecast error, rmse / rated (NWP-based offshore forecasts: 10-20 %)
+par.wind.fc_phi  = 0.97;         % [A] lag-1 (15-min) correlation of the forecast error (decorrelation ~8 h)
 
 %% ---------------- grid & tariff (Jiangsu, summer, from June 2025) ----------------
 % periods (consultation draft, Apr 2025): peak 14-22, valley 0-6 & 11-13, flat otherwise
@@ -106,6 +108,11 @@ par.dr.coef_05to2h= 1.6;         % [S] intraday notice 0.5-2 h
 par.dr.valid_lo   = 0.80;        % [S] effective response if avg reduction >= 80 % of confirmed value
 par.dr.valid_margin = 0.1;       % [A] planning margin above the 80 % threshold (MW), against metering / forecast error
 par.dr.pay_hi     = 1.20;        % [S] payment capped at 120 %
+par.dr.exempt_zero = false;      % [A] true: an event confirmed with C = 0 is not declared (no pay, no shortfall
+                                 %     or rebound assessment, no event rows in the MPC; Exp21)
+par.dr.relax_invalid = false;    % [A] true: the event rows of the planning model are relaxed (big-M) when the
+                                 %     event is given up (Z = 0), so that the mean event load may exceed the
+                                 %     baseline (needed with large behind-the-meter wind, Exp21; settlement unchanged)
 par.dr.kappa_dev = 1.0;          % [A] shortfall assessed at kappa x the event's DR unit price (symmetric)
 par.dr.c_rb       = 3000;        % [A] rebound assessment (CNY/MW per event) = 3 CNY/kW, i.e. the pay of a 1-h event
 par.dr.rb_win_h   = 2;           % [A] post-event window in which load must stay <= baseline

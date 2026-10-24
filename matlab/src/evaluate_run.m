@@ -14,7 +14,7 @@ function M = evaluate_run(L, ev, base, par, inp, refL)
 %     co2           grid electricity (East China factor) + natural gas burnt (t CO2)
 %     cost_delay    service cost of deferred work c_jct * backlog-hours (+ lateness), part of net_cost
 dt = par.dt; d = sys_derived(par); T = numel(L.pg);
-K = numel(ev);
+K = numel(ev); exz = isfield(par.dr, 'exempt_zero') && par.dr.exempt_zero;
 if nargin < 6, refL = []; end
 called = true(K, 1);
 if isfield(ev, 'called'), for k = 1:K, called(k) = logical(ev(k).called); end, end
@@ -39,6 +39,9 @@ for k = 1:K
     w2 = min(T, e + round(par.dr.payback_h / dt));
     if ~isempty(nxt), w2 = min(w2, ev(nxt).s - 1); end
     if w2 > e, M.rebound6(k) = max(0, max(L.pg(e+1:w2) - base(e+1:w2))); end
+    if exz && ev(k).C <= 1e-9           % not declared (C = 0, par.dr.exempt_zero): no pay, no assessment
+        M.valid(k) = true; M.pay(k) = 0; M.short(k) = 0; M.rebound(k) = 0; M.rebound6(k) = 0;
+    end
 end
 kc = find(called);
 Dk = ([ev.e] - [ev.s] + 1)' * dt; C = [ev.C]';

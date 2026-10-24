@@ -258,15 +258,20 @@ end
 ix.ev = struct('R', {}, 'Z', {}, 'SF', {}, 'MX', {}, 'RHO', {}, 'C', {}, 'row_rb', {}, 'hw', {});
 tend = t0 + H - 1;
 act = opt.active;
-for k = 1:numel(ev)
+exz = isfield(par.dr, 'exempt_zero') && par.dr.exempt_zero;   % C = 0: event not declared, no obligation
+for k = 1:numel(ev)                     % (day-ahead 'commit' rows keep treating every event as declared)
     e = ev(k); ix.ev(k).C = [];
     if strcmp(e.mode, 'none') || ~any(act(k, :)), continue; end
+    if exz && strcmp(e.mode, 'settle') && e.C <= 1e-9, continue; end
     % ---- event window ----
     if e.e >= t0 && e.e <= tend
         hk = (max(e.s, t0):e.e) - t0 + 1; nk = e.e - e.s + 1; Dh = nk * dt;
         rhs0 = (st.ev_r(k) + sum(sc.Pb(hk))) / nk;
         nh = numel(hk);
         vmar = 0; if isfield(par.dr, 'valid_margin'), vmar = par.dr.valid_margin; end   % planning margin above 80 %
+        % R <= reduction and the validity row hold for Z = 1; with par.dr.relax_invalid they are relaxed by
+        % Mz for a given-up event (Z = 0), otherwise they also cap the mean event load at the baseline mean
+        Mz = 0; if (isfield(par.dr, 'relax_invalid') && par.dr.relax_invalid) || exz, Mz = 2 * max(d.Pcap, max(sc.Pb(hk))); end
         switch e.mode
             case 'settle'
                 [m, R]  = addb(m, 1, S, 0, par.dr.pay_hi * e.C, -e.price * Dh * pr);
@@ -277,9 +282,13 @@ for k = 1:numel(ev)
                 for s = 1:S
                     if ~act(k, s), m.ub([R(s); Z(s); SF(s); MX(s)]) = 0; continue; end
                     pgk = PG(hk, s);
-                    m = lpb_addle(m, ones(nh+1,1), [R(s); pgk], [1; ones(nh,1)/nk], rhs0);
+                    if Mz > 0
+                        m = lpb_addle(m, ones(nh+2,1), [R(s); Z(s); pgk], [1; Mz; ones(nh,1)/nk], rhs0 + Mz);
+                    else
+                        m = lpb_addle(m, ones(nh+1,1), [R(s); pgk], [1; ones(nh,1)/nk], rhs0);
+                    end
                     m = lpb_addle(m, [1; 1], [R(s); Z(s)], [1; -par.dr.pay_hi * e.C], 0);
-                    m = lpb_addle(m, ones(nh+1,1), [Z(s); pgk], [par.dr.valid_lo * e.C + vmar; ones(nh,1)/nk], rhs0);
+                    m = lpb_addle(m, ones(nh+1,1), [Z(s); pgk], [par.dr.valid_lo * e.C + vmar + Mz; ones(nh,1)/nk], rhs0 + Mz);
                     m = lpb_addle(m, ones(nh+1,1), [SF(s); pgk], [-1; ones(nh,1)/nk], rhs0 - e.C);
                     m = lpb_addle(m, [(1:nh)'; (1:nh)'], [pgk; repmat(MX(s), nh, 1)], [ones(nh,1); -ones(nh,1)], e.Pbmax * ones(nh,1));
                 end
@@ -298,9 +307,13 @@ for k = 1:numel(ev)
                     m = lpb_addle(m, [1;1], [Wv(s); Z(s)], [1; -Cm], 0);
                     m = lpb_addle(m, [1;1], [Wv(s); Cv], [1; -1], 0);
                     m = lpb_addle(m, [1;1;1], [Cv; Wv(s); Z(s)], [1; -1; Cm], Cm);
-                    m = lpb_addle(m, ones(nh+1,1), [R(s); pgk], [1; ones(nh,1)/nk], rhs0);
+                    if Mz > 0
+                        m = lpb_addle(m, ones(nh+2,1), [R(s); Z(s); pgk], [1; Mz; ones(nh,1)/nk], rhs0 + Mz);
+                    else
+                        m = lpb_addle(m, ones(nh+1,1), [R(s); pgk], [1; ones(nh,1)/nk], rhs0);
+                    end
                     m = lpb_addle(m, [1;1], [R(s); Wv(s)], [1; -par.dr.pay_hi], 0);
-                    m = lpb_addle(m, ones(nh+2,1), [Wv(s); Z(s); pgk], [par.dr.valid_lo; vmar; ones(nh,1)/nk], rhs0);
+                    m = lpb_addle(m, ones(nh+2,1), [Wv(s); Z(s); pgk], [par.dr.valid_lo; vmar + Mz; ones(nh,1)/nk], rhs0 + Mz);
                     m = lpb_addle(m, ones(nh+2,1), [Cv; SF(s); pgk], [1; -1; ones(nh,1)/nk], rhs0);
                     m = lpb_addle(m, [(1:nh)'; (1:nh)'], [pgk; repmat(MX(s), nh, 1)], [ones(nh,1); -ones(nh,1)], e.Pbmax * ones(nh,1));
                 end

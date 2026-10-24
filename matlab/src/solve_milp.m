@@ -8,8 +8,10 @@ function sol = solve_milp(P, opts)
 %   sol.marg_ineq / sol.marg_eq = d(objective)/d(rhs) for LPs (empty for MILPs), sol.solver, sol.time,
 %   sol.timelimit (true if a MILP stopped at opts.tmlim seconds with its best feasible solution;
 %   default 300 s, so that a rare hard branch-and-bound instance cannot stall a long experiment).
-%   glpk LPs that do not finish within opts.tmlim_lp seconds (default opts.tmlim; the primal simplex
-%   can cycle on rare degenerate LPs) are solved again without presolve, then by the interior-point method.
+%   glpk LPs that do not finish within opts.tmlim_lp seconds (default opts.tmlim) or within
+%   max(5000, 10 (n + m)) simplex iterations (the primal simplex can cycle on rare degenerate presolved
+%   LPs; regular solves need a few hundred iterations) are solved again without presolve, then by the
+%   interior-point method.
 if nargin < 2, opts = struct(); end
 if ~isfield(opts, 'solver') || isempty(opts.solver), opts.solver = pick_solver(); end
 if ~isfield(opts, 'duals'), opts.duals = false; end
@@ -60,7 +62,7 @@ switch opts.solver
         vtype = repmat('C', n, 1); vtype(P.intcon) = 'I';
         lbg = full(lb); ubg = full(ub);
         prm.msglev = 0; prm.tmlim = round(1000 * opts.tmlim);
-        if ~isMIP, prm.tmlim = round(1000 * opts.tmlim_lp); end
+        if ~isMIP, prm.tmlim = round(1000 * opts.tmlim_lp); prm.itlim = max(5000, 10 * (n + size(A, 1))); end
         if isMIP, prm.presol = 1; end
         if size(A,1) == 0, A = sparse(1, n); b = 0; ctype = 'U'; end
         [x, fv, err, extra] = glpk(full(P.f), A, b, lbg, ubg, ctype, vtype, 1, prm);

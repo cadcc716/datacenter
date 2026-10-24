@@ -148,21 +148,28 @@ end
 
 %% --- optional green-power direct connection (offshore wind behind the meter, par.wind) ---
 %  Wind power is added to the on-site renewable supply (curtailable like PV, no export) of the DR day,
-%  the baseline days, the forecast pool and the Monte-Carlo days, for the same calendar dates as the weather.
+%  the baseline days and the Monte-Carlo days, for the same calendar dates as the weather. Unlike PV,
+%  the wind of a day is not predictable from the previous days: the day-ahead forecast is the actual
+%  output plus an AR(1) error (rmse par.wind.fc_rmse x rated, lag-1 correlation par.wind.fc_phi per
+%  step; numerical-weather-prediction quality), and the forecast pool (day-ahead scenarios) holds
+%  forecast-error paths around it. Every Monte-Carlo day gets its own forecast and pool (inp.mc.fcpv,
+%  inp.mc.poolpv, used by USE_REALIZATION). Errors are drawn from the date-seeded LCG_RAND.
 inp.real.wind = zeros(T, 1);
 if isfield(par, 'wind') && par.wind.Prated > 0
     [tw, vw] = read_wind(fullfile(datadir, par.wind.file));
     wd = @(dstr) wind_day(tw, vw, dstr, par);
-    a = wd(par.case.weather_date); b = wd(next_date(par.case.weather_date));
-    inp.real.wind = [a; b(nxt)]; inp.real.pv = inp.real.pv + inp.real.wind;
+    w2 = @(dstr) two_days(wd(dstr), wd(next_date(dstr)), nxt);
+    sol_fc = inp.fc.pv; sol_pool = inp.pool.pv; nwp = size(sol_pool, 2);
+    [inp.real.wind, wf, we] = wind_forecast(w2(par.case.weather_date), par, par.case.weather_date, nwp);
+    inp.real.pv = inp.real.pv + inp.real.wind;
+    inp.fc.pv = sol_fc + wf; inp.pool.pv = sol_pool + we;
     for i = 1:nb, a = wd(par.case.base_dates{i}); inp.base.pv{i} = inp.base.pv{i} + [a; a(nxt)]; end
-    for i = 1:numel(wP), a = wd(dP{i}); b = wd(next_date(dP{i})); inp.pool.pv(:, i) = inp.pool.pv(:, i) + [a; b(nxt)]; end
-    inp.fc.pv = mean(inp.pool.pv(:, 1:3), 2);
-    inp.mc.wind = zeros(T, inp.mc.N);
+    inp.mc.wind = zeros(T, inp.mc.N); inp.mc.fcpv = zeros(T, inp.mc.N); inp.mc.poolpv = zeros(T, nwp, inp.mc.N);
     for r = 1:inp.mc.N
         dw = inp.mc.label{r}(find(inp.mc.label{r} == '_', 1, 'last') + 1:end);
-        a = wd(dw); b = wd(next_date(dw)); inp.mc.wind(:, r) = [a; b(nxt)];
-        inp.mc.pv(:, r) = inp.mc.pv(:, r) + inp.mc.wind(:, r);
+        [w, wf, we] = wind_forecast(w2(dw), par, dw, nwp);
+        inp.mc.wind(:, r) = w; inp.mc.pv(:, r) = inp.mc.pv(:, r) + w;
+        inp.mc.fcpv(:, r) = sol_fc + wf; inp.mc.poolpv(:, :, r) = sol_pool + we;
     end
 end
 
@@ -230,6 +237,29 @@ w = par.wind;
 cf = (vq.^3 - w.v_in^3) / (w.v_r^3 - w.v_in^3);
 cf(vq < w.v_in | vq >= w.v_out) = 0; cf(vq >= w.v_r & vq < w.v_out) = 1;
 p = w.Prated * w.eta * cf;
+end
+
+function x = two_days(a, b, nxt)
+x = [a; b(nxt)];
+end
+
+function [w, wf, we] = wind_forecast(w, par, dstr, np)
+% day-ahead forecast wf = actual w + AR(1) error and np forecast-error paths we around wf, clipped to
+% [0, rated x eta]; the generator is seeded by the date, so every day has its own reproducible errors
+wmax = par.wind.Prated * par.wind.eta; T = numel(w);
+sg = par.wind.fc_rmse * par.wind.Prated; ph = par.wind.fc_phi;
+x = mod(sum(double(dstr) .* (1:numel(dstr))) * 7919, 2147483646) + 1;
+[e, x] = ar1_path(x, T, sg, ph);
+wf = min(max(w + e, 0), wmax);
+we = zeros(T, np);
+for i = 1:np, [e, x] = ar1_path(x, T, sg, ph); we(:, i) = min(max(wf + e, 0), wmax); end
+end
+
+function [e, x] = ar1_path(x, T, sg, ph)
+[u, x] = lcg_rand(x, 2 * T);
+z = sqrt(-2 * log(u(1:T))) .* cos(2 * pi * u(T+1:end));       % Box-Muller
+e = zeros(T, 1); e(1) = sg * z(1);
+for t = 2:T, e(t) = ph * e(t-1) + sg * sqrt(1 - ph^2) * z(t); end
 end
 
 function [pv, cop, Tq] = pv_cop(w, par)

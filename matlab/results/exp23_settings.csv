@@ -1,0 +1,12 @@
+label,part,setting
+quantile-5,1,1
+kmeans-5,1,2
+kmeans-10,1,3
+kmeans-20,1,4
+kmeans-5-DRO0.4,1,5
+kmeans-10-DRO0.4,1,6
+winter-SP,2,1
+summer-SP,2,2
+summer-DRO0.4,2,3
+summer-DRO1.2,2,4
+winter-DRO0.4,2,5
