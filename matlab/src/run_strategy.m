@@ -55,7 +55,7 @@ c = ctx; c.fmode = 'oracle';
 sc = make_scen(ctx.inp, par, ctx.base, 1, par.Tsim, c);
 act = event_activity(ctx, 1, 1, 'oracle');
 opt = struct('milp', ctx.milp, 'visible', any(act, 2), 'active', act, 'terminal', true, ...
-             'Eref_end', ctx.Eref(end), 'Sref_end', ctx.Sref(end));
+             'Eref_end', ctx.Eref(end), 'Sref_end', ctx.Sref(end), 'Href_end', href_end(ctx));
 [P, ix] = build_model(par, st, sc, ctx.ev, opt);
 sol = solve_milp(P, ctx.solver);
 if ~sol.ok, error('run_strategy:jr', 'JR open-loop plan infeasible'); end
@@ -76,10 +76,14 @@ if ~s1.ok, error('run_strategy:iro1', 'IR-O stage 1 infeasible'); end
 yfix = [s1.x(ix1.Y{1}), s1.x(ix1.Y{2}), s1.x(ix1.Y{3})];
 zfix = []; if ~isempty(ix1.Zc), zfix = [s1.x(ix1.Zc{1}), s1.x(ix1.Zc{2}), s1.x(ix1.Zc{3})]; end
 o2 = struct('milp', ctx.milp, 'fix_y', yfix, 'fix_z', zfix, 'visible', vis, 'active', act, 'terminal', true, ...
-            'Eref_end', ctx.Eref(end), 'Sref_end', ctx.Sref(end));
+            'Eref_end', ctx.Eref(end), 'Sref_end', ctx.Sref(end), 'Href_end', href_end(ctx));
 [P2, ix2] = build_model(par, st, sc, ctx.ev, o2);
 s2 = solve_milp(P2, ctx.solver);
 if ~s2.ok, error('run_strategy:iro2', 'IR-O stage 2 infeasible'); end
 plan = extract_plan(s2.x, ix2);
 plan.y = yfix; if ~isempty(zfix), plan.z = zfix; end
+end
+
+function h = href_end(ctx)
+h = 0; if isfield(ctx, 'Href') && ~isempty(ctx.Href), h = ctx.Href(end); end
 end

@@ -58,6 +58,16 @@ if th_on
 else
     TH = []; QHC = []; QHD = [];
 end
+% optional waste-heat recovery (par.hp): heat-pump electricity PHP, boiler heat QB, hot-water tank level HT
+% (a fourth recovery state: heat drawn from the tank during an event must be put back afterwards)
+hp_on = isfield(par, 'hp') && par.hp.on;
+if hp_on
+    [m, PHP] = addb(m, H, S, 0, par.hp.Pmax, 0);
+    [m, QB]  = addb(m, H, S, 0, Inf, W(par.price.gas / par.hp.eta_b));
+    [m, HT]  = addb(m, H, S, 0, par.hp.E, 0);
+else
+    PHP = []; QB = []; HT = [];
+end
 if ~isempty(opt.fix_y)
     for c = 1:3
         v = repmat(opt.fix_y(:, c), 1, S);
@@ -162,6 +172,7 @@ base_it = d.Pfix + d.pdyn * (par.it.k_inf * sc.inf + sc.fix);
 I = [r; r; r; r; r; r; r]; J = [QEC(:); HAC(:); QTD(:); QTC(:); Y{1}(:); Y{2}(:); Y{3}(:)];
 Vv = [one; par.ac.cop * one; one; -one; -th * d.pdyn * [one; one; one]];
 if th_on, I = [I; r; r]; J = [J; QHC(:); QHD(:)]; Vv = [Vv; one; -one]; end   % supply + accumulation = load
+if hp_on, I = [I; r]; J = [J; PHP(:)]; Vv = [Vv; (par.hp.cop - 1) * one]; end   % heat pump cools the loop
 if capon
     I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; th * d.pdyn * [one; one; one]];
 end
@@ -174,7 +185,20 @@ Vv = [one; one; one; one; -one; -1 ./ sc.cop(:); -(1 + a) * d.pdyn * [one; one; 
 if capon
     I = [I; r; r; r]; J = [J; ZC{1}(:); ZC{2}(:); ZC{3}(:)]; Vv = [Vv; (1 + a) * d.pdyn * [one; one; one]];
 end
+if hp_on, I = [I; r]; J = [J; PHP(:)]; Vv = [Vv; -one]; end
 [m, ix.row_el] = lpb_addeq(m, I, J, Vv, (1 + a) * base_it(:) + par.fac.P_aux0);
+
+%% hot-water tank: HT(h) <= keep*HT(h-1) + (cop*php + qb - qdh)*dt  (surplus heat may go to the cooling tower)
+if hp_on
+    keep = 1 - par.hp.loss * dt; qd = sc.qdh; if size(qd, 2) == 1, qd = repmat(qd, 1, S); end
+    Ih = (1:H)';
+    for s = 1:S
+        I = [Ih; Ih; Ih; (2:H)']; J = [HT(:, s); PHP(:, s); QB(:, s); HT(1:H-1, s)];
+        Vv = [ones(H, 1); -par.hp.cop * dt * ones(H, 1); -dt * ones(H, 1); -keep * ones(H-1, 1)];
+        rhs = -qd(:, s) * dt; rhs(1) = rhs(1) + keep * st.H;
+        m = lpb_addle(m, I, J, Vv, rhs);
+    end
+end
 
 %% leftover backlog at the end of the evaluation window is valued at its energy cost (flat price)
 if t0 + H - 1 >= par.Tsim
@@ -246,6 +270,7 @@ m.lb(PGT(1, :)) = max(0, st.pgt_prev - par.gt.ramp);
 %% non-anticipativity of the first-step decisions
 if S > 1 && opt.nonant
     X = {Y{1}, Y{2}, Y{3}, PCH, PDS, PGT, HAC, QEC, QTC, QTD, PPV};
+    if hp_on, X = [X, {PHP, QB}]; end
     if capon, X = [X, {ZC{1}, ZC{2}, ZC{3}}]; end
     if th_on, X = [X, {QHC, QHD}]; end
     for q = 1:numel(X)
@@ -374,6 +399,10 @@ if opt.terminal
         [m, eT] = addb(m, 1, S, 0, Inf, par.term.c_S * pr);
         for s = 1:S, m = lpb_addle(m, [1;1], [TH(H, s); eT(s)], [1; -1], 0); end
     end
+    if hp_on                                   % tank below its reference level: the deficit costs boiler heat
+        [m, eH] = addb(m, 1, S, 0, Inf, par.price.gas / par.hp.eta_b * pr);
+        for s = 1:S, m = lpb_addle(m, [1;1], [HT(H, s); eH(s)], [-1; -1], -min(opt.Href_end, par.hp.E)); end
+    end
 end
 
 %% optional cumulative policy constraints over the window 1..t0+H-1 (accrued values in st.acc), soft
@@ -417,6 +446,7 @@ P = lpb_finalize(m);
 ix.Y = Y; ix.Zc = []; if capon, ix.Zc = ZC; end
 ix.B = B; ix.V = V; ix.PG = PG; ix.POV = POV; ix.PCH = PCH; ix.PDS = PDS; ix.E = E;
 ix.PGT = PGT; ix.HAC = HAC; ix.QEC = QEC; ix.QTC = QTC; ix.QTD = QTD; ix.SS = SS; ix.PPV = PPV;
+ix.PHP = PHP; ix.QB = QB; ix.HT = HT;
 ix.TH = TH; ix.QHC = QHC; ix.QHD = QHD; ix.GG = GG;
 ix.H = H; ix.S = S; ix.t0 = t0;
 ix.scen = zeros(m.n, 1); ix.scen(1:numel(m.scen)) = m.scen(:);
@@ -485,7 +515,7 @@ rhs = zeros(H, S); rhs(1, :) = keep * X0;
 end
 
 function opt = defaults(opt, K)
-f = {'milp', true; 'nonant', true; 'fix_y', []; 'terminal', false; 'Eref_end', 0; 'Sref_end', 0; ...
+f = {'milp', true; 'nonant', true; 'fix_y', []; 'terminal', false; 'Eref_end', 0; 'Sref_end', 0; 'Href_end', 0; ...
      'no_late', false; 'fix_z', []; 'visible', true(K,1); 'Cmax', 15; 'w_max', 1e7; 'active', []; 'risk', []};
 for i = 1:size(f,1)
     if ~isfield(opt, f{i,1}), opt.(f{i,1}) = f{i,2}; end

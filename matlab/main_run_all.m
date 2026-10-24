@@ -5,7 +5,7 @@
 %   Runs in MATLAB (Optimization Toolbox, or Gurobi if on the path) or GNU Octave (glpk).
 %   Results are written to matlab/results/*.csv, figures by tools/plot_results.py.
 %   Options (set before calling):  QUICK = true  -> smoke run (tiny samples / grids)
-%                                  RUN = [...]   -> subset of experiments (default 1:23; Exp14 timing runs last)
+%                                  RUN = [...]   -> subset of experiments (default 1:24; Exp14 timing runs last)
 %                                  NMC = n       -> Monte-Carlo realisations (default: all, 52)
 %                                  MC_PART = 'certain' | 'uncertain' | 'all' (parts of Exp4; default 'all')
 %   Base case: Jiangsu settlement rules + gap-rebound assessment c_rb = 3 CNY/kW per event (a policy
@@ -15,7 +15,7 @@ root = fileparts(mfilename('fullpath'));
 addpath(fullfile(root, 'src')); addpath(fullfile(root, 'config')); addpath(fullfile(root, 'experiments'));
 dcdr_setup_paths();
 if ~exist('QUICK', 'var'), QUICK = false; end
-if ~exist('RUN', 'var'), RUN = 1:23; end
+if ~exist('RUN', 'var'), RUN = 1:24; end
 if ~exist('NMC', 'var'), NMC = []; end
 if ~exist('MC_PART', 'var'), MC_PART = 'all'; end
 if ~exist('LOGTAG', 'var'), LOGTAG = ''; end
@@ -145,6 +145,10 @@ end
 if any(RUN == 23)
     fprintf('== Exp23: day-ahead scenarios (K-means reduction, seasonal drift)\n');
     if QUICK, E23 = exp23_scenarios(par, root, struct('N', 2, 'NB', 2)); else, E23 = exp23_scenarios(par, root); end
+end
+if any(RUN == 24)
+    fprintf('== Exp24: winter waste-heat recovery (heat pump, hot-water tank, gas-boiler backup)\n');
+    if QUICK, E24 = exp24_heat(par, root, struct('N', 1, 'settings', [1 3])); else, E24 = exp24_heat(par, root); end
 end
 if any(RUN == 14)
     fprintf('== Exp14: computational performance (run on an idle machine)\n');

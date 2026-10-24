@@ -74,7 +74,14 @@ M.res_selfuse = sum(L.ppv) / max(sum(L.pv), 1e-9);                    % on-site 
 M.pause_ovh = 0; if isfield(L, 'povh'), M.pause_ovh = sum(L.povh); end  % GPU-h of pause / resume overhead (M6)
 M.th_max_K = 0; M.th_end = 0;
 if isfield(L, 'TH') && isfield(par, 'th') && par.th.on, M.th_max_K = max(L.TH) / par.th.C; M.th_end = L.TH(end); end
-M.cost_op = M.cost_energy + M.cost_gas + M.cost_deg + M.cost_green;
+% waste-heat recovery (par.hp): heat-pump electricity, recovered heat, backup boiler gas
+M.hp_MWh = 0; M.heat_rec_MWh = 0; M.boiler_MWh = 0; M.cost_boiler = 0; M.heat_rec_share = NaN;
+if isfield(par, 'hp') && par.hp.on && isfield(L, 'php')
+    M.hp_MWh = sum(L.php) * dt; M.heat_rec_MWh = par.hp.cop * M.hp_MWh; M.boiler_MWh = sum(L.qb) * dt;
+    M.cost_boiler = M.boiler_MWh / par.hp.eta_b * par.price.gas;
+    M.heat_rec_share = 1 - M.boiler_MWh / max(sum(L.qdh) * dt, 1e-9);   % share of the heat demand met by recovered heat
+end
+M.cost_op = M.cost_energy + M.cost_gas + M.cost_deg + M.cost_green + M.cost_boiler;
 % service cost of deferred work (the same delay price c_jct that every optimiser has in its objective)
 M.cost_delay = par.qos.c_jct * dt * sum(L.backlog(:)) + par.qos.c_late * dt * sum(L.overdue);
 M.dr_pay = sum(M.pay);
@@ -116,6 +123,9 @@ if ~isempty(refL)
     dE = refL.E(T) - L.E(T); dS = refL.S(T) - L.S(T);
     M.term_adj = d.c_B_end * dB + (pval + par.bess.c_deg) * dE / par.bess.eta_c + pval * dS / (par.tes.eta_c * L.cop(T));
     if isfield(L, 'TH') && isfield(refL, 'TH'), M.term_adj = M.term_adj + pval * (L.TH(T) - refL.TH(T)) / L.cop(T); end
+    if isfield(par, 'hp') && par.hp.on && isfield(L, 'H') && isfield(refL, 'H')   % tank deficit: recharged by the heat pump at the valley price
+        M.term_adj = M.term_adj + pval * (refL.H(T) - L.H(T)) / par.hp.cop;
+    end
 else
     M.term_adj = d.c_B_end * M.term_backlog;
 end
@@ -124,6 +134,7 @@ M.net_cost_adj = M.net_cost + M.term_adj;
 M.net_cost_excl_rb = M.net_cost_adj - M.pen_rb - M.pen_pre;   % cost under the Jiangsu rules alone (no rebound / load-up charge)
 %% carbon
 M.co2 = sum(L.pg) * dt * par.co2.ef_grid + M.gas_MWh / par.gt.eta_e * par.co2.ef_gas;
+if isfield(par, 'hp') && par.hp.on, M.co2 = M.co2 + M.boiler_MWh / par.hp.eta_b * par.co2.ef_gas; end   % backup boiler
 %% service and diagnostics
 M.lateness = sum(L.overdue) * dt;                    % GPU-h * h
 M.cap_violation = max(L.over);

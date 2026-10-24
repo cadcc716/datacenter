@@ -38,6 +38,7 @@ end
 sc.H = H; sc.S = S; sc.prob = ones(S, 1) / S;
 sc.flex = reshape(flex, H, 3, S);
 sc.inf = inf; sc.fix = fix; sc.pv = max(pv, 0);
+sc.qdh = zeros(H, S); if isfield(inp.real, 'qdh'), sc.qdh = repmat(inp.real.qdh(hh), 1, S); end   % heat demand (par.hp)
 sc.cop = repmat(inp.real.cop(hh), 1, S);
 % optional (A3, KMEANS_SCEN): non-uniform scenario probabilities; day-ahead COP from the weather pool
 if strcmp(ctx.fmode, 'scenario') && isfield(ctx.sidx, 'prob') && numel(ctx.sidx.prob) == S

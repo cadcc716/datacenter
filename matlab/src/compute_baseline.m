@@ -6,6 +6,7 @@ P = zeros(par.Tsim, nb);
 noev = struct('s', {}, 'e', {}, 'win', {});
 for i = 1:nb
     D = struct('flex', inp.base.flex{i}, 'fix', inp.base.fix{i}, 'inf', inp.base.inf{i}, 'pv', inp.base.pv{i}, 'cop', inp.base.cop{i});
+    if isfield(inp.base, 'qdh'), D.qdh = inp.base.qdh{i}; end
     o = run_closed_loop(par, D, zeros(par.Tsim,1), noev, @(st, data, ctx) wrap_nom(st, data, ctx), struct('par', par, 'inp', inp));
     P(:, i) = o.log.pg;
 end

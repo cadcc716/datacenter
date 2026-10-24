@@ -1097,6 +1097,56 @@ def fig_extensions():
     save(fig, "fig25_extensions.png")
 
 
+def fig_heat():
+    """Fig. 27: winter waste-heat recovery (Exp24)"""
+    d = rd_parts("exp24_heat"); se = rd("exp24_settings.csv"); s_ = rd("exp24_strategies.csv")
+    if d is None or se is None or s_ is None: return
+    d["name"] = d.strategy.map(dict(zip(s_["index"], s_["label"]))); lab = dict(zip(se["index"], se["label"]))
+    LAB = {"boiler": "燃气锅炉供热", "hp": "热泵（无蓄热）", "hp+tank20": "热泵 + 20 MWh 蓄热", "hp+tank40": "热泵 + 40 MWh 蓄热"}
+    m = d[d.realisation > 0]; ks = sorted(m.setting.unique())
+    fig, ax = plt.subplots(1, 3, figsize=(16, 4.6)); fig.subplots_adjust(wspace=0.55)
+    a = ax[0]
+    for j, nm in enumerate(["JR-D", "IR-O*", "IR-P"]):
+        xs = [m[(m.setting == k) & (m.name == nm)].net_cost_adj.mean() / 1e4 for k in ks]
+        a.scatter(xs, np.arange(len(ks)) + (j - 1) * 0.16, s=40, color=C[nm], marker=MK[nm], label=nm, zorder=3, edgecolor="#fcfcfb", linewidth=0.8)
+    for i, k in enumerate(ks):
+        sm, lo, hi, b = _saving(m[m.setting == k])
+        if b is not None:
+            a.text(1.02, i, f"{-sm:+.1f}%".replace("-", "\u2212"), transform=a.get_yaxis_transform(), va="center", fontsize=8, color=C["JR-D"])
+    a.text(1.02, -0.8, "JR-D 相对最强基准", transform=a.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
+    a.set_yticks(range(len(ks))); a.set_yticklabels([LAB.get(lab[k], lab[k]) for k in ks]); a.invert_yaxis()
+    a.set_xlabel("26 个冬季运行日平均综合成本 / 万元"); a.legend(loc="lower right", fontsize=8)
+    a.set_title("(a) 综合成本（含供热燃气）")
+    a = ax[1]; w = 0.36
+    for j, nm in enumerate(["IR-P", "JR-D"]):
+        hpq = [m[(m.setting == k) & (m.name == nm)].heat_rec_MWh.mean() for k in ks]
+        bq = [m[(m.setting == k) & (m.name == nm)].boiler_MWh.mean() for k in ks]
+        x = np.arange(len(ks)) + (j - 0.5) * w
+        a.bar(x, hpq, width=w, color=C[nm], edgecolor="#fcfcfb", linewidth=1, label=f"{nm}：热泵回收")
+        a.bar(x, bq, width=w, bottom=hpq, color=C[nm], alpha=0.35, edgecolor="#fcfcfb", linewidth=1, label=f"{nm}：燃气锅炉")
+    a.set_xticks(range(len(ks))); a.set_xticklabels([LAB.get(lab[k], lab[k]).replace("（", "\n（").replace(" + ", "\n+ ") for k in ks], fontsize=8)
+    a.set_ylabel("供热量 / MWh·日⁻¹（含次日 6 h）"); a.legend(loc="upper left", fontsize=7.5, ncol=1, bbox_to_anchor=(1.0, 1.0), frameon=False)
+    a.set_title("(b) 热源构成（26 日平均）")
+    a = ax[2]
+    t1 = rd("ts_heat_hp_tank20_JRD.csv"); t2 = rd("ts_heat_hp_tank20_IRP.csv")
+    if t1 is not None and t2 is not None:
+        h = t1.hour.values; sel = (h >= 12) & (h <= 30)
+        shade(a)
+        a.plot(h[sel], t1.H.values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="蓄热量 JR-D")
+        a.plot(h[sel], t2.H.values[sel], color=C["IR-P"], lw=1.6, ls="--", drawstyle="steps-post", label="蓄热量 IR-P")
+        a.set_ylabel("蓄热量 / MWh"); a.set_xlabel("时刻 / h（24 以后为次日）")
+        b2 = a.twinx()
+        b2.plot(h[sel], t1.php.values[sel], color=C["JR-D"], lw=1, alpha=0.6, drawstyle="steps-post", label="热泵电功率 JR-D")
+        b2.plot(h[sel], t2.php.values[sel], color=C["IR-P"], lw=1, alpha=0.6, ls=":", drawstyle="steps-post", label="热泵电功率 IR-P")
+        b2.set_ylabel("热泵电功率 / MW"); b2.set_ylim(0, 3.5)
+        h1, l1 = a.get_legend_handles_labels(); h2, l2 = b2.get_legend_handles_labels()
+        a.legend(h1 + h2, l1 + l2, loc="upper right", fontsize=7.5)
+        a.set_title("(c) 案例日蓄热与热泵（20 MWh 蓄热）")
+    else:
+        a.set_visible(False)
+    save(fig, "fig27_heat.png")
+
+
 def fig_wind():
     """Fig. 26: green-power direct connection with offshore wind (Exp21)"""
     cu = rd("exp21_curve.csv"); w = rd_parts("exp21_wind"); ws = rd("exp21_strategies.csv")
@@ -1166,4 +1216,4 @@ if __name__ == "__main__":
     fig_pareto(); fig_capacity(); fig_stylized(); fig_robust()
     fig_substitution(); fig_risk(); fig_decomposition()
     fig_drivers(); fig_typical_day(); fig_channel(); fig_generalization(); fig_policy()
-    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind()
+    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind(); fig_heat()

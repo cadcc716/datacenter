@@ -88,8 +88,8 @@ for i = 1:nb
     inp.base.flex{i} = fs * o3; inp.base.fix{i} = (1 - fs) * sum(o3, 2);
     a = azb(mod(i-1, numel(azb)) + 1);
     inp.base.inf{i} = [ginf(:,a); ginf(nxt,a)];
-    [pb, cb] = pv_cop(wB{i}, par);
-    inp.base.pv{i} = [pb; pb(nxt)]; inp.base.cop{i} = [cb; cb(nxt)];
+    [pb, cb, tb] = pv_cop(wB{i}, par);
+    inp.base.pv{i} = [pb; pb(nxt)]; inp.base.cop{i} = [cb; cb(nxt)]; inp.base.T{i} = [tb; tb(nxt)];
 end
 
 %% --- forecast pools (historical days, used for expected forecasts and scenarios) ---
@@ -117,8 +117,13 @@ inp.fc.cop  = inp.real.cop;
 %% --- Monte-Carlo realisation library (other weekdays / other hot days) ---
 cand = wk(wk > iD & wk < nd);                         % later PAI weekdays with a following day
 Wd = all_days_weather(wt, Tamb, ghi); tmax = -Inf(numel(Wd), 1);
-for q = 1:numel(Wd), if ~isempty(Wd{q}), tmax(q) = max(Wd{q}.T); end, end
-[~, ordT] = sort(tmax, 'descend');
+tmean = Inf(numel(Wd), 1);
+for q = 1:numel(Wd), if ~isempty(Wd{q}), tmax(q) = max(Wd{q}.T); tmean(q) = mean(Wd{q}.T); end, end
+if isfield(par.case, 'mc_weather') && strcmp(par.case.mc_weather, 'coldest')
+    [~, ordT] = sort(tmean, 'ascend');               % winter peak: coldest days
+else
+    [~, ordT] = sort(tmax, 'descend');               % summer peak: hottest days
+end
 wdays = all_dates(wt);
 wsel = {};
 for q = ordT(:)'
@@ -133,7 +138,7 @@ end
 nc = min(numel(cand), numel(wsel)); azall = azwk(:)'; na = numel(azall); nw = numel(wsel);
 Nmc = min(2 * nc, 60);
 inp.mc.N = Nmc; inp.mc.flex = zeros(T, 3, Nmc); inp.mc.fix = zeros(T, Nmc); inp.mc.inf = zeros(T, Nmc);
-inp.mc.pv = zeros(T, Nmc); inp.mc.cop = zeros(T, Nmc); inp.mc.label = cell(Nmc, 1);
+inp.mc.pv = zeros(T, Nmc); inp.mc.cop = zeros(T, Nmc); inp.mc.T = zeros(T, Nmc); inp.mc.label = cell(Nmc, 1);
 for r = 1:Nmc
     ip = mod(r - 1, nc) + 1; pass = floor((r - 1) / nc);
     iw = mod(r - 1 + 11 * pass, nw) + 1; ia = mod(r - 1 + 5 * pass, na) + 1;
@@ -141,8 +146,8 @@ for r = 1:Nmc
     inp.mc.flex(:,:,r) = fs * o3; inp.mc.fix(:,r) = (1 - fs) * sum(o3, 2);
     a1 = azall(ia); a2 = min(a1 + 1, size(ginf, 2));
     inp.mc.inf(:, r) = [ginf(:, a1); ginf(nxt, a2)];
-    [p1, c1] = pv_cop(wsel{iw}{1}, par); [p2, c2] = pv_cop(wsel{iw}{2}, par);
-    inp.mc.pv(:, r) = [p1; p2(nxt)]; inp.mc.cop(:, r) = [c1; c2(nxt)];
+    [p1, c1, t1] = pv_cop(wsel{iw}{1}, par); [p2, c2, t2] = pv_cop(wsel{iw}{2}, par);
+    inp.mc.pv(:, r) = [p1; p2(nxt)]; inp.mc.cop(:, r) = [c1; c2(nxt)]; inp.mc.T(:, r) = [t1; t2(nxt)];
     inp.mc.label{r} = sprintf('pai%d_%s_%s', days(cand(ip)), dates{a1}, wsel{iw}{3});
 end
 
@@ -171,6 +176,14 @@ if isfield(par, 'wind') && par.wind.Prated > 0
         inp.mc.wind(:, r) = w; inp.mc.pv(:, r) = inp.mc.pv(:, r) + w;
         inp.mc.fcpv(:, r) = sol_fc + wf; inp.mc.poolpv(:, :, r) = sol_pool + we;
     end
+end
+
+%% --- optional heat-network demand for waste-heat recovery (par.hp): degree-hour profile of each day ---
+if isfield(par, 'hp') && par.hp.on
+    qd = @(Tv) par.hp.k * max(par.hp.Tb - Tv, 0);
+    inp.real.qdh = qd(inp.real.T);
+    for i = 1:nb, inp.base.qdh{i} = qd(inp.base.T{i}); end
+    inp.mc.qdh = qd(inp.mc.T);
 end
 
 %% --- admission control: nominal demand never exceeds the schedulable capacity ---

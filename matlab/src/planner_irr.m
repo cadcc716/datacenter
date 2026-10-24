@@ -15,6 +15,7 @@ kin = find(known & t >= [ev.s] & t <= [ev.e], 1);
 knext = find(known & [ev.s] > t, 1);
 % ---- gas engine / absorption chiller (economic rule) ----
 u.pgt = r.pgt; u.hac = r.hac;
+u.php = hp_rule(st, par, data, r, ~isempty(kin));    % heat pump off during a known event
 qac = min(par.ac.cop * u.hac, par.ac.Qmax);
 pit0 = d.Pfix + pdyn * (par.it.k_inf * data.inf + data.fix);   % IT power without deferrable work
 grid_est = @(ysum, qtc, qtd, pch, pdis) (1 + par.fac.a_aux) * (pit0 + pdyn * ysum) + par.fac.P_aux0 + ...

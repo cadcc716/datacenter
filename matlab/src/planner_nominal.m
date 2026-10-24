@@ -7,6 +7,7 @@ u.y = edf_alloc(st, par, min(sum(r.avail), r.gfree));
 u.pgt = r.pgt; u.hac = r.hac;
 [u.pch, u.pdis] = bess_tou(st, par, r);
 [u.qtc, u.qtd] = tes_tou(st, par, r);
+u.php = hp_rule(st, par, data, r);
 end
 
 function [pch, pdis] = bess_tou(st, par, r)

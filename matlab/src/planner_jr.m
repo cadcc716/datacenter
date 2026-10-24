@@ -14,7 +14,7 @@ end
 opt = struct('milp', ctx.milp, 'nonant', true);
 opt.active = event_activity(ctx, t0, sc.S, amode);
 opt.visible = any(opt.active, 2);
-[opt.terminal, opt.Eref_end, opt.Sref_end] = terminal_ref(ctx, t0 + H - 1);
+[opt.terminal, opt.Eref_end, opt.Sref_end, opt.Href_end] = terminal_ref(ctx, t0 + H - 1);
 [P, ix] = build_model(par, st, sc, ctx.ev, opt);
 sol = solve_milp(P, mpc_solver(ctx));
 info.ok = sol.ok; info.time = sol.time;

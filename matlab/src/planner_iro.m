@@ -22,7 +22,7 @@ yfix = [s1.x(ix1.Y{1}), s1.x(ix1.Y{2}), s1.x(ix1.Y{3})];
 zfix = []; if ~isempty(ix1.Zc), zfix = [s1.x(ix1.Zc{1}), s1.x(ix1.Zc{2}), s1.x(ix1.Zc{3})]; end
 o2 = struct('milp', ctx.milp, 'nonant', true, 'fix_y', yfix, 'visible', vis, 'active', act);
 o2.fix_z = zfix;
-[o2.terminal, o2.Eref_end, o2.Sref_end] = terminal_ref(ctx, t0 + H - 1);
+[o2.terminal, o2.Eref_end, o2.Sref_end, o2.Href_end] = terminal_ref(ctx, t0 + H - 1);
 [P2, ix2] = build_model(par, st, sc, ctx.ev, o2);
 s2 = solve_milp(P2, mpc_solver(ctx));
 info.time = info.time + s2.time;

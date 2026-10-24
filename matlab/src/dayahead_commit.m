@@ -25,6 +25,7 @@ amode = 'scenario'; if sc.S == 1, amode = 'ce'; end
 act = event_activity(ctx, 1, sc.S, amode);
 opt = struct('milp', true, 'visible', any(act, 2), 'active', act, 'terminal', true, 'Eref_end', ctx.Eref(end), ...
              'Sref_end', ctx.Sref(end), 'Cmax', 15);
+if isfield(ctx, 'Href') && ~isempty(ctx.Href), opt.Href_end = ctx.Href(end); end
 opt.risk = risk;
 DA.C = zeros(K, 1); DA.mode = mode;
 switch mode

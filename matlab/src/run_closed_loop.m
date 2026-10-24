@@ -5,12 +5,14 @@ T = par.Tsim;
 st = state_init(par, numel(ev));
 if isfield(ctx, 'st0') && ~isempty(ctx.st0), st = state_fit_events(ctx.st0, numel(ev)); end
 t1 = st.t; t2 = T; if isfield(ctx, 't_stop') && ~isempty(ctx.t_stop), t2 = ctx.t_stop; end
-f = {'pg','pit','pch','pdis','E','S','pgt','qac','qec','qtc','qtd','ppv','pv','cop','overdue','over','inf','TH','qth','povh'};
+f = {'pg','pit','pch','pdis','E','S','pgt','qac','qec','qtc','qtd','ppv','pv','cop','overdue','over','inf','TH','qth','povh', ...
+     'php','qb','H','qdh'};
 for i = 1:numel(f), L.(f{i}) = zeros(T, 1); end
 L.y = zeros(T, 3); L.z = zeros(T, 3); L.backlog = zeros(T, 3); L.solve_time = zeros(T,1); L.fallback = false(T,1);
 for t = t1:t2
     st = add_arrivals(st, D.flex(t, :), par);
-    data = struct('inf', D.inf(t), 'fix', D.fix(t), 'pv', D.pv(t), 'cop', D.cop(t));
+    data = struct('inf', D.inf(t), 'fix', D.fix(t), 'pv', D.pv(t), 'cop', D.cop(t), 'qdh', 0);
+    if isfield(D, 'qdh'), data.qdh = D.qdh(t); end           % heat-network demand (waste-heat recovery option)
     [u, info] = planner(st, data, ctx);
     [st, rec] = plant_step(st, u, par, data, base, ev);
     for i = 1:numel(f), L.(f{i})(t) = rec.(f{i}); end

@@ -26,7 +26,7 @@ end
 ctx.alpha = gc / (gc + gs);
 ctx.cap_comp = gc / numel(ev); ctx.cap_stor = gs / numel(ev);
 ctx.par = par; ctx.inp = inp; ctx.base = base; ctx.ref = ref; ctx.ref_eval = ref; ctx.ev = ev;
-ctx.pgt_nom = ref.log.pgt; ctx.Eref = ref.log.E; ctx.Sref = ref.log.S;
+ctx.pgt_nom = ref.log.pgt; ctx.Eref = ref.log.E; ctx.Sref = ref.log.S; ctx.Href = ref.log.H;
 ctx.H = par.mpc.H; ctx.milp = true; ctx.solver = struct(); ctx.fmode = 'oracle'; ctx.all_visible = false;
 ctx.sidx = scenario_index(par, inp);
 ctx.d = d;

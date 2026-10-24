@@ -8,7 +8,8 @@ function ctx = use_realization(ctx, r)
 mc = ctx.inp.mc;
 ctx.inp.real.flex = mc.flex(:, :, r); ctx.inp.real.fix = mc.fix(:, r); ctx.inp.real.inf = mc.inf(:, r);
 ctx.inp.real.pv = mc.pv(:, r); ctx.inp.real.cop = mc.cop(:, r);
-ctx.inp.fc.cop = mc.cop(:, r);
+ctx.inp.fc.cop = mc.cop(:, r); ctx.inp.real.T = mc.T(:, r);
+if isfield(mc, 'qdh'), ctx.inp.real.qdh = mc.qdh(:, r); end   % heat demand of the day (par.hp)
 if isfield(mc, 'fcpv')                  % wind: the day's own day-ahead forecast and scenario pool
     ctx.inp.fc.pv = mc.fcpv(:, r); ctx.inp.pool.pv = mc.poolpv(:, :, r); ctx.inp.real.wind = mc.wind(:, r);
     sx = scenario_index(ctx.par, ctx.inp); ctx.sidx.pv = sx.pv;

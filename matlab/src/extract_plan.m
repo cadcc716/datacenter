@@ -8,4 +8,5 @@ plan.pg = x(ix.PG(:,1)); plan.E = x(ix.E(:,1)); plan.S = x(ix.SS(:,1));
 plan.B = [x(ix.B{1}(:,1)), x(ix.B{2}(:,1)), x(ix.B{3}(:,1))];
 plan.qth = zeros(size(plan.pg));
 if isfield(ix, 'QHC') && ~isempty(ix.QHC), plan.qth = x(ix.QHC(:,1)) - x(ix.QHD(:,1)); end
+plan.php = zeros(size(plan.pg)); if isfield(ix, 'PHP') && ~isempty(ix.PHP), plan.php = x(ix.PHP(:,1)); end
 end

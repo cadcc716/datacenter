@@ -444,6 +444,28 @@ if d is not None and se is not None and s is not None:
         print(t.round(3).to_string())
         jr_vs_best(m, "net_cost_adj", "MC")
 
+# ------------------------------------------------------------------ Exp24 winter waste-heat recovery
+header("Exp24  winter waste-heat recovery (heat pump, hot-water tank, gas-boiler backup)")
+d = rd_parts("exp24_heat"); se = rd("exp24_settings.csv"); s = rd("exp24_strategies.csv")
+if d is not None and se is not None and s is not None:
+    d["name"] = d.strategy.map(dict(zip(s["index"], s["label"]))); lab = dict(zip(se["index"], se["label"]))
+    cols = ["fulfil_rate_pct", "all_valid", "net_cost_adj", "dr_pay", "pen_rb", "cost_energy", "cost_boiler", "hp_MWh", "boiler_MWh",
+            "heat_rec_share", "co2_t", "php_events_MW", "H_start_E1", "H_start_E2", "H_start_E3"]
+    for k, q in d.groupby("setting"):
+        c0 = q[q.realisation == 0]; m = q[q.realisation > 0]
+        print(f"\n--- {lab[k]}: case-day heat demand {c0.heat_demand_MWh.iloc[0]:.1f} MWh_th; MC mean {m.groupby('realisation').heat_demand_MWh.first().mean():.1f}")
+        print("  case day: " + ", ".join(f"{a} {b:.0f}" for a, b in zip(c0.name, c0.net_cost_adj)))
+        print(m.groupby("name")[cols].mean().round(3).to_string())
+        jr_vs_best(m, "net_cost_adj", "MC")
+    ref = d[(d.setting == 1) & (d.realisation > 0)]
+    for k in sorted(d.setting.unique()):
+        if k == 1: continue
+        q = d[(d.setting == k) & (d.realisation > 0)]
+        for nm in ["JR-D", "IR-P"]:
+            a = q[q.name == nm].set_index("realisation"); b = ref[ref.name == nm].set_index("realisation").loc[a.index]
+            print(f"  value of heat recovery, {lab[k]:10s} vs boiler ({nm}): {(a.net_cost_adj - b.net_cost_adj).mean():+8.0f} CNY/day "
+                  f"({100 * (a.net_cost_adj - b.net_cost_adj).mean() / b.net_cost_adj.mean():+.1f}%), CO2 {(a.co2_t - b.co2_t).mean():+.1f} t/day")
+
 # ------------------------------------------------------------------ Exp23 scenario generation
 header("Exp23  day-ahead scenarios: K-means reduction and seasonal drift (out of sample with JR-D)")
 c = rd("exp23_commit.csv"); se = rd("exp23_settings.csv"); o = rd("exp23_oos.csv")

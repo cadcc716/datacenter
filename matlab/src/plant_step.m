@@ -86,13 +86,26 @@ if qec < 0          % too much cold supplied: reduce TES discharge, then heat ac
     if qec < 0 && qth > 0, r1 = min(qth, -qec); qth = qth - r1; qec = qec + r1; end
     if qec < 0, qac = qac + qec; qec = 0; end
 end
+%% optional waste-heat recovery: the heat pump takes (cop - 1) * php of heat from the chilled-water loop (relieving
+%  the electric chillers) and delivers cop * php to the hot-water tank; the heat network draws data.qdh from the
+%  tank, a gas boiler covers what the tank cannot, surplus heat above the tank capacity goes to the cooling tower
+php = 0; qb = 0; hp_on = isfield(par, 'hp') && par.hp.on;
+if hp_on
+    hp = par.hp;
+    php = 0; if isfield(u, 'php'), php = min(max(u.php, 0), hp.Pmax); end
+    php = min(php, max(qec, 0) / (hp.cop - 1));
+    qec = qec - (hp.cop - 1) * php;
+    Hn = (1 - hp.loss * dt) * st.H + (hp.cop * php - data.qdh) * dt;
+    if Hn < 0, qb = -Hn / dt; Hn = 0; end
+    st.H = min(Hn, hp.E);
+end
 %% battery
 pdis = min([max(u.pdis, 0), par.bess.Pmax, max(st.E - par.bess.Emin, 0) * par.bess.eta_d / dt]);
 pch  = min([max(u.pch, 0),  par.bess.Pmax, max(par.bess.Emax - st.E, 0) / (par.bess.eta_c * dt)]);
 if pch > 0 && pdis > 0, net = pch - pdis; pch = max(net, 0); pdis = max(-net, 0); end
 ppv = data.pv;
 % grid import from the balance (ppv and pgt passed explicitly: an anonymous function would freeze them)
-grid = @(pch_, pdis_, qec_, ppv_, pgt_) (1 + fac.a_aux) * pit + fac.P_aux0 + qec_ / data.cop + pch_ - pdis_ - pgt_ - ppv_;
+grid = @(pch_, pdis_, qec_, ppv_, pgt_) (1 + fac.a_aux) * pit + fac.P_aux0 + qec_ / data.cop + pch_ - pdis_ - pgt_ - ppv_ + php;
 pg = grid(pch, pdis, qec, ppv, pgt);
 %% connection-limit enforcement (facility controller): storage first, then compute throttling
 over = pg - d.Pcap;
@@ -147,7 +160,7 @@ end
 rec = struct('pg', pg, 'pit', pit, 'y', y, 'z', z, 'pch', pch, 'pdis', pdis, 'E', st.E, 'S', st.S, ...
     'pgt', pgt, 'qac', qac, 'qec', qec, 'qtc', qtc, 'qtd', qtd, 'ppv', ppv, 'pv', data.pv, ...
     'cop', data.cop, 'overdue', overdue, 'backlog', sum(st.rem, 1), 'over', max(pg - d.Pcap, 0), ...
-    'inf', data.inf, 'TH', st.TH, 'qth', qth, 'povh', povh);
+    'inf', data.inf, 'TH', st.TH, 'qth', qth, 'povh', povh, 'php', php, 'qb', qb, 'H', st.H, 'qdh', data.qdh);
 st.t = t + 1;
 end
 

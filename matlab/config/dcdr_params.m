@@ -141,6 +141,20 @@ par.th.dT_up  = 3;               % [A] allowed rise above the set-point, K (e.g.
 par.th.dT_dn  = 2;               % [A] allowed pre-cooling below the set-point, K
 par.th.loss   = 0;               % [A] per-hour relaxation of the stored heat (envelope exchange; negligible for a data hall)
 
+%% ---------------- waste-heat recovery for heating (optional, winter case Exp24; off in the base case) ----------------
+% a water-source heat pump lifts heat from the chilled-water return (~30 C) to a nearby low-temperature heat network
+% (~65 C) through a hot-water tank; heat the pump and tank cannot supply is covered by a gas boiler. The heat it
+% extracts relieves the electric chillers. Heat demand q_t = k * max(Tb - T_t, 0) follows the outdoor temperature.
+par.hp.on     = false;           % [A] enable the heat pump, tank and heat demand
+par.hp.Pmax   = 3.0;             % [A] heat-pump electric capacity (MW_el): 10.5 MW_th out, 7.5 MW_th taken from the loop
+par.hp.cop    = 3.5;             % [S] heating COP for a ~35 K lift (30 -> 65 C), large water-source heat pumps
+par.hp.E      = 20;              % [A] hot-water tank (MWh_th; ~310 m3 at 55 K); 0 = no tank
+par.hp.E0     = 0.5;             % [A] initial tank level (fraction of E)
+par.hp.loss   = 0.005;           % [A] tank heat loss per hour
+par.hp.k      = 0.3;             % [A] heat-network demand per K below the base temperature (MW_th/K; ~5 MW_th at 0 C)
+par.hp.Tb     = 18;              % [S] heating base temperature (C), degree-hour method
+par.hp.eta_b  = 0.9;             % [S] gas boiler efficiency (backup heat)
+
 %% ---------------- policy constraints (optional; off in the base case) ----------------
 % cumulative over the simulated window; the MPC enforces them on accrued + planned quantities (soft)
 par.pol.pue_max   = Inf;         % [S] electric PUE cap: new large DCs <= 1.25, national hub nodes <= 1.2 (NDRC et al.,
@@ -167,6 +181,8 @@ par.case.workload_file = 'pai_gpu_occupancy_15min.csv';   % deferrable workload 
                                                % 'acme_seren_gpu_occupancy_15min.csv' with pai_day = 83 (2023-05-23)
 par.case.azure_date   = '2024-05-14';          % Azure LLM weekday used as DR day
 par.case.lat = 31.16; par.case.lon = 120.64;
+par.case.mc_weather   = 'hottest';             % weather days of the Monte-Carlo library: 'hottest' (summer peak)
+                                               % or 'coldest' (winter peak, Exp24) days of the weather file
 
 %% ---------------- DR events (base case) ----------------
 % start/end in hours of day D, notice (h before start), commitment (MW)

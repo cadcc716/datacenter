@@ -114,8 +114,9 @@ matlab/src/                  model and solvers
                              fluid schedule with rigid jobs, checkpoint / restart overheads, minimum pause
    kmeans_scen.m             K-means reduction of the joint day-ahead scenarios (non-uniform probabilities)
    cap_curve.m               convex piecewise-linear GPU capping curve (one or several levels)
+   hp_rule.m                 rule-based heat-pump / hot-water-tank dispatch (waste-heat recovery option, par.hp)
    solve_milp.m              solver wrapper: Gurobi | linprog/intlinprog | Octave glpk (MIP time limit 300 s)
-matlab/experiments/          exp1 ... exp23 (see below)
+matlab/experiments/          exp1 ... exp24 (see below)
 matlab/tests/                smoke tests (QUICK settings, results to tempdir)
 tools/                       summarize_results.py, plot_results.py, draw_diagrams.py, run_parallel.sh
 ```
@@ -147,6 +148,7 @@ tools/                       summarize_results.py, plot_results.py, draw_diagram
 | 21 | `exp21_wind` | Green-power direct connection: offshore wind behind the meter (curve 0–40 MW; DR at 0–20 MW, per-day day-ahead commitments) |
 | 22 | `exp22_overhead` | Pause / resume overhead and several GPU capping levels in the fluid model |
 | 23 | `exp23_scenarios` | Day-ahead scenarios: K-means reduction with non-uniform probabilities, seasonal drift |
+| 24 | `exp24_heat` | Winter waste-heat recovery: heat pump on the chilled-water return, hot-water tank, gas-boiler backup |
 
 ## Data licences and citations
 

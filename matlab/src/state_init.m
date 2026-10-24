@@ -17,4 +17,6 @@ st.TH = 0;                  % heat stored in the data hall above the set-point (
 st.acc = zeros(1, 4);       % accrued facility, IT, PV and consumption energy (MWh) for the policy constraints
 st.arr = zeros(1, 3);       % arrivals of the current step (busy GPUs, set by add_arrivals)
 st.dprev = zeros(1, 3);     % deferral (nominal - executed GPUs) of the previous step (pause-overhead option)
+st.H = 0;                   % hot-water tank level (MWh_th, waste-heat recovery option)
+if isfield(par, 'hp') && par.hp.on, st.H = par.hp.E0 * par.hp.E; end
 end
