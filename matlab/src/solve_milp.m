@@ -8,10 +8,13 @@ function sol = solve_milp(P, opts)
 %   sol.marg_ineq / sol.marg_eq = d(objective)/d(rhs) for LPs (empty for MILPs), sol.solver, sol.time,
 %   sol.timelimit (true if a MILP stopped at opts.tmlim seconds with its best feasible solution;
 %   default 300 s, so that a rare hard branch-and-bound instance cannot stall a long experiment).
+%   glpk LPs that do not finish within opts.tmlim_lp seconds (default opts.tmlim; the primal simplex
+%   can cycle on rare degenerate LPs) are solved again without presolve, then by the interior-point method.
 if nargin < 2, opts = struct(); end
 if ~isfield(opts, 'solver') || isempty(opts.solver), opts.solver = pick_solver(); end
 if ~isfield(opts, 'duals'), opts.duals = false; end
 if ~isfield(opts, 'tmlim') || isempty(opts.tmlim), opts.tmlim = 300; end
+if ~isfield(opts, 'tmlim_lp') || isempty(opts.tmlim_lp), opts.tmlim_lp = opts.tmlim; end   % first LP attempt
 n = numel(P.f);
 lb = P.lb; ub = P.ub;
 tic0 = tic;
@@ -56,10 +59,19 @@ switch opts.solver
         ctype = [repmat('U', size(P.Aineq,1), 1); repmat('S', size(P.Aeq,1), 1)];
         vtype = repmat('C', n, 1); vtype(P.intcon) = 'I';
         lbg = full(lb); ubg = full(ub);
-        prm.msglev = 0;
-        if isMIP, prm.presol = 1; prm.tmlim = round(1000 * opts.tmlim); end
+        prm.msglev = 0; prm.tmlim = round(1000 * opts.tmlim);
+        if ~isMIP, prm.tmlim = round(1000 * opts.tmlim_lp); end
+        if isMIP, prm.presol = 1; end
         if size(A,1) == 0, A = sparse(1, n); b = 0; ctype = 'U'; end
         [x, fv, err, extra] = glpk(full(P.f), A, b, lbg, ubg, ctype, vtype, 1, prm);
+        % rare degenerate LPs make glpk's default primal simplex cycle until the time limit: solve them
+        % again without presolve, then with the interior-point method (same optimum)
+        alts = {struct('presol', 0), struct('lpsolver', 2)}; ia = 1;
+        while ~isMIP && ~(err == 0 && extra.status == 5) && ia <= numel(alts)
+            p2 = prm; fa = fieldnames(alts{ia});
+            for q = 1:numel(fa), p2.(fa{q}) = alts{ia}.(fa{q}); end
+            [x, fv, err, extra] = glpk(full(P.f), A, b, lbg, ubg, ctype, vtype, 1, p2); ia = ia + 1;
+        end
         if isMIP && err == 9 && extra.status == 2                 % time limit: keep the best feasible solution
             sol.x = x; sol.fval = fv; sol.ok = true; sol.timelimit = true;
         end

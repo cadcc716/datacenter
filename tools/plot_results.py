@@ -951,7 +951,7 @@ def fig_jobsim():
         a.plot(h[sel], PDYN * (t.y_fluid - t.flex).values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="流体模型计划")
         a.plot(h[sel], PDYN * (t.y_job - t.flex).values[sel], color=INK, lw=1.4, ls="--", drawstyle="steps-post", label="作业级执行")
         shade(a); a.set_xlim(15, 28); a.set_xlabel("时刻 / h（24 以后为次日）"); a.set_ylabel("可延迟 IT 负荷相对名义值 / MW")
-        a.set_title(lab); a.legend(loc="lower left", fontsize=8)
+        a.set_title(lab); a.legend(loc="upper left", fontsize=8)
     if d is not None:
         q = d[d.realisation > 0]
         names = [n for n in ORDER if n in set(q.name)]
