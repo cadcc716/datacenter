@@ -8,12 +8,12 @@ function out = exp21_wind(par0, root, opts)
 %   wind and the deliverable reduction at the meter shrinks and fluctuates with the wind of the day.
 %   Commitments are therefore sized day-ahead for every capacity (opts.commit = 'dayahead': coupled
 %   two-stage model with the wind-inclusive scenarios; 'uniform': opts.C for all capacities). Then
-%   the case day (bench_list('mc')) and opts.N Monte-Carlo days (core strategies) are run.
+%   the case day (bench_list('mc')) and opts.N Monte-Carlo days (default 26, core strategies) are run.
 %   Writes results/exp21_wind.csv: one row per capacity, realisation (0 = case day) and strategy with
 %   all metrics plus the available wind energy of the day and the commitments, exp21_strategies.csv.
 if nargin < 3, opts = struct(); end
 P = getf(opts, 'P', [0 10 20 40]);
-N = getf(opts, 'N', 52);
+N = getf(opts, 'N', 26);
 C = getf(opts, 'C', [6 6 6]);
 cmode = getf(opts, 'commit', 'dayahead'); tag = getf(opts, 'tag', '');
 Sc = bench_list('mc'); Sm = bench_list('core');

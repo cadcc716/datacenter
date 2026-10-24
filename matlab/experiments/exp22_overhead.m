@@ -7,11 +7,11 @@ function out = exp22_overhead(par0, root, opts)
 %     cap-1        one capping level (power -30 %, throughput -12 %), as Exp10
 %     cap-3        three levels: power -15/-30/-45 % cost throughput -3/-12/-30 % (convex)
 %     cap-3+ovh    three capping levels and the base pause overhead
-%   For each setting the benchmarks are tuned again; case day with bench_list('mc') and opts.N
+%   For each setting the benchmarks are tuned again; case day with bench_list('mc') and opts.N (default 26)
 %   Monte-Carlo days with bench_list('core').
 %   Writes results/exp22_overhead.csv (setting, realisation, strategy, metrics) and exp22_settings.csv.
 if nargin < 3, opts = struct(); end
-N = getf(opts, 'N', 52);
+N = getf(opts, 'N', 26);
 C = getf(opts, 'C', [6 6 6]); tag = getf(opts, 'tag', '');
 cfg = {'base', @(p) p; ...
        'ovh-base', @(p) setit(p, 'pause_ovh_h', (1 + 5) / 60 * [1 1 1]); ...
