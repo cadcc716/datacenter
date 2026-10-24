@@ -176,9 +176,9 @@ ZH2EN = {
     "(c) 独立恢复：Γ_B/Γ_B⁰（前序 6 MW×2 h）": "(c) IR: Γ_B/Γ_B⁰ (A: 6 MW × 2 h)", "(d) 联合恢复：Γ_B/Γ_B⁰（前序 6 MW×2 h）": "(d) JR: Γ_B/Γ_B⁰ (A: 6 MW × 2 h)",
     "可靠容量处": "at reliable capacity", "独立恢复": "Independent recovery", "联合恢复": "Joint recovery",
     "52 个运行日的综合成本分布（核密度；竖线与右侧数字为均值）": "Total cost over the 52 operating days (kernel density; vertical line and right-hand number: mean)",
-    "(a) 流体恢复模型的计划（JR-D，PAI 病例日）": "(a) Plan of the fluid recovery model (JR-D, PAI case day)",
-    "(b) 刚性作业恢复约束下的计划（JR-D，PAI 病例日）": "(b) Plan with the rigid-job recovery bound (JR-D, PAI case day)",
-    "流体模型计划": "Fluid-model plan", "作业级执行": "Job-level execution", "可延迟 IT 负荷相对名义值 / MW": "Deferrable IT load vs nominal / MW",
+    "(a) 流体恢复模型的计划（JR-D，PAI 案例日）": "(a) Plan of the fluid recovery model (JR-D, PAI case day)",
+    "(b) 刚性作业恢复约束下的计划（JR-D，PAI 案例日）": "(b) Plan with the rigid-job recovery bound (JR-D, PAI case day)",
+    "闭环计划（流体仿真）": "Closed-loop plan (fluid simulation)", "作业级执行": "Job-level execution", "可延迟 IT 负荷相对名义值 / MW": "Deferrable IT load vs nominal / MW",
     "(c) 作业级执行：三次事件全部有效的天数占比 / %": "(c) Job-level execution: days with all three events valid / %",
     "(d) 作业级执行：日均综合成本相对 JR-D / %": "(d) Job-level execution: mean daily cost vs JR-D / %",
     "PAI·流体": "PAI · fluid", "PAI·刚性": "PAI · rigid", "Acme·流体": "Acme · fluid", "Acme·刚性": "Acme · rigid",
@@ -943,12 +943,12 @@ def fig_jobsim():
     d = exp19_frame()
     if all(t is None for t in ts.values()) and d is None: return
     fig, ax = plt.subplots(2, 2, figsize=(12, 7.6)); fig.subplots_adjust(hspace=0.42, wspace=0.3)
-    for k, (m, lab) in enumerate([(0, "(a) 流体恢复模型的计划（JR-D，PAI 病例日）"), (1, "(b) 刚性作业恢复约束下的计划（JR-D，PAI 病例日）")]):
+    for k, (m, lab) in enumerate([(0, "(a) 流体恢复模型的计划（JR-D，PAI 案例日）"), (1, "(b) 刚性作业恢复约束下的计划（JR-D，PAI 案例日）")]):
         a = ax[0, k]; t = ts[m]
         if t is None: a.set_visible(False); continue
         h = t.hour.values; sel = (h >= 15) & (h <= 28)
         a.axhline(0, color=AXIS, lw=0.8)
-        a.plot(h[sel], PDYN * (t.y_fluid - t.flex).values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="流体模型计划")
+        a.plot(h[sel], PDYN * (t.y_fluid - t.flex).values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="闭环计划（流体仿真）")
         a.plot(h[sel], PDYN * (t.y_job - t.flex).values[sel], color=INK, lw=1.4, ls="--", drawstyle="steps-post", label="作业级执行")
         shade(a); a.set_xlim(15, 28); a.set_xlabel("时刻 / h（24 以后为次日）"); a.set_ylabel("可延迟 IT 负荷相对名义值 / MW")
         a.set_title(lab); a.legend(loc="upper left" if m == 0 else "lower right", fontsize=8)
@@ -1098,7 +1098,7 @@ def fig_wind():
         a.text(Ps[-1], 30.8, "≥30%（2030 年前 ≥35%）", ha="right", va="bottom", fontsize=7.5, color=C["JR-D"])
         a.text(Ps[-1], 60.8, "自用 ≥60%", ha="right", va="bottom", fontsize=7.5, color=C["IR-O*"])
         a.set_xlabel("表后风电装机 / MW"); a.set_ylabel("比例 / %（线：均值；带：10%–90% 日）"); a.set_ylim(0, 105)
-        a.legend(loc="center right", fontsize=8); a.set_title("(a) 绿电直连曲线（无需求响应运行，53 日）")
+        a.legend(loc="lower right", fontsize=8); a.set_title("(a) 绿电直连曲线（无需求响应运行，53 日）")
     else:
         a.set_visible(False)
     if w is not None and ws is not None:

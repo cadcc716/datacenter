@@ -1,0 +1,10 @@
+  exp21 curve  0 MW: renewable share of consumption 11.0% (min 8.8), self-use 100.0% (min 100.0) over 53 days
+  exp21 curve  5 MW: renewable share of consumption 25.6% (min 11.9), self-use 100.0% (min 100.0) over 53 days
+  exp21 curve 10 MW: renewable share of consumption 40.0% (min 14.4), self-use 100.0% (min 99.3) over 53 days
+  exp21 curve 15 MW: renewable share of consumption 51.8% (min 16.9), self-use 97.0% (min 84.2) over 53 days
+  exp21 curve 20 MW: renewable share of consumption 58.4% (min 19.4), self-use 89.1% (min 66.2) over 53 days
+  exp21 curve 25 MW: renewable share of consumption 63.1% (min 21.9), self-use 81.8% (min 54.1) over 53 days
+  exp21 curve 30 MW: renewable share of consumption 66.6% (min 24.4), self-use 75.5% (min 45.5) over 53 days
+  exp21 curve 35 MW: renewable share of consumption 69.5% (min 26.7), self-use 70.2% (min 39.3) over 53 days
+  exp21 curve 40 MW: renewable share of consumption 71.9% (min 28.7), self-use 65.5% (min 34.6) over 53 days
+DONE
