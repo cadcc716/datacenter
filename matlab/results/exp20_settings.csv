@@ -1,0 +1,15 @@
+label,workload,index
+pai-base,1,1
+pai-none,1,2
+pai-slow,1,3
+pai-periodic,1,4
+seren-base,1,5
+kalos-base,1,6
+pai-x4-base,1,7
+seren-base,2,1
+seren-none,2,2
+seren-slow,2,3
+seren-periodic,2,4
+kalos-base,2,5
+seren-x2-base,2,6
+pai-base,2,7

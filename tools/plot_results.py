@@ -983,8 +983,8 @@ def fig_jobmix():
         a = ax[k]; q = d[(d.workload == w) & (d.model == 1)]
         if not len(q): a.set_visible(False); continue
         lab = {i: LAB.get(l, l) for ww, i, l in zip(se["workload"], se["index"], se["label"]) if ww == w}
-        order = [0] + sorted(lab)
-        ylab = ["流体模型评价"] + [lab[i] for i in sorted(lab)]
+        order = sorted(lab)                     # job-level executions only (the fluid accounting of the rigid
+        ylab = [lab[i] for i in order]          # variants reports spurious lateness, see section 6.13)
         for j, nm in enumerate(["JR-D", "IR-O*", "IR-P"]):
             z = q[q.name == nm].set_index("setting")
             y = np.arange(len(order)) + (j - 1) * 0.18
