@@ -237,8 +237,8 @@ ZH2EN = {
     "事件 1 承诺 C₁ / MW": "Commitment of event 1, C₁ / MW", "事件 2 承诺 C₂ / MW": "Commitment of event 2, C₂ / MW",
     "(a) 基准算例": "(a) Base case", "(b) 间隔短、无并网裕度": "(b) Short intervals, no connection margin",
     "：C₃ 固定时的 (C₁, C₂) 截面": ": (C₁, C₂) slices at fixed C₃", "JR 能力域 = 盒 ∩ ": "JR region = box ∩ ",
-    "能量界 ": "energy bound ", "JR 能力域 = 单事件能力盒": "JR region = single-event box", "多事件能量界 ": "multi-event energy bound ", "单事件能力 min G_k": "single-event capability min G_k", "能量界 / 3": "energy bound / 3",
-    "本文统一承诺 6 MW": "uniform commitment of the paper, 6 MW", "事件间隔 τ / h": "Interval between events τ / h",
+    "能量界 ": "energy bound ", "JR 能力域 = 单事件能力盒": "JR region = single-event box", "多事件能量界 ": "multi-event energy bound ", "单事件能力 min G_k": "min G_k", "能量界/3": "energy bound/3",
+    "本文统一承诺 6 MW": "uniform commitment of the paper, 6 MW", "能量界 / 3（切面起作用处）": "energy bound / 3 (where the cut binds)", "事件间隔 τ / h": "Interval between events τ / h",
     "三次事件统一承诺能力 / MW": "Uniform capability of the three events / MW",
     "(c) 统一承诺能力随事件间隔的变化（案例日）": "(c) Uniform capability vs. the interval (case day)",
     "联合恢复\nJR": "Joint\nJR", "价格协调\n最有利响应\nIR-P+": "Price-coordinated\nbest response\nIR-P+",
@@ -1292,11 +1292,12 @@ def fig_region():
             for nm, col, mk in [("JR", "u_JR", "o"), ("IR-O*", "u_IROs", "s")]:
                 a.plot(q.tau_h, q[col], ls=ls, marker=mk, color=C[nm], ms=5, lw=1.5, mfc=mf if mf else C[nm],
                        label=f"{nm}，γ = {g:.2f}")
-            a.plot(q.tau_h, q[["G1", "G2", "G3"]].min(axis=1), ls=ls, color=MUTED, lw=0.9, label=f"单事件能力 min G_k，γ = {g:.2f}")
-            a.plot(q.tau_h, q.bound123 / 3, ls=ls, color=INK2, lw=0.7, alpha=0.6, label=f"能量界 / 3，γ = {g:.2f}")
-        a.axhline(6, color=INK2, lw=0.6, ls=":"); a.text(0.02, 6.05, "本文统一承诺 6 MW", fontsize=7.5, color=INK2, va="bottom")
+            if g > 1.05: a.plot(q.tau_h, q[["G1", "G2", "G3"]].min(axis=1), ls="-", color=MUTED, lw=0.9, label="单事件能力 min G_k")
+            bnd = (q.h123 < q[["G1", "G2", "G3"]].sum(axis=1) - 0.01).values      # energy cut binding
+            a.plot(q.tau_h[bnd], (q.bound123 / 3)[bnd], ls=ls, color=INK2, lw=0.7, alpha=0.6, label=f"能量界/3，γ = {g:.2f}")
+        a.axhline(6, color=INK2, lw=0.6, ls=":"); a.text(2.95, 6.05, "本文统一承诺 6 MW", fontsize=7.5, color=INK2, va="bottom", ha="right")
         a.set_xlabel("事件间隔 τ / h"); a.set_ylabel("三次事件统一承诺能力 / MW")
-        a.set_ylim(4.5, 9.2); a.legend(loc="lower right", fontsize=7, ncol=2)
+        a.set_ylim(4.5, 9.2); a.legend(loc="lower right", fontsize=7, ncol=2, framealpha=0.92, frameon=True, edgecolor="none")
         a.set_title("(c) 统一承诺能力随事件间隔的变化（案例日）")
     else:
         a.set_visible(False)

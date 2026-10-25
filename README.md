@@ -66,6 +66,15 @@ are negligible for every strategy (at most 4 GPU·h·h in a single run).
   recharge competes with catch-up computing (IR-P keeps every event valid on only 69 % of days; joint recovery
   −4.4 %); a 20 MWh hot-water tank decouples heating from the events, and joint recovery recovers about 6 points
   more of the waste heat. An oversized tank lowers the baseline, like a large battery.
+* **Capability region (Exp25, Proposition 4).** The single commitment is generalised to the set of commitment
+  vectors (C1, C2, C3) that can be delivered in full. Under joint recovery it is the single-event box cut by one
+  cross-event energy budget, i.e. a virtual battery described by four numbers (vertex-certified); in the base case the
+  three events do not interact at all. A multi-event energy bound, which does not assume an unbiased baseline, is
+  within 3 % of the exact budget wherever the budget binds. Independent recovery keeps the single-event capabilities
+  but shrinks the cross-event budget by 18 % even with a hindsight-optimal split (uniform capability 7.90 → 6.44 MW;
+  89 % of joint recovery over 52 days). Under price coordination the IT side's optimal response is not unique: the
+  solver's own response delivers 60 % of the joint capability on average, responses within 0.1 % of the IT optimum
+  almost all of it.
 * **Day-ahead scenarios (Exp23).** K-means scenario reduction, DRO around it and a wrong-season scenario pool
   all give out-of-sample costs within 0.35 % of each other (every event valid); the in-sample estimate is
   6–14 % optimistic in every case.
@@ -120,8 +129,11 @@ matlab/src/                  model and solvers
    kmeans_scen.m             K-means reduction of the joint day-ahead scenarios (non-uniform probabilities)
    cap_curve.m               convex piecewise-linear GPU capping curve (one or several levels)
    hp_rule.m                 rule-based heat-pump / hot-water-tank dispatch (waste-heat recovery option, par.hp)
+   region_*.m                capability region of cross-event commitments: deliverability check (JR, IR-O, IR-P,
+                             optimistic IR-P+), radial function, support function, multi-event energy bound,
+                             vertex-certified virtual-battery template (Proposition 4)
    solve_milp.m              solver wrapper: Gurobi | linprog/intlinprog | Octave glpk (MIP time limit 300 s)
-matlab/experiments/          exp1 ... exp24 (see below)
+matlab/experiments/          exp1 ... exp25 (see below)
 matlab/tests/                smoke tests (QUICK settings, results to tempdir)
 tools/                       summarize_results.py, plot_results.py, draw_diagrams.py, run_parallel.sh
 ```
@@ -154,6 +166,7 @@ tools/                       summarize_results.py, plot_results.py, draw_diagram
 | 22 | `exp22_overhead` | Pause / resume overhead and several GPU capping levels in the fluid model |
 | 23 | `exp23_scenarios` | Day-ahead scenarios: K-means reduction with non-uniform probabilities, seasonal drift |
 | 24 | `exp24_heat` | Winter waste-heat recovery: heat pump on the chilled-water return, hot-water tank, gas-boiler backup |
+| 25 | `exp25_region` | Capability region: which commitment vectors (C1, C2, C3) can be delivered in full under joint, independent and price-coordinated recovery; energy bound and virtual-battery certificate |
 
 ## Data licences and citations
 

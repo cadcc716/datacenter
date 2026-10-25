@@ -524,3 +524,13 @@ if mc is not None:
         g_ = (mc.bound123 - mc.h123)[bind]
         print(f"  energy bound - h123 on binding days: mean {g_.mean():.2f}, max {g_.max():.2f} MWh ({100 * (g_ / mc.h123[bind]).max():.1f}%)")
     print(f"  bound >= h123 on all days: {bool((mc.bound123 >= mc.h123 - 1e-6).all())}")
+fe = rd("exp25_irp_eps.csv")
+if fe is not None:
+    print("--- optimistic IR-P with near-optimal IT responses (IT objective within 0.1 % of its optimum)")
+    for ci_, q in fe[fe.part == 1].groupby("id"):
+        ok = q.t_JR > 1e-6; r_ = (q.t_IRPe / q.t_JR)[ok]
+        print(f"  case {ci_}: ratio to JR min {r_.min():.3f}, mean {r_.mean():.3f}, rays at the JR boundary {np.mean(np.abs(q.t_IRPe - q.t_JR)[ok] <= 0.02):.2f}")
+    q = fe[fe.part == 2]; r_ = q.t_IRPe / q.t_JR
+    print(f"  sweep centre rays ({len(q)}): ratio to JR min {r_.min():.3f}")
+    q = fe[fe.part == 3]; r_ = q.t_IRPe / q.t_JR
+    print(f"  Monte-Carlo days ({len(q)}): ratio to JR mean {r_.mean():.4f}, min {r_.min():.3f}")
