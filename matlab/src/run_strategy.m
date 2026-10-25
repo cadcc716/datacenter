@@ -1,11 +1,13 @@
 function R = run_strategy(ctx, name, fmode)
 %RUN_STRATEGY  Run one scheduling strategy on the DR day and evaluate it.
-%   name : 'NoDR' | 'IR-R' | 'IR-O' | 'IR-O*' | 'IR-P' | 'JR' | 'JR-M'
+%   name : 'NoDR' | 'IR-R' | 'IR-O' | 'IR-O*' | 'IR-P' | 'JR' | 'JR-M' | 'JR-A'
 %     IR-R  independent recovery, rule based
 %     IR-O  independent recovery, sequential optimisation, static split ctx.alpha
 %     IR-O* as IR-O with the split tuned day-ahead (ctx.alpha_star, see prepare_benchmarks)
 %     IR-P  independent recovery coordinated only by a day-ahead shadow price (ctx.lambda_hr_da)
 %     JR    joint recovery (proposed); JR-M joint but event-by-event (no cross-event foresight)
+%     JR-A  joint recovery reached by the IT scheduler and the facility EMS with ADMM (ctx.admm: rho,
+%           K iterations per MPC step), exchanging only the IT power plan and its price
 %   fmode: 'open'     - perfect-information plan solved once over the whole day, replayed open loop
 %          'oracle'   - rolling horizon with perfect forecasts
 %          'expected' - rolling horizon, deterministic (historical-mean) forecasts
@@ -29,6 +31,10 @@ switch name
         else
             o = run_closed_loop(par, inp.real, ctx.base, ctx.ev, @planner_iro, ctx);
         end
+    case 'JR-A'                         % distributed joint recovery (ADMM, ctx.admm.K iterations per step)
+        if ~isfield(ctx, 'admm') || isempty(ctx.admm), ctx.admm = struct('rho', 200, 'K', 3); end
+        if strcmp(fmode, 'open'), ctx.fmode = 'oracle'; fmode = 'oracle'; end
+        o = run_closed_loop(par, inp.real, ctx.base, ctx.ev, @planner_admm, ctx);
     case {'JR', 'JR-M'}
         if strcmp(name, 'JR-M')
             ctx.myopic = true; ctx.Eterm = []; ctx.Sterm = [];

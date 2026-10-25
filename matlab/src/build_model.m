@@ -12,7 +12,8 @@ function [P, ix] = build_model(par, st, sc, ev, opt)
 %     'maxm'    maximise the mean reduction (capability region, REGION_RADIUS)
 %     'commit'  day-ahead: commitment C is a first-stage decision variable
 %     'none'    ignored
-%   opt: milp, nonant, fix_y (Hx3), terminal, Eref_end, Sref_end, no_late, visible (Kx1 logical),
+%   opt: milp, nonant, fix_y (Hx3), terminal, Eref_end, Sref_end, no_late, visible (Kx1 logical), q_ext
+%        (facility subproblem of ADMM_PLAN: aggregate external IT load ix.Q, no IT-side constraints),
 %        active (KxS logical, event happens in scenario s; default = visible), Cmax (for 'commit'),
 %        w_max (weight of 'max'), risk (risk measure of the scenario costs instead of their
 %        expectation, see ADD_RISK: struct with type 'dro' (delta) or 'cvar' (beta, w); [] = expectation)
@@ -32,7 +33,17 @@ m = lpb_new();
 W = @(c) dt * repmat(pr, H, 1) .* c;     % cost weight helper (c: HxS or scalar)
 
 %% variables
+% opt.q_ext (facility subproblem of the distributed scheme, ADMM_PLAN): the deferrable IT load is one
+% external variable (aggregate busy GPUs net of capping, in Y{1}; Y{2}, Y{3} = 0) without the IT-side
+% constraints (backlog, deadlines, capping, pause overhead, IT ramp); the facility only sees its power.
+qx = isfield(opt, 'q_ext') && opt.q_ext;
 for c = 1:3
+    if qx
+        yub = 0; if c == 1, yub = Inf; end
+        [m, Y{c}] = addb(m, H, S, 0, yub, 0);
+        [m, B{c}] = addb(m, H, S, 0, 0, 0); [m, V{c}] = addb(m, H, S, 0, 0, 0);
+        continue
+    end
     [m, Y{c}] = addb(m, H, S, 0, Inf, 0);
     [m, B{c}] = addb(m, H, S, 0, Inf, W(par.qos.c_jct));
     vub = Inf; if opt.no_late, vub = 0; end
@@ -80,7 +91,7 @@ n = H * S; one = ones(n, 1); r = (1:n)';
 
 %% optional GPU power capping during DR events: ZC = capped dynamic power (GPU equivalents),
 %  ZC <= rmax*Y, only in event steps; throughput loss LC >= s_k*ZC + i_k*Y (convex, CAP_CURVE)
-cv = cap_curve(par); capon = cv.on;
+cv = cap_curve(par); capon = cv.on && ~qx;
 for c = 1:3
     if capon, [m, ZC{c}] = addb(m, H, S, 0, Inf, 0); else, ZC{c} = zeros(H, S); end
     LC{c} = [];
@@ -112,7 +123,7 @@ if capon
 end
 % optional pause / resume overhead (M6): every GPU newly paused w.r.t. the nominal load (increase of
 % the deferral flex - y) adds par.it.pause_ovh_h GPU-h of work (checkpoint + restart), PI >= increase
-povh = zeros(1, 3); if isfield(par.it, 'pause_ovh_h'), povh = par.it.pause_ovh_h(:)'; end
+povh = zeros(1, 3); if isfield(par.it, 'pause_ovh_h') && ~qx, povh = par.it.pause_ovh_h(:)'; end
 for c = 1:3
     PI{c} = [];
     if povh(c) > 0, [m, PI{c}] = addb(m, H, S, 0, Inf, 0); end
@@ -123,7 +134,7 @@ capfree = par.it.u_max * par.it.Ngpu - sc.inf - sc.fix;
 m = lpb_addle(m, [r; r; r], [Y{1}(:); Y{2}(:); Y{3}(:)], [one; one; one], capfree(:));
 
 %% workload backlog (computing recovery state) with lag-bounded deadlines
-for c = 1:3
+for c = 1:3 * ~qx
     L = d.lag(c);
     remc = st.rem(:, c);
     B0 = sum(remc);
@@ -209,7 +220,7 @@ end
 
 %% optional limit on deferrable IT power swings (pause / resume of large jobs); soft, so that GPUs
 %  can still go idle when the work runs out (excess ramp priced at par.it.c_ramp CNY per MW and step)
-if isfinite(par.it.ramp_max)
+if isfinite(par.it.ramp_max) && ~qx
     Rr = par.it.ramp_max / d.pdyn;                       % GPUs per step
     [m, RU] = addb(m, H, S, 0, Inf, W(par.it.c_ramp * d.pdyn));
     [m, RD] = addb(m, H, S, 0, Inf, W(par.it.c_ramp * d.pdyn));
@@ -460,7 +471,7 @@ ix.B = B; ix.V = V; ix.PG = PG; ix.POV = POV; ix.PCH = PCH; ix.PDS = PDS; ix.E =
 ix.PGT = PGT; ix.HAC = HAC; ix.QEC = QEC; ix.QTC = QTC; ix.QTD = QTD; ix.SS = SS; ix.PPV = PPV;
 ix.PHP = PHP; ix.QB = QB; ix.HT = HT;
 ix.TH = TH; ix.QHC = QHC; ix.QHD = QHD; ix.GG = GG;
-ix.H = H; ix.S = S; ix.t0 = t0;
+ix.H = H; ix.S = S; ix.t0 = t0; if qx, ix.Q = Y{1}; end
 ix.scen = zeros(m.n, 1); ix.scen(1:numel(m.scen)) = m.scen(:);
 end
 

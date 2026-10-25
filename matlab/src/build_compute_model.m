@@ -6,6 +6,8 @@ function [P, ix] = build_compute_model(par, st, sc, ev, opt)
 %     IR-P         : no fixed share; instead it pays a day-ahead shadow price opt.lambda (CNY/MWh) on
 %                    facility power (price-coordinated independent recovery).
 %   It never sees the storage state or the storage recovery needs.
+%   opt.no_budget = true drops the IT power budget (IT subproblem of the distributed scheme ADMM_PLAN,
+%   which also cancels the energy price with opt.lambda = -price).
 d = sys_derived(par); dt = par.dt; H = sc.H; t0 = st.t;
 a = par.fac.a_aux; th = par.fac.theta;
 m = lpb_new();
@@ -54,7 +56,9 @@ qac = min(par.ac.cop * d.kh * pgt_b, par.ac.Qmax);
 fac_other = (1 + a) * base_it + par.fac.P_aux0 + (th * base_it + par.fac.Q0 - qac) ./ sc.cop(:,1) ...
             - pgt_b - sc.pv(:,1);
 budget = d.Pcap - fac_other;
-if capon
+if isfield(opt, 'no_budget') && opt.no_budget
+    % distributed scheme (ADMM_PLAN): the connection limit is the facility's; no private IT budget
+elseif capon
     m = lpb_addle(m, repmat(r, 6, 1), [Y{1}; Y{2}; Y{3}; Z{1}; Z{2}; Z{3}], [repmat(phi * d.pdyn, 3, 1); -repmat(phi * d.pdyn, 3, 1)], max(budget, 0));
 else
     m = lpb_addle(m, [r; r; r], [Y{1}; Y{2}; Y{3}], repmat(phi * d.pdyn, 3, 1), max(budget, 0));
