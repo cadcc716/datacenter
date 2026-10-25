@@ -5,7 +5,7 @@
 %   Runs in MATLAB (Optimization Toolbox, or Gurobi if on the path) or GNU Octave (glpk).
 %   Results are written to matlab/results/*.csv, figures by tools/plot_results.py.
 %   Options (set before calling):  QUICK = true  -> smoke run (tiny samples / grids)
-%                                  RUN = [...]   -> subset of experiments (default 1:25; Exp14 timing runs last)
+%                                  RUN = [...]   -> subset of experiments (default 1:26; Exp14 timing runs last)
 %                                  NMC = n       -> Monte-Carlo realisations (default: all, 52)
 %                                  MC_PART = 'certain' | 'uncertain' | 'all' (parts of Exp4; default 'all')
 %   Base case: Jiangsu settlement rules + gap-rebound assessment c_rb = 3 CNY/kW per event (a policy
@@ -15,7 +15,7 @@ root = fileparts(mfilename('fullpath'));
 addpath(fullfile(root, 'src')); addpath(fullfile(root, 'config')); addpath(fullfile(root, 'experiments'));
 dcdr_setup_paths();
 if ~exist('QUICK', 'var'), QUICK = false; end
-if ~exist('RUN', 'var'), RUN = 1:25; end
+if ~exist('RUN', 'var'), RUN = 1:26; end
 if ~exist('NMC', 'var'), NMC = []; end
 if ~exist('MC_PART', 'var'), MC_PART = 'all'; end
 if ~exist('LOGTAG', 'var'), LOGTAG = ''; end
@@ -154,6 +154,11 @@ if any(RUN == 25)
     fprintf('== Exp25: cross-event deliverable capability region (virtual-battery description)\n');
     if QUICK, E25 = exp25_region(ctx, root, struct('n', 3, 'taus', [0 1], 'gammas', 1.1, 'N', 2, 'c3', [0 NaN], 'nc1', 3));
     else, E25 = exp25_region(ctx, root); end
+end
+if any(RUN == 26)
+    fprintf('== Exp26: distributed joint recovery (IT and facility exchange only the power plan and its price, ADMM)\n');
+    if QUICK, E26 = exp26_admm(ctx, root, struct('rhos', 200, 'Kopen', 5, 'Ks', 1, 'r', [0 1]));
+    else, E26 = exp26_admm(ctx, root); end
 end
 if any(RUN == 14)
     fprintf('== Exp14: computational performance (run on an idle machine)\n');

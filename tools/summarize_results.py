@@ -534,3 +534,46 @@ if fe is not None:
     print(f"  sweep centre rays ({len(q)}): ratio to JR min {r_.min():.3f}")
     q = fe[fe.part == 3]; r_ = q.t_IRPe / q.t_JR
     print(f"  Monte-Carlo days ({len(q)}): ratio to JR mean {r_.mean():.4f}, min {r_.min():.3f}")
+
+# ------------------------------------------------------------------ Exp26 distributed coordination (ADMM)
+header("Exp26  distributed joint recovery: IT and facility exchange only the IT power plan and its price (ADMM)")
+cv = rd("exp26_conv.csv"); rf = rd("exp26_ref.csv"); pz = rd("exp26_price.csv")
+if cv is not None and rf is not None:
+    J = rf.J_joint.iloc[0]
+    print(f"--- open loop, case day: joint {J:.0f}; IR-P {100 * (rf.J_IRP.iloc[0] / J - 1):+.2f}%, IR-O* (alpha {rf.alpha_IROs.iloc[0]:.1f}) "
+          f"{100 * (rf.J_IROs.iloc[0] / J - 1):+.2f}%")
+    for rho_, q in cv.groupby("rho"):
+        q = q.set_index("k"); g = 100 * (q.J_impl / J - 1)
+        kP = g[(g < 100 * (rf.J_IRP.iloc[0] / J - 1)) & (q.valid == 1)].index.min(); k01 = g[g < 0.1].index.min()
+        print(f"  rho {rho_:5.0f}: gap " + ", ".join(f"k={k} {g.get(k, np.nan):.3f}%" for k in [1, 3, 5, 10, 20, 50, 100]) +
+              f"; better than IR-P from k={kP}, below 0.1% from k={k01}; first all-valid k={q[q.valid == 1].index.min()}")
+if pz is not None:
+    for rho_, q in pz.groupby("rho"):
+        dlt = np.abs(q.lambda_admm - q.lambda_joint)
+        print(f"  price rho {rho_:5.0f}: steps within 1 CNY/MWh {np.mean(dlt < 1):.2f}, max deviation {dlt.max():.0f} CNY/MWh "
+              f"(joint price {q.lambda_joint.min():.0f}-{q.lambda_joint.max():.0f})")
+m = rd_parts("exp26_mc"); s26 = rd("exp26_strategies.csv")
+if m is not None and s26 is not None:
+    m["name"] = m.strategy.map(dict(zip(s26["index"], s26["label"])))
+    days = m[m.realisation > 0]
+    print(f"--- closed loop: case day + {days.realisation.nunique()} Monte-Carlo days")
+    c0 = m[m.realisation == 0].set_index("name")
+    print("  case day: " + ", ".join(f"{n} {c0.loc[n, 'net_cost_adj']:.0f} ({int(c0.loc[n, 'n_valid'])} valid)" for n in s26["label"]))
+    ref = days[days.name == "JR-D"].set_index("realisation")
+    for n in s26["label"]:
+        q = days[days.name == n].set_index("realisation").loc[ref.index]
+        mu, lo, hi, rel, pv = paired(q, ref)
+        print(f"  {n:7s}: mean {q.net_cost_adj.mean():9.0f}, all valid {100 * (q.n_valid == 3).mean():5.1f}% of days, "
+              f"vs JR-D {rel:+.2f}% [{100 * lo / ref.net_cost_adj.mean():+.2f}, {100 * hi / ref.net_cost_adj.mean():+.2f}] (p={pv:.2g}), "
+              f"run time {q.run_time_s.mean():.0f} s/day")
+    best = None
+    for b in ["IR-P", "IR-O*"]:
+        q = days[days.name == b].set_index("realisation").loc[ref.index]
+        if best is None or q.net_cost_adj.mean() < best[1].net_cost_adj.mean(): best = (b, q)
+    gap_ir = best[1].net_cost_adj.mean() - ref.net_cost_adj.mean()
+    for n in [x for x in s26["label"] if x.startswith("JR-A")]:
+        q = days[days.name == n].set_index("realisation").loc[ref.index]
+        print(f"  {n}: recovers {100 * (best[1].net_cost_adj.mean() - q.net_cost_adj.mean()) / gap_ir:.0f}% of the JR-D advantage over {best[0]}")
+r26 = rd_parts("exp26_rho")
+if r26 is not None:
+    print("--- case day, K = 3, rho sensitivity:", ", ".join(f"rho {a:.0f}: {b:.0f}" for a, b in zip(r26.rho, r26.net_cost_adj)))

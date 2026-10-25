@@ -245,6 +245,14 @@ ZH2EN = {
     "日前调优分摊\nIR-O*（事后最优）": "Tuned split\nIR-O* (hindsight)", "固定分摊\nIR-O": "Fixed split\nIR-O",
     "价格协调\n求解器响应\nIR-P": "Price-coordinated\nsolver's response\nIR-P", "统一承诺能力 / MW": "Uniform capability / MW",
     " 个运行日（基准事件时段）的统一承诺能力": " operating days (base event times): uniform capability",
+    "实施成本比联合最优高 / %": "Cost above the joint optimum / %",
+    "迭代次数 k": "Iteration k", "(a) 开环收敛（案例日，完美信息；空心点：未能三次全有效）": "(a) Open-loop convergence (case day, perfect information; hollow: not all events valid)",
+    "（一次性）": " (one shot) ", "原始残差 ‖p − q‖ / MW": "Primal residual ‖p − q‖ / MW", "(b) IT 侧与设施侧计划之差": "(b) Mismatch between the IT and facility plans",
+    "联合模型的通道价格（命题 2）": "Channel price of the joint model (Proposition 2)", "ADMM 收敛后的价格（ρ = 200）": "ADMM price after convergence (ρ = 200)",
+    "(c) 迭代得到的价格与通道价格": "(c) Price found by the iterations vs the channel price", "IR-O*\n日前调优分摊": "IR-O*\ntuned split",
+    "IR-P\n一次性价格": "IR-P\none-shot price", "JR-A\n每步 1 次": "JR-A\n1 per step", "JR-A\n每步 3 次": "JR-A\n3 per step",
+    "JR-A\n每步 10 次": "JR-A\n10 per step", "% 日\n全有效": "% days\nall valid", "JR-D（集中式）": "JR-D (centralised)",
+    "综合成本相对 JR-D / %": "Total cost vs JR-D / %", "(d) 闭环（": "(d) Closed loop (", " 个运行日）": " operating days)",
     "积压": "backlog", "承诺": "commitment", "（": " (", "）": ")", "，": ", ", "：": ": ", "；": "; ",
 }
 _ZH_KEYS = sorted(ZH2EN, key=len, reverse=True)
@@ -1320,6 +1328,65 @@ def fig_region():
     save(fig, "fig28_region.png")
 
 
+def fig_admm():
+    """Fig. 29: distributed joint recovery by ADMM (Exp26)"""
+    cv = rd("exp26_conv.csv"); rf = rd("exp26_ref.csv"); pz = rd("exp26_price.csv")
+    m = rd_parts("exp26_mc"); s26 = rd("exp26_strategies.csv")
+    if cv is None or rf is None: return
+    fig, ax = plt.subplots(2, 2, figsize=(13, 9.6)); fig.subplots_adjust(wspace=0.3, hspace=0.36)
+    J = rf.J_joint.iloc[0]; LS = {50: "--", 200: "-", 800: ":"}
+    a = ax[0, 0]
+    for rho_, q in cv.groupby("rho"):
+        g = 100 * (q.J_impl / J - 1); v = q.valid.values == 1
+        a.plot(q.k, g, ls=LS.get(int(rho_), "-"), color=C["JR"], lw=1.5, label=f"ADMM，ρ = {rho_:g}")
+        a.scatter(q.k[~v], g[~v], s=16, facecolor="#fcfcfb", edgecolor=C["JR"], zorder=3)
+    for nm, col in [("IR-P", "J_IRP"), ("IR-O*", "J_IROs")]:
+        gv = 100 * (rf[col].iloc[0] / J - 1)
+        a.axhline(gv, color=C[nm], lw=1.1, ls="-."); a.text(cv.k.max(), gv * 1.12, f"{nm}（一次性）{gv:.1f}%", ha="right", va="bottom", fontsize=7.5, color=C[nm])
+    a.set_yscale("log"); a.set_xscale("log"); a.set_xlabel("迭代次数 k"); a.set_ylabel("实施成本比联合最优高 / %")
+    a.legend(loc="lower left", fontsize=7.5); a.set_title("(a) 开环收敛（案例日，完美信息；空心点：未能三次全有效）")
+    a = ax[0, 1]
+    for rho_, q in cv.groupby("rho"):
+        a.plot(q.k, q.r_primal, ls=LS.get(int(rho_), "-"), color=C["JR"], lw=1.5, label=f"ρ = {rho_:g}")
+    a.set_yscale("log"); a.set_xscale("log"); a.set_xlabel("迭代次数 k"); a.set_ylabel("原始残差 ‖p − q‖ / MW")
+    a.legend(loc="upper right", fontsize=7.5); a.set_title("(b) IT 侧与设施侧计划之差")
+    a = ax[1, 0]
+    if pz is not None:
+        q = pz[pz.rho == 200]; h = (q.step.values - 1) * 0.25
+        shade(a)
+        a.plot(h, q.lambda_joint, color=MUTED, lw=3.2, drawstyle="steps-post", label="联合模型的通道价格（命题 2）")
+        a.plot(h, q.lambda_admm, color=C["JR"], lw=1.2, drawstyle="steps-post", label="ADMM 收敛后的价格（ρ = 200）")
+        a.set_xlim(0, 30); a.set_xlabel("时刻 / h（24 以后为次日）"); a.set_ylabel("元/MWh")
+        a.legend(loc="center left", fontsize=7.5); a.set_title("(c) 迭代得到的价格与通道价格")
+    else:
+        a.set_visible(False)
+    a = ax[1, 1]
+    if m is not None and s26 is not None:
+        m["name"] = m.strategy.map(dict(zip(s26["index"], s26["label"])))
+        d = m[m.realisation > 0]; ref = d[d.name == "JR-D"].set_index("realisation").net_cost_adj
+        order = ["IR-O*", "IR-P", "JR-A1", "JR-A3", "JR-A10"]
+        lab = {"IR-O*": "IR-O*\n日前调优分摊", "IR-P": "IR-P\n一次性价格", "JR-A1": "JR-A\n每步 1 次", "JR-A3": "JR-A\n每步 3 次", "JR-A10": "JR-A\n每步 10 次"}
+        col = {"IR-O*": C["IR-O*"], "IR-P": C["IR-P"], "JR-A1": C["JR"], "JR-A3": C["JR"], "JR-A10": C["JR"]}
+        data = []; names = []
+        for n in order:
+            q = d[d.name == n].set_index("realisation")
+            if not len(q): continue
+            data.append(100 * (q.net_cost_adj / ref.loc[q.index] - 1).values); names.append(n)
+        bp = a.boxplot(data, widths=0.5, patch_artist=True, showfliers=True, medianprops=dict(color=INK, lw=1.2))
+        for i, n in enumerate(names):
+            bp["boxes"][i].set_facecolor(col[n]); bp["boxes"][i].set_alpha(0.35); bp["boxes"][i].set_edgecolor(col[n])
+            q = d[d.name == n]
+            a.text(i + 1, a.get_ylim()[1] if False else max(data[i]) + 0.25, f"{100 * (q.n_valid == 3).mean():.0f}% 日\n全有效",
+                   ha="center", va="bottom", fontsize=7, color=INK2)
+        a.axhline(0, color=INK2, lw=0.8); a.text(0.55, 0.05, "JR-D（集中式）", fontsize=7.5, color=INK2, va="bottom")
+        a.set_xticks(range(1, len(names) + 1)); a.set_xticklabels([lab[n] for n in names], fontsize=7.5)
+        a.set_ylabel("综合成本相对 JR-D / %"); a.set_title(f"(d) 闭环（{d.realisation.nunique()} 个运行日）")
+        top = max(np.max(x) for x in data); a.set_ylim(min(-0.6, min(np.min(x) for x in data) - 0.3), top + 1.6)
+    else:
+        a.set_visible(False)
+    save(fig, "fig29_admm.png")
+
+
 if __name__ == "__main__":
     fig_case(); fig_mechanism()
     for case in ["DAcommit", "uniform6"]:
@@ -1328,4 +1395,4 @@ if __name__ == "__main__":
     fig_pareto(); fig_capacity(); fig_stylized(); fig_robust()
     fig_substitution(); fig_risk(); fig_decomposition()
     fig_drivers(); fig_typical_day(); fig_channel(); fig_generalization(); fig_policy()
-    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind(); fig_heat(); fig_region()
+    fig_ridge(); fig_jobsim(); fig_jobmix(); fig_extensions(); fig_wind(); fig_heat(); fig_region(); fig_admm()

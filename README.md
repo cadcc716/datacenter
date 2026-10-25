@@ -75,6 +75,11 @@ are negligible for every strategy (at most 4 GPU·h·h in a single run).
   89 % of joint recovery over 52 days). Under price coordination the IT side's optimal response is not unique: the
   solver's own response delivers 60 % of the joint capability on average, responses within 0.1 % of the IT optimum
   almost all of it.
+* **Distributed coordination (Exp26, Proposition 5).** The IT scheduler and the facility controller keep their own
+  models and exchange only the deferrable IT power plan and its price (ADMM). On the case day the IT plan beats the
+  one-shot price coordination after 4 exchanges and is within 0.09 % of the joint optimum after 10; the converged price
+  is the recovery-channel price. In closed loop over 52 days, 1 / 3 / 10 exchanges per 15-min step recover 67 % / 85 % /
+  97 % of the joint-recovery advantage over the strongest independent benchmark, with every event valid on every day.
 * **Day-ahead scenarios (Exp23).** K-means scenario reduction, DRO around it and a wrong-season scenario pool
   all give out-of-sample costs within 0.35 % of each other (every event valid); the in-sample estimate is
   6–14 % optimistic in every case.
@@ -129,11 +134,13 @@ matlab/src/                  model and solvers
    kmeans_scen.m             K-means reduction of the joint day-ahead scenarios (non-uniform probabilities)
    cap_curve.m               convex piecewise-linear GPU capping curve (one or several levels)
    hp_rule.m                 rule-based heat-pump / hot-water-tank dispatch (waste-heat recovery option, par.hp)
+   admm_plan.m / planner_admm.m  distributed joint recovery: IT and facility subproblems that exchange only the
+                             deferrable IT power plan and its price (ADMM, tangent-cut proximal terms; JR-A)
    region_*.m                capability region of cross-event commitments: deliverability check (JR, IR-O, IR-P,
                              optimistic IR-P+), radial function, support function, multi-event energy bound,
                              vertex-certified virtual-battery template (Proposition 4)
    solve_milp.m              solver wrapper: Gurobi | linprog/intlinprog | Octave glpk (MIP time limit 300 s)
-matlab/experiments/          exp1 ... exp25 (see below)
+matlab/experiments/          exp1 ... exp26 (see below)
 matlab/tests/                smoke tests (QUICK settings, results to tempdir)
 tools/                       summarize_results.py, plot_results.py, draw_diagrams.py, run_parallel.sh
 ```
@@ -167,6 +174,7 @@ tools/                       summarize_results.py, plot_results.py, draw_diagram
 | 23 | `exp23_scenarios` | Day-ahead scenarios: K-means reduction with non-uniform probabilities, seasonal drift |
 | 24 | `exp24_heat` | Winter waste-heat recovery: heat pump on the chilled-water return, hot-water tank, gas-boiler backup |
 | 25 | `exp25_region` | Capability region: which commitment vectors (C1, C2, C3) can be delivered in full under joint, independent and price-coordinated recovery; energy bound and virtual-battery certificate |
+| 26 | `exp26_admm` | Distributed joint recovery: IT scheduler and facility controller exchange only the power plan and its price (ADMM); open-loop convergence and closed loop with 1 / 3 / 10 exchanges per MPC step |
 
 ## Data licences and citations
 

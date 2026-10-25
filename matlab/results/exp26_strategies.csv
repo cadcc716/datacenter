@@ -1,0 +1,7 @@
+label,index,K
+IR-O*,1,0
+IR-P,2,0
+JR-D,3,0
+JR-A1,4,1
+JR-A3,5,3
+JR-A10,6,10
