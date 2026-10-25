@@ -20,9 +20,12 @@ function out = exp25_region(ctx, root, opts)
 %   (d) Monte-Carlo days (opts.N, default all; base events): same metrics -> results/exp25_mc.csv
 %   (e) IR-P summary per case: share of the rays on which IR-P+ reaches the JR boundary, ratio of the
 %       solver's response to JR -> results/exp25_irp.csv
-%   opts.parts: subset of 'abcd' to run (default all; (e) belongs to (a)).
+%   (f) optimistic IR-P with near-optimal IT responses (IT objective within opts.irp_tol_f, default 0.1 %,
+%       of its optimum) on the rays of the cases, the centre rays of the sweep and the Monte-Carlo days
+%       -> results/exp25_irp_eps.csv
+%   opts.parts: subset of 'abcdf' to run (default 'abcdf'; (e) belongs to (a)).
 if nargin < 3, opts = struct(); end
-parts = getf(opts, 'parts', 'abcd');
+parts = getf(opts, 'parts', 'abcdf');
 cases  = getf(opts, 'cases', [1.1 1; 1.0 0.5]);
 n      = getf(opts, 'n', 12);
 taus   = getf(opts, 'taus', [0 0.25 0.5 0.75 1 1.5 2 3]);
@@ -115,7 +118,32 @@ if any(parts == 'd')
     end
     write_csv(fullfile(root, 'results', 'exp25_mc.csv'), [{'realisation'}, hm], Rmc);
 end
-out.case = Rcase; out.radial = Rrad; out.sweep = Rsw; out.mc = Rmc; out.irp = Rp;
+%% (f) near-optimal IT responses under the channel price
+Rf = [];
+if any(parts == 'f')
+    oe = struct('irp_tol', getf(opts, 'irp_tol_f', 1e-3));
+    for ci = 1:size(cases, 1)
+        c = mkcase(ctx, cases(ci, 1), cases(ci, 2), g0);
+        for q = 1:size(Dg, 1)
+            d = Dg(q, :)'; tj = region_radius(c, d, 'JR'); o = oe; o.tmax = tj;
+            Rf = [Rf; 1, ci, cases(ci, :), Dg(q, :), tj, region_radius(c, d, 'IR-P+', o)]; %#ok<AGROW>
+        end
+    end
+    for g = gammas
+        for tau = taus
+            c = mkcase(ctx, g, tau, g0); tj = region_radius(c, dc, 'JR'); o = oe; o.tmax = tj;
+            Rf = [Rf; 2, 0, g, tau, dc', tj, region_radius(c, dc, 'IR-P+', o)]; %#ok<AGROW>
+        end
+    end
+    c0 = mkcase(ctx, g0, 1, g0);
+    for r = 1:N
+        c = use_realization(c0, r); tj = region_radius(c, dc, 'JR'); o = oe; o.tmax = tj;
+        Rf = [Rf; 3, r, g0, 1, dc', tj, region_radius(c, dc, 'IR-P+', o)]; %#ok<AGROW>
+    end
+    write_csv(fullfile(root, 'results', 'exp25_irp_eps.csv'), {'part', 'id', 'gamma', 'tau_h', 'd1', 'd2', 'd3', 't_JR', 't_IRPe'}, Rf);
+    fprintf('  exp25 near-optimal IR-P+ done (%.0f min)\n', toc(t0) / 60);
+end
+out.case = Rcase; out.radial = Rrad; out.sweep = Rsw; out.mc = Rmc; out.irp = Rp; out.irp_eps = Rf;
 fprintf('  exp25 done (%.1f min)\n', toc(t0) / 60);
 end
 

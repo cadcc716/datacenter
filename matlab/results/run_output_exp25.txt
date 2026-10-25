@@ -1,0 +1,13 @@
+  exp25 case gamma 1.10 tau 1.00: G [8.178 7.978 7.9], h123 24.06 (bound 25.66), template exact 1 (theta 1.0000),
+      u JR 7.90 IR-O* 6.44 IR-O 5.50 IR-P 4.52 IR-P+ 7.90, vol / JR: IR-O* 0.966 IR-O 0.770 IR-P 0.279 IR-P+ 1.000 (5 min)
+  exp25 case gamma 1.00 tau 0.50: G [8.178 8.049 8.06], h123 19.43 (bound 19.57), template exact 0 (theta 0.9997),
+      u JR 6.48 IR-O* 6.44 IR-O 3.05 IR-P 2.55 IR-P+ 6.47, vol / JR: IR-O* 0.962 IR-O 0.278 IR-P 0.119 IR-P+ 0.850 (15 min)
+  exp25 sweep gamma 1.00 done (17 min)
+  exp25 sweep gamma 1.05 done (18 min)
+  exp25 sweep gamma 1.10 done (19 min)
+  exp25 MC 13/52 (20 min)
+  exp25 MC 26/52 (22 min)
+  exp25 MC 39/52 (23 min)
+  exp25 MC 52/52 (25 min)
+  exp25 done (24.6 min)
+== exp25 finished in 24.6 min

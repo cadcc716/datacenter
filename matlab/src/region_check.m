@@ -16,7 +16,9 @@ function [ok, info] = region_check(ctx, C, strat, opts)
 %          'IR-P' as IR-O, but the IT scheduler pays the recovery-channel price of the joint plan for C
 %                 (duals of the electric balance minus the TOU price, as DAYAHEAD_PRICES) instead of
 %                 following a share. Its LP response to the price is not unique (see Proposition 4):
-%          'IR-P+' optimistic IR-P: deliverable with SOME optimal IT response to that price (one LP).
+%          'IR-P+' optimistic IR-P: deliverable with SOME optimal IT response to that price (one LP);
+%                 opts.irp_tol = relative tolerance on the IT objective (default 1e-7: optimal responses;
+%                 e.g. 1e-3: responses within 0.1 % of the IT optimum).
 %   info.lam (IR-P), info.y (stage-1 or joint IT schedule, H x 3), info.sol (last LP), info.time.
 if nargin < 4, opts = struct(); end
 t0 = tic;
@@ -56,7 +58,8 @@ switch strat
         s1 = solve_milp(P1, slv);
         if ~s1.ok, ok = false; info.time = toc(t0); return; end
         [P, ix] = build_model(par, st, sc, ev, opt); P.ub(ix.POV(:)) = 0;
-        n = numel(P.f); n1 = numel(P1.f); tol = 1e-7 * abs(s1.fval) + 1e-4;
+        rt = 1e-7; if isfield(opts, 'irp_tol') && ~isempty(opts.irp_tol), rt = opts.irp_tol; end
+        n = numel(P.f); n1 = numel(P1.f); tol = rt * abs(s1.fval) + 1e-4;
         Q.f = zeros(n + n1, 1); Q.lb = [P.lb; P1.lb]; Q.ub = [P.ub; P1.ub]; Q.intcon = [];
         Q.Aineq = [blkdiag(P.Aineq, P1.Aineq); sparse(1, n + (1:n1), P1.f(:)', 1, n + n1)];
         Q.bineq = [P.bineq; P1.bineq; s1.fval + tol];

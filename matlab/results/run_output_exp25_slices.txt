@@ -1,0 +1,4 @@
+  exp25 slices case 1 done (2 min)
+  exp25 slices case 2 done (3 min)
+  exp25 done (3.3 min)
+== exp25 slices finished in 3.3 min

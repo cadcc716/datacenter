@@ -1,0 +1,3 @@
+  exp25 near-optimal IR-P+ done (4 min)
+  exp25 done (3.6 min)
+== exp25 part f finished in 3.6 min
