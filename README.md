@@ -4,15 +4,18 @@ Coordinated scheduling for consecutive demand response (DR) in AI data-center in
 systems (AIDC-IES) considering cross-event computing-storage recovery — reproducible MATLAB study
 (revised after the simulated peer review and upgraded against an Applied Energy benchmark paper).
 
+* **Typeset manuscript (English, Applied Energy layout, all 26 experiments):** [`paper/manuscript.pdf`](paper/manuscript.pdf),
+  sources and build notes in [`paper/`](paper/README.md)
 * **Paper idea, model, theory, experiments and results (Chinese):** [`docs/论文主要思路.md`](docs/论文主要思路.md)
-* **Proofs (Lemma 1, Propositions 1–3, Theorem 1):** [`docs/理论推导.md`](docs/理论推导.md)
+* **Proofs (Lemma 1, Propositions 1–5, Theorem 1):** [`docs/理论推导.md`](docs/理论推导.md)
 * **Review, revision tracking, benchmark gap analysis, handover:** [`docs/审稿意见.md`](docs/审稿意见.md),
   [`docs/修改进度.md`](docs/修改进度.md), [`docs/AE对标分析与优化方案.md`](docs/AE对标分析与优化方案.md),
   [`docs/交接文档.md`](docs/交接文档.md)
 * **MATLAB code:** [`matlab/`](matlab) — runs in MATLAB (Optimization Toolbox, or Gurobi) or GNU Octave (glpk)
 * **Data (derived from public traces):** [`data/`](data), provenance in [`data_prep/README.md`](data_prep/README.md)
 * **Figures:** [`matlab/figures/`](matlab/figures) (Chinese labels) and [`matlab/figures_en/`](matlab/figures_en)
-  (English), rendered by `tools/plot_results.py` and `tools/draw_diagrams.py`
+  (English, journal style of `tools/journal_style.py`, PNG and vector PDF), rendered by `tools/plot_results.py` and
+  `tools/draw_diagrams.py`
 * The first version (before the review) is kept on branch `Firstthinking`.
 
 ## Key results (reproduced by `main_run_all`)

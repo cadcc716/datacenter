@@ -1,0 +1,100 @@
+\section{Introduction}
+\label{sec:intro}
+
+The rapid expansion of artificial intelligence (AI) is turning data centers into one of the fastest-growing
+electricity loads. The International Energy Agency estimates that data centers consumed about 415~TWh in 2024, roughly
+1.5\% of global electricity use, and that their demand may reach about 945~TWh by 2030~\cite{iea2025}. In the United
+States their share already reached 4.4\% in 2023 and may rise to 325--580~TWh by 2028~\cite{shehabi2024}, while China
+requires new large data centers to achieve a power usage effectiveness (PUE) of 1.25 or lower~\cite{ndrc2024dc}.
+Because new AI campuses are increasingly limited by grid interconnection rather than by chips, operational flexibility
+is becoming a condition of connection: curtailing large flexible loads for 0.25--1\% of the hours could accommodate
+76--126~GW of additional load in 22 balancing authorities of the United States~\cite{norris2025}, the flexibility of AI loads can reduce grid
+investment and operating costs by 3--21\%~\cite{chen2026defer}, and the Texas Senate Bill~6 links the interconnection of
+large loads to curtailment obligations during grid emergencies~\cite{texas2025sb6}. Power-flexible AI data centers are
+therefore regarded as a new class of grid-responsive resources~\cite{williams2026}, and a field demonstration in Phoenix
+reduced the power of a 256-GPU cluster by 25\% for three hours~\cite{colangelo2025}. In China, demand-side regulations
+require a demand response (DR) capability of 3--5\% of the maximum load~\cite{ndrc2023dsm}. Under the Jiangsu DR rules,
+an event is valid only if the mean load falls by at least 80\% of the confirmed reduction, payments are capped at
+120\% of it, agreed responses are limited to two calls and 2~h per day, and fast responses with short notice are paid up to 1.6 times
+the base rate~\cite{jiangsu2024dr}. One evening peak can therefore trigger several events that are separated by gaps of
+an hour or less, and an AI data center that responds to the first event must be ready for the next one shortly
+afterwards.
+
+In the area of data center DR and AI workload flexibility, early studies showed that data centers can avoid coincident
+peaks by shifting deferrable workloads and using local generation~\cite{liu2013}, discussed the opportunities and
+challenges of data center DR~\cite{wierman2014}, and reviewed how Internet data centers participate in DR
+programs~\cite{chen2020review}. Carbon-aware computing shifts flexible workloads towards low-carbon hours at fleet
+scale~\cite{radovanovic2023}. For AI workloads, simulation studies estimate a power flexibility of 18--55\% for AI data
+centers~\cite{acun2026}, power capping and frequency scaling provide additional levers for large language model (LLM)
+workloads~\cite{patel2024}, and quantization can turn LLM inference into a DR resource~\cite{du2026}. Agreements that
+curtail machine-learning workloads during grid stress have also been signed in practice~\cite{google2025}. However, a
+study of 185 days of production traces from 155,000 GPUs found that a scalar flexibility ratio overstates the dependable
+load relief by 17--47\%~\cite{li2026scalar}, and synchronous training causes large power swings~\cite{choukse2025}.
+These studies characterise how much an AI data center can reduce in a single event, but they do not consider how the
+recovery needs left by one event constrain the next event.
+
+In the area of data center integrated energy systems (IES), multi-level DR dispatch of data centers with district
+autonomy~\cite{han2024}, exergy-based planning and operation of computing-power IES~\cite{lin2025} and the operation
+of data centers with combined cooling, heating and power (CCHP) and spatio-temporally adjustable loads~\cite{fan2026}
+have been studied. Zhang et al.~\cite{zhang2026bilevel} proposed a bi-level distributionally robust planning model for
+data center clusters in which time-shiftable and space-transferable loads act as virtual energy storage, and the reuse of
+data center waste heat in district heating has been reviewed~\cite{huang2020,wahlroos2018}. In these models, deferred
+workloads are bounded by constant virtual-queue limits and recovered by their own rules, while storage is recharged by
+the energy system, so the recovery of computing backlog and that of storage are treated as separate subproblems. As
+shown in \secref{sec:computing}, a constant queue limit cannot guarantee that every task meets its deadline when
+arrivals are low and is unnecessarily conservative when arrivals are high.
+
+In the area of recovery and coordination, Evans et al.~\cite{evans2022} proposed a flexibility framework with recovery
+guarantees for aggregated energy storage, in which discharge and recovery are coupled and the recovery capability is
+summarised by a single virtual battery; virtual-battery models also describe the aggregate flexibility of
+thermostatically controlled loads~\cite{hao2015}. Load payback after DR events is a common side effect of
+DR~\cite{wrinch2012}, and the choice of the customer baseline affects the settled reduction~\cite{chao2011}.
+Uncertainty in DR scheduling is usually handled by scenario-based stochastic model predictive control
+(MPC)~\cite{schildbach2014} or by distributionally robust optimization (DRO), which in two-stage problems is typically
+solved by duality-based reformulation and column-and-constraint generation~\cite{zhang2026bilevel,zeng2013,esfahani2018}.
+Coordination between the IT scheduler and the facility energy management system is commonly realised by price signals,
+whereas iterative schemes such as the alternating direction method of multipliers (ADMM)~\cite{boyd2011} exchange both
+plans and prices. However, existing approaches consider either one homogeneous storage state or a single event, and
+none addresses two heterogeneous recovery states, a deadline-bounded and nearly lossless computing backlog and a lossy
+physical storage, that compete for one connection-limited recovery channel across consecutive events.
+
+Despite substantial progress in data center DR, IES operation and storage recovery, several research gaps remain.
+First, existing studies optimise a single event or treat events independently, so the state coupling between
+consecutive events, \ie\ the computing backlog and the storage deficit that must be recovered through the same
+connection headroom, is not modelled, and the resulting loss of deliverable capability is unknown. Second, computing
+backlog and storage are recovered by separate rules or coordinated by static prices, whereas their joint value, the
+conditions under which this value vanishes and the price that would coordinate them have not been characterised.
+Third, commitments are assessed event by event and against weak benchmarks, without a description of the set of
+deliverable commitment vectors, out-of-sample validation over many operating days, or a job-level verification of the
+fluid workload model. Consequently, a scheduling framework that jointly recovers computing and storage across events,
+from the day-ahead commitment to intraday operation, is still lacking.
+
+To address these gaps, this paper proposes a coordinated scheduling method for consecutive DR in AI data center IES
+(AIDC-IES) considering cross-event computing--storage recovery. The main contributions are summarised as follows.
+\begin{enumerate}[label=(\arabic*),leftmargin=1.9em,itemsep=1.5pt]
+\item A multi-state recovery model of computing and storage is established. Tiered service-level agreements (SLAs) are
+represented by lag-bounded backlog constraints, which are proved to be exactly equivalent to deadline-feasible
+earliest-deadline-first (EDF) execution (Lemma~\ref{lem:edf}), so that deferrable computing becomes a virtual storage
+whose capacity is set by deadlines. Together with the battery, the chilled-water storage, the gas engine with
+absorption cooling and the connection limit, the model captures how catch-up computing, recharging and the next
+event's capability interact; data hall thermal inertia, waste-heat recovery, GPU power capping, pause overheads and a
+rigid-job recovery bound are included as options.
+\item Theoretical properties of cross-event recovery are derived: an upper bound on the deliverable capability of the
+next event (Proposition~\ref{prop:bound}), a closed-form value of joint recovery and of the minimum recovery interval
+(Theorem~\ref{thm:closed}), a single recovery-channel price with equal marginal values
+(Proposition~\ref{prop:price}), an exact mixed-integer linear reformulation of the distributionally robust commitment
+(Proposition~\ref{prop:dro}), the convex capability region of commitment vectors with a virtual-battery description
+and a vertex certificate (Proposition~\ref{prop:region}), and a distributed plan--price iteration that converges to
+joint recovery and recovers the channel price (Proposition~\ref{prop:admm}).
+\item A day-ahead coupled commitment and intraday rolling joint-recovery framework is developed
+(Algorithm~1, \tabref{tab:algorithm}). It embeds the Jiangsu settlement rules, handles uncertain event calls by
+scenario trees, and admits a distributed implementation in which the IT scheduler and the facility controller keep their
+own models and exchange only power plans and prices.
+\item A comprehensive evaluation against strong benchmarks is conducted on a 16,000-GPU case built from public
+traces. The benchmarks include independent recovery with a back-tested split, independent recovery coordinated by the
+channel price of the joint plan and event-by-event joint recovery. The evaluation covers 52 out-of-sample operating
+days with paired tests, risk-averse commitments, the capability region, job-level replay of all schedules and
+extensions to green-power direct supply and winter waste-heat recovery, and it quantifies the reliably deliverable
+capacity, its equivalent in battery and connection capacity, and the conditions under which joint recovery loses its
+value.
+\end{enumerate}

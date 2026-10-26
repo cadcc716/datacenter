@@ -1,0 +1,44 @@
+% notation shortcuts used throughout the manuscript
+\newcommand{\Pg}{P^{\mathrm{G}}}
+\newcommand{\Pb}{P^{\mathrm{b}}}
+\newcommand{\Pcap}{\bar P}
+\newcommand{\Bbar}{\bar B}
+\newcommand{\pdyn}{p^{\mathrm{dyn}}}
+\newcommand{\pidle}{p^{\mathrm{idle}}}
+\newcommand{\Pch}{P^{\mathrm{ch}}}
+\newcommand{\Pdis}{P^{\mathrm{dis}}}
+\newcommand{\Qtc}{Q^{\mathrm{TC}}}
+\newcommand{\Qtd}{Q^{\mathrm{TD}}}
+\newcommand{\Qec}{Q^{\mathrm{EC}}}
+\newcommand{\Pgt}{P^{\mathrm{GT}}}
+\newcommand{\Ppv}{P^{\mathrm{PV}}}
+\newcommand{\Pit}{P^{\mathrm{IT}}}
+\newcommand{\crb}{c^{\mathrm{rb}}}
+\newcommand{\cjct}{c^{\mathrm{jct}}}
+\newcommand{\clate}{c^{\mathrm{late}}}
+\newcommand{\cdeg}{c^{\mathrm{deg}}}
+\newcommand{\COP}{\mathrm{COP}}
+\newcommand{\lch}{\lambda^{\mathrm{ch}}}
+\newcommand{\Cset}{\mathcal{C}}
+\newcommand{\Tset}{\mathcal{T}}
+\newcommand{\Kset}{\mathcal{K}}
+\newcommand{\Iset}{\mathcal{I}}
+\newcommand{\Wset}{\mathcal{W}}
+\newcommand{\Hs}{H}
+\newcommand{\dt}{\Delta t}
+\newcommand{\ie}{i.e.}
+\newcommand{\eg}{e.g.}
+\newcommand{\CNY}{CNY}
+\newcommand{\tenk}{$10^4$\,CNY}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\appref}[1]{Appendix~\ref{#1}}
+% appendix numbering of floats and equations ("Fig. A.1", "Table B.2", "(B.3)")
+\newcommand{\appendixnumbering}{%
+  \setcounter{figure}{0}\setcounter{table}{0}\setcounter{equation}{0}%
+  \renewcommand{\thefigure}{\thesection.\arabic{figure}}%
+  \renewcommand{\thetable}{\thesection.\arabic{table}}%
+  \renewcommand{\theequation}{\thesection.\arabic{equation}}}
+% end-of-proof square (not predefined by unicode-math)
+\AtBeginDocument{\providecommand{\square}{\mdlgwhtsquare}}

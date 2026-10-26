@@ -1,0 +1,116 @@
+\section{Case analysis}
+\label{sec:case}
+
+\subsection{Case settings}
+\label{sec:settings}
+
+To verify the effectiveness and applicability of the proposed method, a case study is built entirely from public data.
+The deferrable training and batch workload follows the Alibaba PAI GPU cluster trace~\cite{weng2022}, online inference
+the Azure LLM inference trace of 2024~\cite{stojkovic2025}, and the weather the ERA5 reanalysis~\cite{hersbach2020} for
+Wujiang, Suzhou, retrieved from Open-Meteo; the tariff is the Jiangsu summer TOU tariff of 2025 and the DR rules are
+those of Jiangsu~\cite{jiangsu2024dr}. The DR day combines PAI day 27, the weather of 5 August 2024 (maximum
+38.3~$^\circ$C) and the Azure trace of 14 May 2024, and the baseline is the mean of the five previous workdays.
+\figref{fig:case} shows the inputs: the evening events fall into the TOU peak period after PV output has vanished, and
+the grid import without response lies above the baseline during the evening peak because, in normal operation, the
+BESS discharges in the peak-price hours that form the baseline.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.86\textwidth]{fig01_case_profiles.pdf}
+\caption{Inputs of the case day. (a) DR baseline (mean of the five previous workdays), grid import without response
+and connection limit; (b) GPU load composition from the PAI and Azure traces; (c) Jiangsu commercial TOU tariff
+(summer); (d) PV output and chiller-plant COP (Wujiang, Suzhou, 5 August 2024). Shaded: the three DR events.}
+\label{fig:case}
+\end{figure*}
+
+To test the model on LLM-era workloads, the Acme trace of LLM development at the Shanghai AI Laboratory (Seren and
+Kalos clusters, March--August 2023)~\cite{hu2024acme} is processed in the same way. It differs strongly from PAI: long
+jobs account for 80.5\% of the deferrable GPU$\cdot$h instead of 49.5\%, the GPU$\cdot$h-weighted gang size of the long
+class is 407 instead of 35 GPUs, and the load has almost no diurnal cycle (\tabref{tab:acme}). For
+\secref{sec:ext-wind}, offshore wind is generated for the Rudong site from ERA5 100-m wind speeds of summer 2024, with a
+summer capacity factor of 0.35 and 0.40--0.43 in 17:00--22:00.
+
+Out-of-sample performance is evaluated on 52 operating days: each of the 26 PAI workdays after the DR day is paired with
+two different combinations of hot-day weather of summer 2024 and an Azure workday inference trace (a crossed design that
+uses no random numbers). The commitments, baseline, scenarios, tuned split $\alpha^*$ and IR-P price are fixed before
+the operating day. Statistics are reported as means with 95\% $t$ confidence intervals, and strategies are compared by
+paired daily differences with Wilcoxon signed-rank tests. The main parameters are listed in \tabref{tab:params}, with
+sources and the parameters of the optional features in \appref{app:data}. Every parameter marked as an assumption is
+varied in the sensitivity studies. \tabref{tab:experiments} maps all 26 experiments to the questions they answer.
+
+\begin{table}[!t]
+\caption{Main parameters of the case study (sources in \appref{app:data}).}
+\label{tab:params}
+\centering\footnotesize
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}p{0.38\columnwidth}X@{}}
+\toprule
+Parameter & Value\\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Equipment}}\\
+GPUs / node power / idle share & 16,000 / 8.4~kW per 8 GPUs~\cite{latif2024} / 25\%\\
+Chiller COP & $6-0.12(T-25)$ in $[3,7]$; 4.41--5.61 on the DR day\\
+BESS & 6~MW / 12~MWh, SOC 10--95\%, $\eta=0.95/0.95$, 60~CNY/MWh~\cite{xu2018}\\
+TES & 10~MWh$_{\mathrm{th}}$, 4~MW$_{\mathrm{th}}$, $\eta=0.98$, 0.5\%/h\\
+Gas engine + absorption & 3~MW, $\eta_{\mathrm e}=0.38$, $\eta_{\mathrm h}=0.45$, 1.5~MW/15~min; COP 0.75\\
+PV & 8~MWp, PVWatts v5~\cite{dobos2014}\\
+Connection limit $\Pcap=\gamma\hat P$ & $\gamma=1.10\Rightarrow16.03$~MW (1.0--1.3); $P^{\min}=1.5$~MW\\
+\multicolumn{2}{@{}l}{\textit{Computing}}\\
+Workload & Inference $\approx$25\%, training/batch $\approx$40\% of GPUs, 75\% of it deferrable\\
+Lag bounds $L_{1,2,3}$ & 0.5 / 1.5 / 3~h\\
+Delay cost / overdue penalty & 0.5 / 1000~CNY per GPU$\cdot$h and hour\\
+\multicolumn{2}{@{}l}{\textit{Market and policy}}\\
+TOU tariff & Peak 14--22~h ($\times$1.8), valley 0--6~h and 11--13~h ($\times$0.35)\\
+DR payment & 3 (E1, E2), 4.2 (E3), 4.8~CNY/kWh (E3 uncertain)\\
+Validity / payment cap & $\ge$80\% (+0.1~MW margin) / $\le$120\%\\
+Shortfall coefficient $\kappa$ & 1.0 (0.5--2)\\
+Rebound charge $\crb$ & 0 and 3~CNY/kW per event (0--6)\\
+Gas price & 3.6~CNY/Nm$^3$ (9.89~kWh/Nm$^3$)\\
+Emission factors & 0.5617~tCO$_2$/MWh grid~\cite{mee2024ef}; 56.1~t/TJ gas\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table*}[!t]
+\caption{Experiments of the case study and where they are reported.}
+\label{tab:experiments}
+\centering\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabularx}{\textwidth}{@{}c>{\raggedright\arraybackslash}p{0.21\textwidth}X>{\raggedright\arraybackslash}p{0.14\textwidth}@{}}
+\toprule
+No. & Experiment & Setting & Reported in\\
+\midrule
+1 & Cross-event mechanism & Two events; gap $\tau$ 0.25--4~h $\times$ margin $\gamma$ 1.0--1.3; capability ratio & \S\ref{sec:res-mech}, \figref{fig:mech}\\
+2 & Case-day closed loop & 8 strategies; coupled and uniform 6-MW commitments; both settlement bases & \S\ref{sec:res-caseday}, \figref{fig:typical}--\ref{fig:flows}\\
+3 & Sensitivity (perfect information) & Duration, gap, $\gamma$, commitment; $\tau\times\gamma$ map; hindsight-tuned benchmarks & \S\ref{sec:sens-commit}, \figref{fig:sens}--\ref{fig:map}\\
+4 & Out-of-sample evaluation & 52 days; events certain with $\crb=3$ and $\crb=0$; E3 uncertain & \S\ref{sec:res-mc}, \figref{fig:ridge}\\
+5 & Channel shadow prices & Duals of the joint plan; KKT residuals & \S\ref{sec:res-price}, \figref{fig:shadow}\\
+6 & Commitment--operation pairing & Single-event, scaled single-event and coupled commitments $\times$ IR-O*, JR-D & \S\ref{sec:res-pairing}, \figref{fig:pairing}\\
+7 & Ablation and mechanism contribution & No computing flexibility / BESS / TES; waterfall of mechanisms & \S\ref{sec:res-sources}, \figref{fig:decomp}\\
+8 & Rebound charge & $\crb$ = 0--6~CNY/kW & \S\ref{sec:sens-rebound}, \figref{fig:rebound}\\
+9 & DR payment and shortfall & 1--3~CNY/kWh $\times$ $\kappa$ = 0.5--2 & \S\ref{sec:sens-rebound}, \figref{fig:robust}\\
+10 & Realism & Liquid cooling, IT ramp limits, pre-event charge, GPU power capping & \S\ref{sec:sens-real}, \figref{fig:robust}\\
+11 & Closed form of Theorem~\ref{thm:closed} & 68 stylised cases, closed form vs LP & \appref{app:proofs}, \figref{fig:theorem}\\
+12 & Reliable capacity in closed loop & Uniform 4--9~MW, 20 days & \S\ref{sec:res-capacity}, \figref{fig:capacity}\\
+13 & Virtual--physical substitution & BESS 3--24~MWh; $\gamma$ 1.0--1.3; uniform 5--9.5~MW & \S\ref{sec:res-capacity}, \figref{fig:subst}\\
+14 & Computational efficiency & Horizon $\times$ scenarios $\times$ events & \S\ref{sec:algorithm}, \tabref{tab:timing}\\
+15 & Risk-averse commitment & SP, DRO ($\delta$ = 0.1--1.2), RO, CVaR; 52 days & \S\ref{sec:res-risk}, \figref{fig:risk}\\
+16 & Tariff shapes & Five TOU shapes with equal daily mean & \S\ref{sec:sens-gen}, \figref{fig:gen}\\
+17 & Multi-energy coupling and policy & Thermal inertia, green share, PUE cap, tie-line ramp & \S\ref{sec:sens-real}, \figref{fig:policy}\\
+18 & Season and climate & Suzhou winter, Gui'an summer & \S\ref{sec:sens-gen}, \figref{fig:gen}\\
+19 & Job-level validation & PAI/Acme load $\times$ fluid/rigid recovery; 52 days & \S\ref{sec:res-job}, \figref{fig:jobsim}\\
+20 & Job mix and overheads & Job sources, gang size $\times$2/$\times$4, checkpoint/restart overheads & \S\ref{sec:res-job}, \figref{fig:jobmix}\\
+21 & Green-power direct supply & Offshore wind 0--40~MW behind the meter & \S\ref{sec:ext-wind}, \figref{fig:wind}\\
+22 & Pause overhead and capping levels & 6/25-min overheads; one/three capping levels; 26 days & \S\ref{sec:ext-overhead}, \figref{fig:ext}\\
+23 & Scenario generation and drift & Quantile vs K-means (+DRO) scenarios; winter day with summer scenarios & \S\ref{sec:res-scen}, \figref{fig:ext}\\
+24 & Winter waste-heat recovery & Boiler; heat pump without/with 20 and 40~MWh tanks; 26 winter days & \S\ref{sec:ext-heat}, \figref{fig:heat}\\
+25 & Capability region & 91 rays $\times$ 5 strategies; slices; gap $\times$ margin; 52 days & \S\ref{sec:res-region}, \figref{fig:region}\\
+26 & Distributed coordination & Plan--price iteration in open loop; JR-A with 1/3/10 exchanges per step; 52 days & \S\ref{sec:res-admm}, \figref{fig:admm}\\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\input{sections/s5b_performance}
+\input{sections/s5c_capacity}
+\input{sections/s5d_uncertainty}
+\input{sections/s5e_sensitivity}
+\input{sections/s5f_extensions}

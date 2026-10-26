@@ -1,0 +1,108 @@
+% Manuscript: Coordinated scheduling for consecutive demand response in AI data center integrated energy
+% systems considering cross-event computing-storage recovery.
+% Build: ./build.sh   (XeLaTeX; references are numbered in order of first citation by tools/order_refs.py)
+\documentclass[9pt,twocolumn]{extarticle}
+\usepackage{aeprep}
+\graphicspath{{../matlab/figures_en/}}
+
+%% ------------------------------------------------------------------ authors (to be completed)
+\newcommand{\PaperTitle}{Coordinated scheduling for consecutive demand response in AI data center integrated energy systems considering cross-event computing--storage recovery}
+\newcommand{\PaperAuthors}{First Author\,\textsuperscript{a}, Second Author\,\textsuperscript{a}, Third Author\,\textsuperscript{b}, Corresponding Author\,\textsuperscript{a,}$^{*}$}
+\newcommand{\PaperAffiliations}{%
+  \textsuperscript{a}\,[Department, University, City, Postcode, Country]\par
+  \textsuperscript{b}\,[Department, University, City, Postcode, Country]}
+\newcommand{\PaperEmail}{[e-mail address]}
+\renewcommand{\RunningAuthors}{First Author et al.}
+\hypersetup{pdftitle={\PaperTitle},pdfauthor={First Author et al.},
+  pdfkeywords={AI data center; consecutive demand response; joint computing-storage recovery; virtual storage;
+  distributionally robust optimization; integrated energy system}}
+
+\input{sections/macros}
+
+\begin{document}
+\thispagestyle{firstpage}
+\twocolumn[{%
+\begin{center}
+{\fontsize{7.5}{9}\selectfont\color{aeblue} Manuscript prepared for submission to \textit{Applied Energy}}
+\end{center}
+\vspace{-1mm}
+\aethickrule
+\vspace{7mm}
+{\raggedright\fontsize{15.5}{19}\selectfont \PaperTitle\par}
+\vspace{4.5mm}
+{\raggedright\fontsize{9.6}{12}\selectfont \PaperAuthors\par}
+\vspace{2.5mm}
+{\raggedright\fontsize{6.6}{8.4}\selectfont\itshape \PaperAffiliations\par}
+\vspace{4mm}
+\aethinrule
+\vspace{3.2mm}
+\spacedcaps{Highlights}\par
+\vspace{1.6mm}
+\aethinrule
+\vspace{0.6mm}
+{\fontsize{7.6}{9.6}\selectfont
+\noindent$\bullet$ Cross-event joint computing--storage recovery for consecutive demand response.\par
+\noindent$\bullet$ Lag-bounded backlog makes deferrable AI computing a deadline-exact virtual storage.\par
+\noindent$\bullet$ Capability bound, closed-form recovery value and recovery-channel price are derived.\par
+\noindent$\bullet$ Exact robust commitment MILP and plan--price distributed coordination are proposed.\par
+\noindent$\bullet$ Reliable DR capacity rises by 33\% and cost falls by 2.9--4.0\% over 52 test days.\par}
+\vspace{1.2mm}
+\aethinrule
+\vspace{5mm}
+\noindent
+\begin{minipage}[t]{0.245\textwidth}
+\spacedcaps{Article info}\par\vspace{1.6mm}\aethinrule\vspace{1.2mm}
+{\fontsize{6.8}{8.6}\selectfont\raggedright
+\textit{Keywords:}\par
+AI data center\par
+Consecutive demand response\par
+Joint computing--storage recovery\par
+Virtual storage\par
+Distributionally robust optimization\par
+Integrated energy system\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.725\textwidth}
+\spacedcaps{Abstract}\par\vspace{1.6mm}\aethinrule\vspace{1.2mm}
+{\fontsize{7.6}{9.75}\selectfont\justifying
+With the rapid growth of artificial intelligence (AI) computing, AI data centers are increasingly called on for demand
+response (DR). However, DR events often come consecutively within one evening peak: each event leaves deferred computing
+work and depleted storage, and both must be recovered in short inter-event gaps through the same connection-limited grid
+headroom, which erodes the capability of later events. This study develops a coordinated scheduling method for
+consecutive DR in AI data center integrated energy systems that jointly optimizes cross-event computing and storage
+recovery. Tiered service-level agreements are modelled by lag-bounded backlog constraints, which are proved equivalent to
+deadline-feasible earliest-deadline-first execution, so that deferrable computing acts as a virtual storage that competes
+with battery and chilled-water storage for one recovery channel. An upper bound on the next event's capability, a
+closed-form value of joint recovery, a single recovery-channel price, the convex capability region of commitment vectors
+and an exact mixed-integer linear reformulation of the distributionally robust commitment are derived. A day-ahead
+commitment--intraday rolling framework embedding the Jiangsu DR rules is established, together with a distributed variant
+that exchanges only power plans and prices. Case studies on a 16,000-GPU data center built from public workload traces
+and ERA5 weather show that, compared with the strongest tuned and price-coordinated independent-recovery benchmarks,
+joint recovery keeps all events valid on all 52 test days and reduces the total cost by 2.9--4.0\%. It raises the
+reliably deliverable capacity from 6 to 8~MW per event, which is equivalent to about 9--12~MWh of battery or 2.9~MW of
+connection capacity, whereas independent recovery shrinks the cross-event energy budget by about 18\%. When the IT
+scheduler and the facility controller exchange only power plans and prices, three exchanges per 15-min step recover 85\%
+of the cost advantage of joint recovery. The proposed method improves the reliability and economy of consecutive DR and
+supports the grid-interactive operation of AI data centers.\par}
+\vspace{1.4mm}\aethinrule
+\end{minipage}
+\vspace{6mm}
+}]
+{\renewcommand{\thefootnote}{\fnsymbol{footnote}}\footnotetext[1]{Corresponding author.\ \textit{E-mail address:} \PaperEmail.}}
+
+\input{sections/nomenclature}
+\input{sections/s1_introduction}
+\input{sections/s2_system}
+\input{sections/s3_model}
+\input{sections/s4_method}
+\input{sections/s5_case}
+\input{sections/s6_conclusion}
+\input{sections/backmatter}
+
+\appendix
+\input{sections/appendix_a}
+\input{sections/appendix_b}
+\input{sections/appendix_c}
+
+\input{sections/data_availability}
+\input{sections/references_ordered}
+\end{document}

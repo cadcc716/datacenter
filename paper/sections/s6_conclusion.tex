@@ -1,0 +1,47 @@
+\section{Conclusions}
+\label{sec:conclusion}
+
+As AI computing drives a rapid growth of data center electricity demand, AI data centers are increasingly expected to
+respond to several DR events within one evening peak. This paper proposed a coordinated scheduling method for
+consecutive DR in AI data center integrated energy systems that jointly recovers the computing backlog and the storage
+across events, from the day-ahead commitment to intraday operation. Through theoretical analysis and case studies on a
+16,000-GPU data center with 52 out-of-sample operating days, the main conclusions are summarised as follows.
+\begin{enumerate}[label=(\arabic*),leftmargin=1.9em,itemsep=1.5pt]
+\item Consecutive events leave a two-sided debt, deferred computing and depleted storage, that competes for one
+connection-limited recovery channel. Independent recovery must repay the whole debt and retains only 38--39\% of the
+next event's stand-alone capability for gaps of up to 1~h, whereas joint recovery repays only what the next event needs
+and restores 96\% within 0.75~h from the same post-event state. The lag-bounded backlog constraint is exact
+(Lemma~\ref{lem:edf}); the capability bound held in all 80 cases, the closed form of the recovery value matched the LP
+within $10^{-5}$~MW, and the single channel price was confirmed with KKT residuals of $2\times10^{-12}$.
+\item The main value of joint recovery is the reliably deliverable capacity. It raises the capacity that is delivered on
+at least 95\% of the days from 6 to 8~MW per event (+33\%), which is equivalent to about 9--12~MWh of battery or 2.9~MW
+of connection capacity, while price-coordinated independent recovery reaches this reliability at no commitment level.
+The capability region of joint recovery is the single-event box intersected with one cross-event energy budget and can
+be declared by four numbers; independent recovery shrinks this budget by 18\% even with a hindsight-optimal split, and a
+one-shot price delivers only 60\% of the uniform capability on average because the IT side's response is not unique.
+\item In closed-loop operation, joint recovery keeps all three events valid on all 52 days (benchmarks: 86--98\% of the
+days) and lowers the total cost by 2.9--4.0\% against the strongest benchmark of each setting ($p<10^{-9}$), and by
+14--16\% when the commitments approach the single-event capabilities; coupled commitment with joint recovery is 12.6\%
+cheaper than single-event assessment with independent recovery. The saving comes from the rebound charge (78\%) when
+rebound is priced and from the additional DR payment (86\%) under the Jiangsu settlement alone, not from energy
+arbitrage.
+\item Joint recovery can be distributed: when the IT scheduler and the facility controller exchange only power plans
+and prices, 1, 3 and 10 exchanges per 15-min step recover 67\%, 85\% and 97\% of its advantage over the strongest
+independent benchmark, and the converged price equals the recovery-channel price. Distributionally robust commitments
+lower both the mean (by up to 0.26\%) and the worst-decile cost (by up to 0.4\%) out of sample, the scenario MPC adds
+only an insignificant 0.4\% when the last event is uncertain, and the advantage of joint recovery holds across tariff
+shapes ($-2.1$ to $-2.9\%$), seasons and climates ($-2.6$ to $-2.9\%$), liquid cooling ($-7.4\%$), thermal inertia
+($-2.2\%$) and power capping, whereas tight IT ramp limits compress it (0.8\% at 1~MW per 15~min).
+\item The fluid workload model is too optimistic for rigid gang-scheduled training: plans made with it fail at job level
+on most days. With the rigid-job recovery bound the plans become executable (all events valid on 98\% and 86.5\% of the
+days for the Acme and PAI loads), and joint recovery stays 3.0--5.0\% cheaper than the strongest benchmark at job level.
+With behind-the-meter offshore wind the meter-based baseline reduces the deliverable commitments by 63\% at 20~MW, while
+the advantage of joint recovery widens to 5.9--6.6\%; winter waste-heat recovery saves about 16\% of the daily cost
+against boiler heating, and a hot-water tank turns the heat pump into a flexible load that is recharged after the events.
+\end{enumerate}
+
+Future work will extend the capability region to forecast errors and to the clearing of virtual-battery bids in DR
+markets, schedule rigid jobs directly in the planning model and replace the first-order recovery bound by kernels based
+on remaining run times, adopt Wasserstein ambiguity sets, and study the distributed coordination under communication
+delays, asynchronous updates and strategic behaviour, as well as uncertainty in event timing and duration and
+multi-site data center clusters with network constraints.

@@ -1,0 +1,86 @@
+% boxed nomenclature (full width, top of page 2)
+\begin{figure*}[!t]
+\setlength{\fboxsep}{6pt}\setlength{\fboxrule}{0.5pt}
+\fbox{\begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule\relax}
+\fontsize{6.9}{8.45}\selectfont
+\noindent\textbf{\normalsize Nomenclature}\par\vspace{2pt}
+\setlength{\columnsep}{7mm}
+\begin{multicols}{2}
+\setlength{\nomsymw}{15mm}
+\nomhead{Abbreviations}
+\nom{AI(DC)}{Artificial intelligence (AI data center)}
+\nom{IES}{Integrated energy system}
+\nom{DR}{Demand response}
+\nom{SLA}{Service-level agreement}
+\nom{EDF}{Earliest deadline first}
+\nom{BESS}{Battery energy storage system}
+\nom{TES}{Chilled-water thermal energy storage}
+\nom{COP}{Coefficient of performance}
+\nom{TOU}{Time-of-use (tariff)}
+\nom{PV}{Photovoltaic}
+\nom{MPC}{Model predictive control}
+\nom{(MI)LP}{(Mixed-integer) linear programme}
+\nom{SP, RO}{Stochastic programming, (scenario-)robust optimization}
+\nom{DRO}{Distributionally robust optimization}
+\nom{CVaR}{Conditional value-at-risk}
+\nom{ADMM}{Alternating direction method of multipliers}
+\nom{PUE}{Power usage effectiveness}
+\nom{JR, IR}{Joint recovery, independent recovery}
+\nom{IR-R}{Rule-based independent recovery}
+\nom{IR-O, IR-O*}{Sequentially optimized IR with a fixed / tuned split}
+\nom{IR-P}{IR coordinated by a one-shot channel price}
+\nom{JR-M}{Event-by-event (myopic) joint recovery}
+\nom{JR-D, JR-S}{Joint recovery by deterministic / scenario MPC}
+\nom{JR-A}{Distributed joint recovery by plan--price exchange}
+\nomhead{Sets and indices}
+\nom{$t\in\Tset$, $\dt$}{Time steps (00:00 of day D to 06:00 of day D+1, 120 steps); step length 0.25~h}
+\nom{$c\in\{1,2,3\}$}{Classes of deferrable jobs (short, medium, long)}
+\nom{$k\in\Kset$}{DR events; $\Tset_k=[s_k,e_k]$ event steps, $D_k$ duration}
+\nom{$\Iset_k$, $\Wset_k$}{Gap between events $k$ and $k+1$; 2-h rebound window after event $k$}
+\nom{$\omega\in\Omega$, $\hat p_\omega$}{Day-ahead scenarios and their empirical probabilities}
+\nomhead{Parameters}
+\nom{$N$}{Number of GPUs (16,000)}
+\nom{$\pidle$, $\pdyn$}{Idle and dynamic power per GPU (0.26, 0.79~kW)}
+\nom{$G^{\mathrm{inf}}_t$, $G^{\mathrm{fix}}_t$}{GPUs busy with online inference and non-deferrable training}
+\nom{$\kappa^{\mathrm{inf}}$}{Dynamic-power factor of inference GPUs (0.65)}
+\nom{$a_{c,t}$}{Nominal work of class $c$ arriving in step $t$ (GPU$\cdot$h)}
+\nom{$L_c$}{Lag bound (deadline) of class $c$ (0.5/1.5/3~h)}
+\nom{$\Bbar_{c,t}$}{Deadline-implied backlog bound = virtual-storage capacity (GPU$\cdot$h)}
+\nom{$a^{\mathrm{aux}}$, $\theta$}{Distribution/air-handling loss factor; heat per unit IT power}
+\nom{$\COP_t$}{COP of the electric chiller plant (temperature dependent)}
+\nom{$\varepsilon_t$}{Facility electricity per GPU$\cdot$h of work, $(1+a^{\mathrm{aux}}+\theta/\COP_t)\pdyn$}
+\nom{$\Pcap$, $\hat P$, $\gamma$}{Connection limit $\Pcap=\gamma\hat P$; typical-day peak import; margin}
+\nom{$\Pb_t$}{DR baseline (mean of the five previous workdays)}
+\nom{$\pi_t$, $\pi_k$}{TOU price; DR payment rate of event $k$}
+\nom{$\kappa$}{Shortfall coefficient (shortfall assessed at $\kappa\pi_k$)}
+\nom{$\crb$, $c^{\mathrm{pre}}$}{Rebound charge; optional pre-event load-up charge}
+\nom{$\cjct$, $\clate$}{Job-delay cost; overdue penalty (CNY per GPU$\cdot$h and hour)}
+\nom{$\bar P^{\mathrm{B}}$, $E^{\min/\max}$}{BESS power and energy limits}
+\nom{$\eta_{\mathrm{c}}$, $\eta_{\mathrm{d}}$, $\cdeg$}{BESS charge/discharge efficiency; degradation cost}
+\nom{$\bar Q^{\mathrm{S}}$, $S^{\min/\max}$}{TES power and capacity limits; $\eta^{\mathrm{TC}},\eta^{\mathrm{TD}}$ efficiencies}
+\nom{$\bar P^{\mathrm{GT}}$, $\eta_{\mathrm{e}}$, $\eta_{\mathrm{h}}$}{Gas-engine capacity, electrical and heat-recovery efficiency}
+\nom{$\COP^{\mathrm{AC}}$}{COP of the absorption chiller}
+\nom{$\delta$}{Radius of the $\ell_1$ ambiguity set of the day-ahead DRO}
+\nom{$\rho$}{Penalty parameter of the plan--price iteration (ADMM)}
+\nom{$\tau_c$}{Gang-weighted mean run time of class $c$ (rigid-job bound)}
+\nom{$o_c$}{Pause/resume overhead per newly paused GPU (GPU$\cdot$h)}
+\nomhead{Variables}
+\nom{$y_{c,t}$}{GPUs executing deferrable class $c$}
+\nom{$B_{c,t}$, $v_{c,t}$}{Backlog (computing recovery state, GPU$\cdot$h); overdue work}
+\nom{$\zeta_{c,t}$, $w_{c,t}$}{Capped dynamic power (GPU equivalents); throughput loss}
+\nom{$u_{c,t}$}{GPUs newly paused relative to the nominal load}
+\nom{$\Pg_t$}{Grid import}
+\nom{$\Pch_t$, $\Pdis_t$, $E_t$}{BESS charging, discharging power and energy}
+\nom{$\Qtc_t$, $\Qtd_t$, $S_t$}{TES charging, discharging and stored cooling}
+\nom{$\Pgt_t$, $Q^{\mathrm{rec}}_t$}{Gas-engine output; recovered heat sent to the absorption chiller}
+\nom{$\Qec_t$, $\Ppv_t$}{Electric-chiller cooling; PV power used}
+\nom{$\Theta_t$}{Stored heat of the data hall (optional thermal inertia)}
+\nom{$P^{\mathrm{HP}}_t$, $E^{\mathrm{HW}}_t$}{Heat-pump power; hot-water tank level (optional)}
+\nom{$C_k$}{Committed reduction of event $k$ (day-ahead decision)}
+\nom{$\bar r_k$, $z_k$}{Mean reduction of event $k$; validity binary}
+\nom{$R_k$, $s_k$, $\Delta^{\mathrm{rb}}_k$}{Paid reduction; shortfall; peak rebound above baseline}
+\nom{$H$}{Recovery-channel energy available in a gap}
+\nom{$\lambda_t$, $\nu_t$, $\mu_{c,t}$}{Channel price; marginal value of stored energy; marginal cost of backlog}
+\end{multicols}
+\end{minipage}}
+\end{figure*}

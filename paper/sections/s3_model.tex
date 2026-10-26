@@ -1,0 +1,172 @@
+\section{Joint recovery model and theoretical properties}
+\label{sec:model}
+
+\subsection{Objective function and evaluation indicators}
+\label{sec:objective}
+
+The joint recovery model minimises the expected operating cost over the scenarios $\omega\in\Omega$ of the planning
+horizon (one scenario in the deterministic MPC):
+\begin{multline}
+\min\ \sum_{\omega\in\Omega}\hat p_\omega\Bigg\{\sum_{t}\dt\Big[\pi_t\Pg_{t,\omega}+\frac{c^{\mathrm{gas}}}{\eta_{\mathrm{e}}}\Pgt_{t,\omega}
++\cdeg\big(\Pch_{t,\omega}+\Pdis_{t,\omega}\big)\\
++\cjct\sum_cB_{c,t,\omega}+\clate\sum_cv_{c,t,\omega}\Big]
++\Phi^{\mathrm{term}}_{\omega}\\
++\sum_{k\in\Kset}\big(-\pi_kD_kR_{k,\omega}+\kappa\pi_kD_ks_{k,\omega}+\crb\Delta^{\mathrm{rb}}_{k,\omega}\big)\Bigg\}
+\label{eq:obj}
+\end{multline}
+subject to \eqref{eq:pit}--\eqref{eq:rebound}. The bracket contains the energy purchase, the gas fuel
+($c^{\mathrm{gas}}=364$~CNY/MWh of fuel), battery degradation ($\cdeg=60$~CNY/MWh), the job-delay cost
+($\cjct=0.5$~CNY per GPU$\cdot$h of backlog and hour) and the overdue penalty, and the last sum is the DR settlement. The
+terminal term
+\begin{equation}
+\Phi^{\mathrm{term}}=c^{\mathrm{E}}\big(E^{\mathrm{ref}}-E_T\big)^+\!+c^{\mathrm{S}}\big(S^{\mathrm{ref}}-S_T\big)^+\!+c^{\mathrm{B}}\sum_cB_{c,T}
+\label{eq:term}
+\end{equation}
+values storage deficits relative to the reference trajectory slightly above their night-time refill cost
+($c^{\mathrm{E}}=500$~CNY/MWh against $(\pi^{\mathrm{valley}}+\cdeg)/\eta_{\mathrm{c}}\approx482$;
+$c^{\mathrm{S}}=100$~CNY/MWh$_{\mathrm{th}}$ against $\approx77$) and backlog left at 06:00 of day D+1 at its energy
+cost at the flat price ($c^{\mathrm{B}}\approx0.67$~CNY per GPU$\cdot$h). The last term closes the loophole of pushing
+catch-up computing beyond the evaluation window. All strategies are evaluated with the same indicators
+(\tabref{tab:metrics}); the total cost is reported both in the rebound-priced setting and, excluding the rebound charge,
+on the rule basis.
+
+\begin{table}[!t]
+\caption{Evaluation indicators (identical for all strategies).}
+\label{tab:metrics}
+\centering\footnotesize
+\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}p{0.27\columnwidth}X@{}}
+\toprule
+Indicator & Definition\\
+\midrule
+Fulfilment rate & $\sum_kD_k\min(\bar r_k,C_k)/\sum_kD_kC_k$ over the called events\\
+Validity & Valid events; share of days with all three events valid\\
+True reduction & Mean reduction relative to the same-day operation without DR (not the 5-day baseline)\\
+Pre-event load-up & Mean import increase in the 3~h before the first event\\
+Rebound & Peak above the baseline in the 2-h window; peak in the 6~h after the last event; payback energy in the gaps\\
+Total cost & Grid, gas and degradation cost $+$ job-delay cost $-$ DR payment $+$ shortfall and rebound charges $+$ terminal adjustment (backlog at flat-price energy cost, storage deficits relative to operation without DR at refill cost)\\
+Carbon emissions & Grid import $\times$ 0.5617~tCO$_2$/MWh~\cite{mee2024ef} $+$ gas $\times$ 0.202~tCO$_2$/MWh of fuel\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Recovery strategies compared}
+\label{sec:strategies}
+
+All strategies share the same commitment, SLA, physical model and settlement, and differ only in how the recovery
+channel is allocated (\tabref{tab:strategies}). In the rule-based benchmark IR-R, the IT side reduces a share
+$\alpha C_k$ of each commitment ($\alpha=0.41$, the ratio of the two sides' single-event capabilities) and the storage
+covers the rest; after each event the IT side catches up immediately and takes the channel first, and the storage
+recharges with what is left. IR-O replaces both rules by optimizers: the IT scheduler optimises its own schedule for
+the share $\alpha C_k$, and the facility energy management system then optimises the storage and IES with the IT plan
+fixed. IR-O* tunes $\alpha$ over 0.2--1.0 by back-testing on historical day-ahead scenarios, without using any
+information of the DR day. IR-P removes the fixed share and lets the IT side pay the channel shadow price
+$\lambda_t-\pi_t$ of the day-ahead joint plan on top of the TOU tariff (Proposition~\ref{prop:price}), sent once. JR-M
+optimises jointly but sees only the current and the next event, which represents single-event DR scheduling and
+isolates the value of cross-event foresight. JR-D and JR-S are the proposed joint recovery by deterministic and scenario
+MPC, JR-A is its distributed implementation (\secref{sec:admm}), and JR-oracle is joint recovery with perfect
+information. In the perfect-information sensitivity studies, IR-O* uses the hindsight-optimal split and IR-P the
+perfect-information shadow price, so that the benchmarks are as strong as possible.
+
+The IT power budget of the independent benchmarks is the connection limit plus the dispatchable gas-engine output
+reachable within its ramp limit, minus the non-dispatchable load, with the storage idle; the IT side occupies this
+headroom first. With this budget no strategy left work overdue in any experiment of the base model.
+
+\begin{table*}[!t]
+\caption{Recovery strategies compared (all with the same commitments, SLA, physical constraints and settlement).}
+\label{tab:strategies}
+\centering\footnotesize
+\setlength{\tabcolsep}{5.2pt}
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+ & IR-R & IR-O & IR-O* & IR-P & JR-M & \textbf{JR-D} & \textbf{JR-S} & \textbf{JR-A} & JR-oracle\\
+\midrule
+IT schedule and IES dispatch optimized & $\times$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$\\
+Split of the commitment tuned on history & $\times$ & $\times$ & $\checkmark$ & -- & -- & -- & -- & -- & --\\
+Channel price sent to the IT side & $\times$ & $\times$ & $\times$ & $\checkmark$ (one-shot) & -- & -- & -- & $\checkmark$ (iterated) & --\\
+Joint allocation of the recovery channel & $\times$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$\\
+Cross-event foresight & $\times$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$\\
+Scenario hedging of event calls & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & --\\
+IT and facility models kept separate & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$\\
+Information & none & forecast & forecast & forecast & forecast & forecast & scenarios & forecast & perfect\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Theoretical properties of cross-event recovery}
+\label{sec:theory}
+
+This subsection characterises what cross-event recovery can deliver; the proofs, two assumptions used in the proofs
+(an unbiased baseline and a constant chiller COP within the gap) and the numerical checks are given in
+\appref{app:proofs}. Consider a preceding event A that ends at $e_A$ and a subsequent event B of duration $D_B$ that
+starts after a gap $\Iset$ of length $\tau$.
+
+\begin{proposition}[Deliverable capability bound]\label{prop:bound}
+Let $X_A=\varepsilon\sum_cB_c(e_A)$ be the backlog energy left by event A, of which $X_A^{\mathrm{due}}$ is due before
+$e_B$; $E_s$ the storage energy that can be discharged; $H=\sum_{t\in\Iset}[(\Pcap-\Pb_t)^++g]\dt$ the channel energy
+including the gas-engine headroom $g$; $\bar X_B=\varepsilon\sum_c\Bbar_c(e_B)$ the virtual-storage capacity at the end
+of B; and $\Gamma_B^0$ the stand-alone capability of B. Every schedule that meets all deadlines and the connection
+limit achieves a mean reduction $\Gamma_B\le\min\{\Gamma_B^0,\Gamma^{\mathrm{E}},\Gamma^{\mathrm{P}}\}$ in event B, where
+\begin{equation}
+\begin{gathered}
+\Gamma^{\mathrm{E}}=\frac{\bar X_B-X_A+E_s+H_{\mathrm{eff}}}{D_B}+g,\\
+H_{\mathrm{eff}}=\begin{cases}H, & H\le X_A,\\ X_A+\eta\,(H-X_A), & H>X_A,\end{cases}
+\end{gathered}
+\label{eq:bound}
+\end{equation}
+$\eta$ is the storage round-trip efficiency, and the power-type bound $\Gamma^{\mathrm{P}}$, which accounts for the
+backlog that falls due within B and for EDF exchanges, is given in \eqref{eq:boundP}.
+\end{proposition}
+
+Proposition~\ref{prop:bound} shows that the channel is worth one unit of capability per unit of energy when it is used
+for catch-up computing that the next event needs, but only $\eta$ when it recharges the storage, and nothing when it is
+spent on backlog that could have been carried across the event. The following stylised model makes this trade-off
+explicit.
+
+\begin{theorem}[Closed-form value of joint recovery]\label{thm:closed}
+Consider one deferrable class with constant nominal power $p_f$ and lag bound $L\ge D_B$, a backlog $X\le p_fL$ at the
+start of the gap, a constant channel width $h$ (so $H=h\tau$), a storage discharge limit $P_s$ and an initial
+dischargeable energy $\eta_{\mathrm{d}}E_A$. Define the necessary catch-up $c^*=[X-p_f(L-D_B)]^+$ and the necessary
+recharge $s_{\mathrm{req}}=[P_sD_B-\eta_{\mathrm{d}}E_A]^+/\eta$. Then:
+(i) JR catches up only $\min(H,c^*)$ and recharges with the rest, whereas IR catches up $\min(H,X)$ first;
+(ii) the capability gain of JR is
+\begin{equation}
+\Delta G(H)=\eta\Big[\min\big(s_{\mathrm{req}},(H-c^*)^+\big)-\min\big(s_{\mathrm{req}},(H-X)^+\big)\Big]\ge0,
+\label{eq:dG}
+\end{equation}
+with maximum $\eta\min\{X,p_f(L-D_B),s_{\mathrm{req}}\}$; and (iii) the minimum gaps for a full recovery of the
+stand-alone capability differ by
+\begin{equation}
+\tau^*_{\mathrm{IR}}-\tau^*_{\mathrm{JR}}=\frac{\min\{X,\ p_f(L-D_B)\}}{h}.
+\label{eq:tau}
+\end{equation}
+\end{theorem}
+
+\begin{corollary}[When joint recovery has no value]\label{cor:novalue}
+$\Delta G\equiv0$ if and only if (a) $L\le D_B$ or $X=0$, \ie\ no backlog can be carried across event B; (b)
+$s_{\mathrm{req}}=0$, \ie\ event B needs no storage; or (c) $H\le c^*$ or $H\ge X+s_{\mathrm{req}}$, \ie\ the channel is
+too narrow for either strategy or wide enough for both.
+\end{corollary}
+
+With several classes, JR only catches up the part $\sum_cc_c^*$ that falls due within the next event and carries the
+long-lag backlog across it. The channel price that implements this allocation follows from the LP duality of the joint
+model with fixed binaries.
+
+\begin{proposition}[Single recovery-channel price]\label{prop:price}
+Let $\lambda_t$, $\nu_t$ and $\mu_{c,t}$ be the duals of the electricity balance, the BESS energy equation and the
+backlog equation of class $c$, and $\lambda^{\mathrm{cap}}_t,\lambda^{\mathrm{rb}}_t,\lambda^{\mathrm{ev}}_t\ge0$ those
+of the connection limit, the rebound window and the event constraints. At an optimum with interior grid import,
+$\lambda_t=\pi_t+\lambda^{\mathrm{cap}}_t+\lambda^{\mathrm{rb}}_t+\lambda^{\mathrm{ev}}_t$; interior charging gives
+$\eta_{\mathrm{c}}\nu_t=\lambda_t+\cdeg$ and interior discharging $\nu_t/\eta_{\mathrm{d}}=\lambda_t-\cdeg$; interior
+execution of class $c$ gives $\mu_{c,t}=\varepsilon_t\lambda_t$. Hence, when catch-up and recharging are both interior,
+\begin{equation}
+\frac{\mu_{c,t}}{\varepsilon_t}=\lambda_t=\eta_{\mathrm{c}}\nu_t-\cdeg ,
+\label{eq:equalmarginal}
+\end{equation}
+\ie\ both recovery states are priced by one channel price.
+\end{proposition}
+
+Under independent recovery the IT side sees only $\pi_t$ (or its own share target) and not
+$\lambda^{\mathrm{cap}}_t+\lambda^{\mathrm{rb}}_t$, so it catches up when the channel is most expensive and violates
+\eqref{eq:equalmarginal}. The price-coordinated benchmark IR-P restores the price part of
+\eqref{eq:equalmarginal}; its remaining gap stems from the price being fixed day-ahead and from the non-uniqueness of the
+IT side's LP response to a given price, which \secref{sec:region} and \secref{sec:admm} analyse further.
