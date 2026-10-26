@@ -36,6 +36,11 @@ plt.rcParams.update({"axes.unicode_minus": False, "font.size": 9, "axes.titlesiz
                      "legend.frameon": False, "figure.dpi": 150, "savefig.bbox": "tight", "axes.axisbelow": True,
                      "figure.facecolor": "#fcfcfb", "axes.facecolor": "#fcfcfb", "savefig.facecolor": "#fcfcfb"})
 
+if EN:                                   # English figures: journal style (serif type, framed panels, muted palette)
+    sys.path.insert(0, HERE)
+    import journal_style as JS
+    JS.apply_rc()
+
 # entity -> fixed categorical slot (reference palette, light mode)
 C = {"JR-D": "#2a78d6", "IR-O*": "#eb6834", "IR-P": "#1baf7a", "JR-S": "#eda100", "JR-M": "#e87ba4",
      "IR-O": "#008300", "IR-R": "#6250d6", "JR-oracle": "#e34948", "JR": "#2a78d6", "IR-O*(hindsight)": "#eb6834",
@@ -68,8 +73,11 @@ def shade(ax, ev=EV):
 
 
 def save(fig, name):
-    if EN: translate_fig(fig)
-    fig.savefig(os.path.join(FIG, name)); plt.close(fig); print("wrote", name)
+    if EN:
+        translate_fig(fig); JS.restyle(fig); JS.save_both(fig, os.path.join(FIG, name))
+    else:
+        fig.savefig(os.path.join(FIG, name))
+    plt.close(fig); print("wrote", name)
 
 
 # Chinese -> English phrase table (longest phrases are replaced first; generic fragments last)
@@ -122,8 +130,8 @@ ZH2EN = {
     "JR 线性规划": "JR LP", "IR 线性规划": "IR LP", "滞后上界 L = ": "Lag bound L = ", "事件 B 可交付削减 / MW": "Deliverable reduction in event B / MW",
     "需求响应补贴单价 / (元/kWh)": "DR payment rate / (CNY/kWh)", "偏差考核系数 κ": "Shortfall coefficient κ", "基准": "Base", "液冷": "Liquid cooling",
     "IT爬坡≤2MW/15min": "IT ramp ≤ 2 MW/15 min", "IT爬坡≤1MW/15min": "IT ramp ≤ 1 MW/15 min", "事件前抬升考核": "Pre-event load-up charge",
-    "IT 爬坡\n≤2 MW/15 min": "IT ramp\n≤2 MW/15 min", "IT 爬坡\n≤1 MW/15 min": "IT ramp\n≤1 MW/15 min", "事件前\n抬升考核": "Pre-event\nload-up charge",
-    "GPU\n功率封顶": "GPU\npower capping",
+    "IT 爬坡\n≤2 MW/15 min": "IT ramp\n≤2 MW", "IT 爬坡\n≤1 MW/15 min": "IT ramp\n≤1 MW", "事件前\n抬升考核": "Pre-event\ncharge",
+    "GPU\n功率封顶": "GPU power\ncapping", "SE-theta": "SE-θ",
     "(b) 模型设定稳健性（统一 6 MW 承诺）": "(b) Robustness to model settings (uniform 6 MW)",
     "电储能能量容量 E / MWh（功率 6 MW）": "Battery energy capacity E / MWh (power 6 MW)",
     "并网裕度 γ（并网上限 = γ × 典型日峰值）": "Connection margin γ (limit = γ × typical-day peak)",
@@ -166,8 +174,8 @@ ZH2EN = {
     "时刻 / h（24 以后为次日）": "Time / h (after 24: next day)", "名义负荷": "Nominal load", "补算": "Catch-up computing",
     "电储能回充": "BESS recharge", "蓄冷回充": "TES recharge", "间隔 E1→E2": "Gap E1→E2", "间隔 E2→E3": "Gap E2→E3", "E3 后 2 h": "2 h after E3",
     "恢复通道的去向：各间隔用于补算与回充的电量 / MWh（设施电量当量）": "Where the recovery channel goes: energy for catch-up and recharge per gap / MWh (facility equivalent)",
-    "江苏分时（基准）": "Jiangsu TOU (base)", "平电价": "Flat", "两段峰谷": "Two-tier", "含尖峰": "Critical peak", "鸭子曲线": "Duck curve",
-    "苏州夏季（基准）": "Suzhou summer (base)", "苏州冬季": "Suzhou winter", "贵安夏季": "Gui'an summer",
+    "江苏分时（基准）": "Jiangsu TOU\n(base)", "平电价": "Flat", "两段峰谷": "Two-tier", "含尖峰": "Critical peak", "鸭子曲线": "Duck curve",
+    "苏州夏季（基准）": "Suzhou summer\n(base)", "苏州冬季": "Suzhou winter", "贵安夏季": "Gui'an summer",
     "(a) 分时电价形态（日均电价相同）": "(a) Tariff shape (same daily mean)", "(b) 可靠可交付容量（完美信息）": "(b) Reliably deliverable capacity (perfect information)",
     "(c) 季节与气候（统一 6 MW，闭环）": "(c) Season and climate (uniform 6 MW, closed loop)",
     "无热惯性": "no thermal inertia", "计热惯性": "with thermal inertia", "(a) 机房热惯性作为第三类恢复状态": "(a) Thermal inertia as a third recovery state",
@@ -298,13 +306,14 @@ def fig_case():
     a.plot(h, d.pg_noDR, color=C["JR-D"], lw=1.5, label="DR日不响应时的并网功率")
     t = rd("ts_uniform6_JRD.csv")
     if t is not None: a.axhline(t.Pcap.iloc[0], color=C["cap"], lw=1, label="并网容量上限")
-    a.set_ylabel("并网功率 / MW"); a.set_title("(a) 并网功率基线"); a.legend(fontsize=7, loc="lower left")
+    a.set_ylabel("并网功率 / MW"); a.set_title("(a) 并网功率基线"); a.set_ylim(4.5, 16.8); a.legend(fontsize=7, loc="lower left")
     a = ax[0, 1]
     st = [d.gpu_inf, d.gpu_flex0, d.gpu_c1, d.gpu_c2, d.gpu_c3]
     lab = ["在线推理 (Flex0)", "不可延迟训练 (Flex0)", "C1 短作业 (L=0.5h)", "C2 中作业 (L=1.5h)", "C3 长训练 (L=3h)"]
     col = ["#898781", "#c3c2b7", "#1baf7a", "#eb6834", "#2a78d6"]
     a.stackplot(h, *[s / 1000 for s in st], labels=lab, colors=col, lw=0.4, edgecolor="#fcfcfb")
-    a.set_ylabel("忙碌GPU / 千卡"); a.set_title("(b) GPU负载构成（PAI/Azure 轨迹）"); a.legend(fontsize=6.5, loc="upper left", ncol=2)
+    a.set_ylabel("忙碌GPU / 千卡"); a.set_title("(b) GPU负载构成（PAI/Azure 轨迹）"); a.set_ylim(0, a.get_ylim()[1] * 1.22)
+    a.legend(fontsize=6.5, loc="upper left", ncol=2)
     a = ax[1, 0]
     a.step(h, d.price / 1000, where="post", color=C["base"], lw=2)
     a.set_ylabel("分时电价 / (元/kWh)"); a.set_xlabel("时刻 / h"); a.set_title("(c) 江苏工商业分时电价（夏季）"); shade(a)
@@ -443,6 +452,7 @@ def fig_mc():
                 a.scatter(np.full(len(v), k + 1) + np.linspace(-0.15, 0.15, len(v)), v, s=8, color=C[names[k]], zorder=3, edgecolor="#fcfcfb", linewidth=0.5)
                 a.text(k + 1, np.nanmax(v), f"{np.nanmean(v):.1f}", ha="center", va="bottom", fontsize=7, color=INK2)
             a.set_xticks(range(1, len(names) + 1)); a.set_xticklabels(names)
+            lo_, hi_ = a.get_ylim(); a.set_ylim(lo_, hi_ + 0.08 * (hi_ - lo_))
             a.set_title(f"({'abcdef'[2 * i + j]}) {lab}（数字为均值）"); a.set_ylabel(ylab)
     save(fig, "fig07_montecarlo.png")
 
@@ -490,7 +500,7 @@ def fig_commit():
             r = d[d.label == f"{p}|JR-D"].iloc[0]
             tick.append(f"{p}\n[{r.C1:.1f}/{r.C2:.1f}/{r.C3:.1f}] MW")
         a.set_xticks(x); a.set_xticklabels(tick, fontsize=7); a.set_ylabel("蒙特卡洛平均综合成本 / 万元")
-        a.set_ylim(0, a.get_ylim()[1] * 1.15); a.set_title(f"({'ab'[j]}) 承诺—运行配对，{lab}"); a.legend(fontsize=7, loc="lower right")
+        a.set_ylim(0, a.get_ylim()[1] * 1.32); a.set_title(f"({'ab'[j]}) 承诺—运行配对，{lab}"); a.legend(fontsize=7, loc="upper center", ncol=2)
     save(fig, "fig09_commitment.png")
 
 
@@ -578,7 +588,8 @@ def fig_robust():
             v = [float(r[(r.cfg == c) & (r.nm == nm)].net_cost_adj.iloc[0]) / 1e4 for c in cfgs]
             ax[1].bar(x + (i - 1) * (w + 0.02), v, w, color=C[nm], label=NAME[nm], edgecolor="#fcfcfb", linewidth=2)
         ax[1].set_xticks(x); ax[1].set_xticklabels([lab.get(c, c) for c in cfgs], fontsize=7)
-        ax[1].set_ylabel("综合成本 / 万元"); ax[1].set_title("(b) 模型设定稳健性（统一 6 MW 承诺）"); ax[1].legend(fontsize=7, loc="lower right")
+        ax[1].set_ylabel("综合成本 / 万元"); ax[1].set_title("(b) 模型设定稳健性（统一 6 MW 承诺）")
+        ax[1].set_ylim(0, ax[1].get_ylim()[1] * 1.22); ax[1].legend(fontsize=7, loc="upper center", ncol=3)
     save(fig, "fig13_robustness.png")
 
 
@@ -609,10 +620,10 @@ def fig_substitution():
             best = [max(a_, b_) for a_, b_ in zip(caps["IR-O*"], caps["IR-P"])]
             need = next((v for v, b_ in zip(vals, best) if b_ >= target - 1e-9), None)
             a.axhline(target, color=MUTED, lw=1, ls="--")
-            txt = (f"JR 在 {base:g}{' MWh' if sw == 1 else ''} 时可靠容量 {target:g} MW；"
+            txt = (f"JR 在 {base:g}{' MWh' if sw == 1 else ''} 时可靠容量 {target:g} MW；\n"
                    + (f"独立恢复需 {need:g}{' MWh' if sw == 1 else ''}" if need is not None else "独立恢复在扫描范围内达不到"))
             a.text(0.02, 0.97, txt, transform=a.transAxes, fontsize=7, color=INK2, va="top")
-            lo_, hi_ = a.get_ylim(); a.set_ylim(lo_, hi_ + 0.35 * (hi_ - lo_))
+            lo_, hi_ = a.get_ylim(); a.set_ylim(lo_ - 0.5 * (hi_ - lo_), hi_ + 0.35 * (hi_ - lo_))
         a.set_xlabel(xl); a.set_ylabel("≥99% 兑现且三次全有效的最大承诺 / MW")
         a.set_title(f"({'ab'[j]}) 可靠可交付容量"); a.legend(fontsize=7, loc="lower right")
     # (c) mirror: physical battery energy above, virtual storage (backlog energy carried into E2) below
@@ -629,7 +640,7 @@ def fig_substitution():
         if np.isfinite(w): a.text(xx, -w - 0.3, f"{w:.1f}", ha="center", va="top", fontsize=7, color=INK2)
     a.axhline(0, color=AXIS, lw=0.8); a.set_xticks(x); a.set_xticklabels([f"{v:g}" for v in vals])
     a.set_xlabel("电储能能量容量 E / MWh"); a.set_ylabel("MWh（下方为虚拟储能）")
-    lim = max(max(vals), np.nanmax(virt) if len(virt) else 0) * 1.25; a.set_ylim(-lim, lim)
+    lim = max(max(vals), np.nanmax(virt) if len(virt) else 0) * 1.25; a.set_ylim(-lim, 1.6 * max(vals))
     a.set_title("(c) 物理—虚拟储能镜像（JR，可靠容量处）"); a.legend(fontsize=7, loc="upper left")
     save(fig, "fig14_substitution.png")
 
@@ -653,9 +664,10 @@ def fig_risk():
     sp = pts[pts.label == "SP"]
     a.scatter(sp["mean"], sp["cvar"], s=60, color=C["IR-O*"], edgecolor="#fcfcfb", linewidth=1, zorder=4, label="随机规划（SP）")
     a.plot(F["mean"], F["cvar"], color=C["JR-D"], lw=2, marker="o", ms=7, mec="#fcfcfb", mew=1, zorder=3, label="非支配点（JR-D 运行）")
-    offs = [(6, 4), (6, -10), (-34, 6), (6, 10), (-40, -10), (6, -4), (-30, -12), (6, 2), (-38, 2)]
-    for k, (_, r) in enumerate(pts.sort_values("mean").iterrows()):
-        a.annotate(r.label, (r["mean"], r["cvar"]), xytext=offs[k % len(offs)], textcoords="offset points", fontsize=6.5, color=INK2)
+    offs = {"SP": (-16, 6), "DRO-0.1": (6, 2), "DRO-0.2": (6, 2), "CVaR-0.9-w0.5": (-64, 3), "DRO-0.4": (6, 0),
+            "DRO-0.8": (7, -3), "RO": (-5, 7), "CVaR-0.8-w1": (-12, -14), "DRO-1.2": (-36, -3)}
+    for _, r in pts.iterrows():
+        a.annotate(r.label, (r["mean"], r["cvar"]), xytext=offs.get(r.label, (6, 4)), textcoords="offset points", fontsize=6.5, color=INK2)
     if len(single):
         r = single.iloc[0]
         a.text(0.98, 0.97, f"单事件能力评估：均值 {r['mean']:.2f}、CVaR {r['cvar']:.2f} 万元（图外）", transform=a.transAxes,
@@ -673,6 +685,7 @@ def fig_risk():
     for _, r in dro.iterrows():
         b.annotate(f"{r.tot:.1f}", (r.delta, r.tot), xytext=(0, 6), textcoords="offset points", ha="center", fontsize=6.5, color=INK2)
     b.set_xlabel("模糊集半径 δ（0 = 随机规划，2 = 场景鲁棒）"); b.set_ylabel("日前承诺 / MW")
+    lo_, hi_ = b.get_ylim(); b.set_ylim(lo_, hi_ + 0.06 * (hi_ - lo_))
     b.set_title(f"(b) 承诺随保守度的变化（E3 始终为 {dro.C3.iloc[0]:.1f} MW）"); b.legend(fontsize=7, loc="center right")
     save(fig, "fig15_risk_pareto.png")
 
@@ -876,7 +889,7 @@ def fig_generalization():
         for j in range(len(sh)):
             q = t[t["shape"] == j + 1]; vals.append([q[q.strategy == i + 1].net_cost_adj.mean() / 1e4 for i in range(3)])
         _grouped(ax[0], [SHAPE_LAB.get(s, s) for s in sh], ser, vals, "蒙特卡洛平均综合成本 / 万元", "(a) 分时电价形态（日均电价相同）", pct_vs=[0, 1])
-        ax[0].set_ylim(0, max(max(v) for v in vals) * 1.15); ax[0].legend(fontsize=7, loc="lower right")
+        ax[0].set_ylim(0, max(max(v) for v in vals) * 1.15)
     if c is not None and cs is not None:
         names = list(cs["label"]); groups = [CASE_LAB.get(n, n) for n in names]
         caps = []
@@ -887,13 +900,14 @@ def fig_generalization():
                 row.append(float(q.C.max()) if len(q) else 0.0)
             caps.append(row)
         _grouped(ax[1], groups, ser, caps, "≥99% 兑现且三次全有效的最大承诺 / MW", "(b) 可靠可交付容量（完美信息）")
-        ax[1].legend(fontsize=7, loc="lower right")
         if cm is not None:
             vals = []
             for j in range(len(names)):
                 q = cm[cm["case"] == j + 1]; vals.append([q[q.strategy == i + 1].net_cost_adj.mean() / 1e4 for i in range(3)])
             _grouped(ax[2], groups, ser, vals, "蒙特卡洛平均综合成本 / 万元", "(c) 季节与气候（统一 6 MW，闭环）", pct_vs=[0, 1])
-            ax[2].set_ylim(0, max(max(v) for v in vals) * 1.15); ax[2].legend(fontsize=7, loc="lower right")
+            ax[2].set_ylim(0, max(max(v) for v in vals) * 1.15)
+    hh, ll = ax[0].get_legend_handles_labels()
+    if hh: fig.legend(hh, ll, loc="upper center", ncol=3, fontsize=8, bbox_to_anchor=(0.5, 1.07))
     save(fig, "fig20_generalization.png")
 
 
@@ -909,7 +923,8 @@ def fig_policy():
             r = q[(q.strategy == i) & (q.value == th)].sort_values("C")
             a.plot(r.C, r.net_cost_adj / 1e4, color=C[nm[i]], lw=2, ls="-" if th else ":", marker=MK[nm[i]], ms=6, mec="#fcfcfb", mew=0.8,
                    label=f"{NAME['IR-O*(hindsight)' if i == 1 else 'JR']}，{lab}")
-    a.set_xlabel("每次事件的统一承诺 C / MW"); a.set_ylabel("综合成本 / 万元"); a.set_title("(a) 机房热惯性作为第三类恢复状态"); a.legend(fontsize=6.5)
+    lo_, hi_ = a.get_ylim(); a.set_ylim(lo_, hi_ + 0.3 * (hi_ - lo_))
+    a.set_xlabel("每次事件的统一承诺 C / MW"); a.set_ylabel("综合成本 / 万元"); a.set_title("(a) 机房热惯性作为第三类恢复状态"); a.legend(fontsize=6.5, loc="upper left")
     for a, sw, xl, tt in [(ax[1], 2, "绿电占比目标 g", "(b) 绿电占比约束（6 MW）"), (ax[2], 3, "PUE 上限", "(c) PUE 上限（6 MW）"),
                           (ax[3], 5, "联络线爬坡上限 / (MW/15 min)", "(d) 联络线爬坡约束（6 MW）")]:
         q = d[d.sweep == sw]; vals = sorted(q.value.unique(), key=lambda v: (np.isinf(v), v))
@@ -921,7 +936,9 @@ def fig_policy():
             if sw in (3, 5):
                 for x_, (_, rr) in zip(xs, r.iterrows()):
                     t_ = f"{rr.pue:.3f}" if sw == 3 else f"{rr.fulfil_rate_pct:.0f}%"
-                    a.annotate(t_, (x_, rr.net_cost_adj / 1e4), xytext=(0, 6 if i == 3 else -11), textcoords="offset points", ha="center", fontsize=6.3, color=INK2)
+                    off = (0, 6) if i == 3 else ((0, -11) if i == 1 or sw == 3 else (9, 3))
+                    a.annotate(t_, (x_, rr.net_cost_adj / 1e4), xytext=off, textcoords="offset points", ha="center" if off[0] == 0 else "left",
+                               fontsize=6.3, color=INK2)
         a.set_xticks(xs); a.set_xticklabels(["无" if np.isinf(v) else f"{v:g}" for v in vals])
         a.set_xlabel(xl); a.set_ylabel("综合成本 / 万元"); a.set_title(tt + {3: "（点旁为实际 PUE）", 5: "（点旁为兑现率）"}.get(sw, "")); a.legend(fontsize=6.5)
     save(fig, "fig21_policy.png")
@@ -1003,7 +1020,7 @@ def fig_jobsim():
         a.plot(h[sel], PDYN * (t.y_fluid - t.flex).values[sel], color=C["JR-D"], lw=2, drawstyle="steps-post", label="闭环计划（流体仿真）")
         a.plot(h[sel], PDYN * (t.y_job - t.flex).values[sel], color=INK, lw=1.4, ls="--", drawstyle="steps-post", label="作业级执行")
         shade(a); a.set_xlim(15, 28); a.set_xlabel("时刻 / h（24 以后为次日）"); a.set_ylabel("可延迟 IT 负荷相对名义值 / MW")
-        a.set_title(lab); a.legend(loc="upper left" if m == 0 else "lower right", fontsize=8)
+        a.set_title(lab); a.legend(loc="upper left" if m == 0 else "center right", fontsize=8)
     if d is not None:
         q = d[d.realisation > 0]
         names = [n for n in ORDER if n in set(q.name)]

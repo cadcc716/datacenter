@@ -23,6 +23,11 @@ for f in ["Noto Sans CJK SC", "WenQuanYi Micro Hei", "SimHei", "Microsoft YaHei"
         break
 plt.rcParams.update({"axes.unicode_minus": False, "font.size": 8.5, "savefig.bbox": "tight", "figure.dpi": 150,
                      "figure.facecolor": "#fcfcfb", "savefig.facecolor": "#fcfcfb"})  # = BG
+if EN:                                               # English diagrams: journal style (serif type, muted palette)
+    sys.path.insert(0, HERE)
+    import journal_style as JS
+    JS.apply_rc()
+    plt.rcParams.update({"font.size": 8.5, "axes.grid": False})
 INK, INK2, MUTED, LINE, BG = "#0b0b0b", "#52514e", "#898781", "#c3c2b7", "#fcfcfb"
 FLOW = {"el": "#2a78d6", "cool": "#1baf7a", "heat": "#eb6834", "gas": "#eda100", "info": "#6250d6", "work": "#e87ba4"}
 
@@ -138,7 +143,11 @@ def architecture():
         ax.plot([x, x + 0.03], [ly, ly], color=FLOW[k], lw=2, ls="--" if k == "info" else "-")
         ax.text(x + 0.035, ly, lab, va="center", fontsize=7, color=INK2)
     name = "fig00_architecture.png"
-    fig.savefig(os.path.join(FIG, name), dpi=200); plt.close(fig); print("wrote", name)
+    if EN:
+        JS.restyle(fig); JS.save_both(fig, os.path.join(FIG, name))
+    else:
+        fig.savefig(os.path.join(FIG, name), dpi=200)
+    plt.close(fig); print("wrote", name)
 
 
 def framework():
@@ -163,7 +172,11 @@ def framework():
     arrow(ax, (0.02 + 4 * dx + w / 2, y), (0.02 + 3 * dx + w / 2, y), "info", ls="--", rad=-0.3)
     label(ax, 0.02 + 3.5 * dx + w / 2, 0.20, T("实测状态反馈（每步）", "measured state fed back every step"), fs=7)
     name = "fig00_framework.png"
-    fig.savefig(os.path.join(FIG, name), dpi=200); plt.close(fig); print("wrote", name)
+    if EN:
+        JS.restyle(fig); JS.save_both(fig, os.path.join(FIG, name))
+    else:
+        fig.savefig(os.path.join(FIG, name), dpi=200)
+    plt.close(fig); print("wrote", name)
 
 
 if __name__ == "__main__":
